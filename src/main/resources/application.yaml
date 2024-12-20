@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: Restaurant_Service
+  datasource:
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    url: ${SPRING_DATASOURCE_URL}
+  jpa:
+    show-sql: ${SPRING_JPA_SHOW_SQL}
+    properties:
+      hibernate:
+        show_sql: ${SPRING_JPA_PROPERTIES_HIBERNATE_SHOW_SQL}
+
+  flyway:
+    enabled: ${SPRING_FLYWAY_ENABLED}
+    locations: ${SPRING_FLYWAY_LOCATIONS}
+    baseline-on-migrate: ${SPRING_FLYWAY_BASELINE_ON_MIGRATE}
+    schemas: ${SPRING_FLYWAY_SCHEMAS}
+    clean-disabled: false
+
+server:
+  port: ${SERVER_PORT}
+
+#
+#jwt:
+#  access: ${JWT_ACCESS}
+#  refresh: ${JWT_REFRESH}
+logging:
+  level:
+    # Логирование WebSocket
+    org.springframework.web.socket: DEBUG
+    org.springframework.messaging: DEBUG
+    org.springframework.web.socket.messaging: DEBUG
+    # Логирование ошибок Tomcat (если используется встроенный Tomcat)
+    org.springframework.boot.web.embedded.tomcat: DEBUG
+

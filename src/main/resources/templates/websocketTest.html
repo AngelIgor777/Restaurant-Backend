@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Получение заказов</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            font-size: 24px;
+            color: #333;
+        }
+        #messages {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: white;
+            border: 1px solid #ddd;
+            max-height: 500px; /* Увеличьте высоту при необходимости */
+            overflow-y: auto;
+            font-size: 14px;
+        }
+        .message {
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+        }
+        .message:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Получение заказов через WebSocket</h1>
+<div id="messages"></div>
+
+<script>
+    let stompClient = null;
+
+    function connectWebSocket() {
+        const socket = new SockJS('http://localhost:9091/ws-orders'); // Подключение к WebSocket
+        stompClient = Stomp.over(socket); // Инициализация STOMP клиента
+
+        stompClient.connect({}, function (frame) {
+            displayMessage("Соединение установлено: " + frame);
+
+            // Подписка на канал
+            stompClient.subscribe('/topic/orders', function (response) {
+                const orders = JSON.parse(response.body); // Парсим список заказов
+                if (Array.isArray(orders)) {
+                    orders.forEach(displayOrder); // Отображаем каждый заказ
+                } else {
+                    displayMessage("Получен неожиданный формат данных.");
+                }
+            });
+        }, function (error) {
+            displayMessage("Ошибка подключения: " + error);
+        });
+    }
+
+    function displayMessage(message) {
+        const messageDiv = document.getElementById("messages");
+        const messageElement = document.createElement("p");
+        messageElement.className = "message";
+        messageElement.textContent = message;
+        messageDiv.appendChild(messageElement);
+    }
+
+    function displayOrder(order) {
+        const messageDiv = document.getElementById("messages");
+        const messageElement = document.createElement("div");
+        messageElement.className = "message";
+        messageElement.innerHTML = `
+        <strong>Заказ ID:</strong> ${order.id ?? 'Не указано'} <br>
+        <strong>Стол ID:</strong> ${order.tableId ?? 'Не указано'} <br>
+        <strong>Статус:</strong> ${order.status ?? 'Не указано'} <br>
+        <strong>Метод оплаты:</strong> ${order.paymentMethod ?? 'Не указано'} <br>
+        <strong>Итоговая цена:</strong> ${order.totalPrice ?? 'Не указано'} <br>
+        <strong>Создан:</strong> ${order.createdAt ?? 'Не указано'} <br>
+        <strong>Обновлён:</strong> ${order.updatedAt ?? 'Не указано'}
+    `;
+        messageDiv.appendChild(messageElement);
+
+        // Автопрокрутка вниз
+        messageDiv.scrollTop = messageDiv.scrollHeight;
+    }
+
+    // Автоматическое подключение при загрузке страницы
+    window.onload = connectWebSocket;
+</script>
+
+</body>
+</html>
