@@ -25,12 +25,18 @@ server:
 #jwt:
 #  access: ${JWT_ACCESS}
 #  refresh: ${JWT_REFRESH}
-logging:
-  level:
-    # Логирование WebSocket
-    org.springframework.web.socket: DEBUG
-    org.springframework.messaging: DEBUG
-    org.springframework.web.socket.messaging: DEBUG
-    # Логирование ошибок Tomcat (если используется встроенный Tomcat)
-    org.springframework.boot.web.embedded.tomcat: DEBUG
+#logging:
+#  level:
+#    # Логирование WebSocket
+#    org.springframework.web.socket: DEBUG
+#    org.springframework.messaging: DEBUG
+#    org.springframework.web.socket.messaging: DEBUG
+#    # Логирование ошибок Tomcat (если используется встроенный Tomcat)
+#    org.springframework.boot.web.embedded.tomcat: DEBUG
+
+bot:
+  name:
+    ARNAUT's
+  key:
+    7637000511:AAHrOCWM4gW3Aq-yWfZ1Rrr2Z2O2H8gm27g
 

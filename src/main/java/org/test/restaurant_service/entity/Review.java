@@ -31,5 +31,6 @@ public class Review {
     private String visitorName;
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @Builder.Default
+    private final LocalDateTime createdAt = LocalDateTime.now();
 }

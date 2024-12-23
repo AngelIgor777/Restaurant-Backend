@@ -38,6 +38,7 @@ public class ProductHistory {
     private BigDecimal price;
 
     @Column(name = "changed_at", nullable = false, updatable = false)
+    @Builder.Default
     private LocalDateTime changedAt = LocalDateTime.now();
 
 
