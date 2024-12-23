@@ -121,10 +121,8 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void register(Long chatId, User user) {
 
-        // Генерация и сохранение OTP
-        Otp otp = otpService.generateAndSaveOtp(chatId.intValue(), user);
+        Otp otp = otpService.generateAndSaveOtp(chatId, user);
 
-        // Отправка OTP пользователю
         String message = "🎉 Ваш код: `" + otp.getOtpCode() + "` 🎉\n" +
                 "🔒 Никому не давайте его.\n" +
                 "🌐 Заходите на наш сайт и регистрируйтесь с помощью этого кода!\n" +
@@ -133,17 +131,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         sendMessageWithMarkdown(chatId, message);
     }
 
-    private void sendRandomCode(Long chatId) {
-        int i = random.nextInt(900000);
-        int code = 100000 + i; // Генерация случайного 6-значного кода
-        String message = "🎉 Ваш код: `" + code + "` 🎉\n" + // Добавлены смайлики
-                "🔒 Никому не давайте его.\n" +
-                "🌐 Заходите на наш сайт и регистрируйтесь с помощью этого кода!\n" +
-                "🎁 Вы сможете участвовать в розыгрышах, получать промокоды и видеть новости самыми первыми!";
-
-        // Укажите форматирование Markdown
-        sendMessageWithMarkdown(chatId, message);
-    }
 
     private void sendMessageWithMarkdown(Long chatId, String message) {
         SendMessage sendMessage = new SendMessage();

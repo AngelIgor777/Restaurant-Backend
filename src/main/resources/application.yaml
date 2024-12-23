@@ -21,10 +21,9 @@ spring:
 server:
   port: ${SERVER_PORT}
 
-#
-#jwt:
-#  access: ${JWT_ACCESS}
-#  refresh: ${JWT_REFRESH}
+jwt:
+  access: ${JWT_ACCESS}
+
 #logging:
 #  level:
 #    # Логирование WebSocket

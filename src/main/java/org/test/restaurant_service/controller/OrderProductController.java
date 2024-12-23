@@ -2,6 +2,7 @@ package org.test.restaurant_service.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.test.restaurant_service.dto.request.OrderProductRequestDTO;
 import org.test.restaurant_service.dto.response.OrderProductResponseDTO;
@@ -17,7 +18,6 @@ import java.util.List;
 public class OrderProductController {
 
     private final OrderProductService orderProductService;
-
 
     @GetMapping("/order/{orderId}")
     public List<OrderProductResponseDTO> getOrderProductsByOrderId(@PathVariable Integer orderId) {

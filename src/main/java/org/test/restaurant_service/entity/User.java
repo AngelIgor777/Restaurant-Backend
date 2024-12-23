@@ -29,11 +29,15 @@ public class User {
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_roles",
-            schema = "ms_auth_sc",
+            schema = "restaurant_service",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     private List<Role> roles;
+
+    @OneToOne
+    @JoinColumn(name = "otp_id", unique = true)
+    private Otp otp;
 
     @Override
     public boolean equals(Object o) {

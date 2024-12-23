@@ -19,7 +19,7 @@ public class Otp {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    private Integer chatId;
+    private Long chatId;
 
     @Column(nullable = false)
     private String otpCode;
@@ -33,6 +33,9 @@ public class Otp {
     @Column(nullable = false)
     @Builder.Default
     private Boolean verified = false;
+
+    @OneToOne(mappedBy = "otp",cascade = CascadeType.ALL)
+    private User user;
 
     @Column(nullable = false, updatable = false)
     @Builder.Default
