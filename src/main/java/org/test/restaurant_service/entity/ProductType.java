@@ -12,13 +12,13 @@ import java.util.Objects;
 @Entity
 @Table(name = "product_types", schema = "restaurant_service")
 public class ProductType {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @Column(nullable = false, unique = true, length = 128)
     private String name;
-
 
     @Override
     public boolean equals(Object o) {

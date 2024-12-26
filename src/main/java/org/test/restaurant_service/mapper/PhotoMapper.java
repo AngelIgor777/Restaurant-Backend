@@ -12,9 +12,11 @@ public interface PhotoMapper {
     PhotoResponseDTO toResponseDTO(Photo photo);
 
     @Mapping(target = "product", ignore = true)
+    @Mapping(target = "id", ignore = true) // Игнорирование id при маппинге
     Photo toEntity(PhotoRequestDTO requestDTO);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "product", ignore = true)
+    @Mapping(target = "id", ignore = true) // Игнорирование id при маппинге
     void updateEntityFromRequestDTO(PhotoRequestDTO requestDTO, @MappingTarget Photo photo);
 }

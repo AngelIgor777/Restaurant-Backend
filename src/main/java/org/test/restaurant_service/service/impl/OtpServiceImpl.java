@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.test.restaurant_service.dto.response.JwtResponse;
 import org.test.restaurant_service.entity.Otp;
-import org.test.restaurant_service.entity.Role;
 import org.test.restaurant_service.entity.RoleName;
 import org.test.restaurant_service.repository.OtpRepository;
 import org.test.restaurant_service.service.OtpService;
@@ -26,21 +25,28 @@ public class OtpServiceImpl implements OtpService {
 
 
     @Override
-    public Otp generateAndSaveOtp(Long chatId, User user) {
+    public Otp generateAndSaveOtp(Long chatId) {
+        Otp otp = otpRepository.findOtpByChatId(chatId)
+                .orElseThrow(EntityNotFoundException::new);
+
+
+        int otpCode = 100000 + random.nextInt(900000);
+        otp.setOtpCode(String.valueOf(otpCode));
+        return otpRepository.save(otp);
+
+    }
+
+    public void save(Long chatId, User user) {
         String username = user.getUserName() != null ? user.getUserName() : "unknown";
         String firstname = user.getFirstName();
 
-        int otpCode = 100000 + random.nextInt(900000);
-
         Otp otp = Otp.builder()
                 .chatId(chatId)
-                .otpCode(String.valueOf(otpCode))
                 .username(username)
                 .firstname(firstname)
                 .verified(false)
                 .build();
-
-        return otpRepository.save(otp);
+        save(otp);
     }
 
     @Override
@@ -71,6 +77,12 @@ public class OtpServiceImpl implements OtpService {
     @Override
     public Otp save(Otp otp) {
         return otpRepository.save(otp);
+    }
+
+    @Override
+    public boolean existByChatId(Long chatId) {
+
+        return otpRepository.existsOtpByChatId(chatId);
     }
 
     private List<String> getUserRoles() {

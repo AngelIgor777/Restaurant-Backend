@@ -9,4 +9,6 @@ INSERT INTO restaurant_service.photo (product_id, url)
 VALUES (1, '/static/images/cola.jpeg'),
        (2, '/static/images/tea.jpeg'),
        (3, '/static/images/soup.jpeg'),
-       (4, '/static/images/cake.jpeg');
+       (4, '/static/images/cake.jpeg'),
+       (5, '/static/images/caesar_salad.jpeg'),
+       (6, '/static/images/steak.jpeg');

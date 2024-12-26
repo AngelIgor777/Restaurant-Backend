@@ -2,10 +2,10 @@ package org.test.restaurant_service.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.test.restaurant_service.dto.request.OrderProductRequestDTO;
 import org.test.restaurant_service.dto.response.OrderProductResponseDTO;
+import org.test.restaurant_service.dto.response.OrderResponseDTO;
 import org.test.restaurant_service.entity.Order;
 import org.test.restaurant_service.service.OrderProductService;
 
@@ -26,9 +26,9 @@ public class OrderProductController {
 
     @PostMapping("/bulk")
     @ResponseStatus(HttpStatus.CREATED)
-    public List<OrderProductResponseDTO> createBulk(@Valid @RequestBody List<OrderProductRequestDTO> requestDTOs,
-                                                    @RequestParam Integer tableNumber,
-                                                    @RequestParam Order.PaymentMethod paymentMethod) {
+    public OrderResponseDTO createBulk(@Valid @RequestBody List<OrderProductRequestDTO> requestDTOs,
+                                       @RequestParam Integer tableNumber,
+                                       @RequestParam Order.PaymentMethod paymentMethod) {
         return orderProductService.createBulk(requestDTOs, tableNumber, paymentMethod);
     }
 

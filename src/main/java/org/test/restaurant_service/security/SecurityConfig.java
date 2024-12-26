@@ -3,7 +3,6 @@ package org.test.restaurant_service.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -15,23 +14,24 @@ import org.test.restaurant_service.security.filters.JwtAuthenticationFilter;
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
+
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http
-                .csrf().disable()
+        http.cors().and() // Включаем поддержку CORS
+                .csrf().disable() // Отключаем CSRF
                 .authorizeRequests()
                 .antMatchers(
                         "/api/v1/otp/**",
-                        "/api/v1/tables,",
-                        "/api/v1/products,",
-                        "/api/v1/product-types,",
-                        "/api/v1/photos/**,",
-                        "/api/v1/order-products/**,"
-                ).permitAll()
-                .anyRequest().authenticated()
+                        "/api/v1/tables/**",
+                        "/api/v1/products/**",
+                        "/api/v1/product-types/**",
+                        "/api/v1/photos/**",
+                        "/api/v1/order-products/**"
+                ).permitAll() // Разрешаем доступ без аутентификации
+                .anyRequest().authenticated() // Все остальные запросы требуют аутентификации
                 .and()
                 .addFilterBefore(new JwtAuthenticationFilter(authenticationManager()),
-                        UsernamePasswordAuthenticationFilter.class);
+                        UsernamePasswordAuthenticationFilter.class); // Добавляем фильтр для JWT
     }
 
     @Override

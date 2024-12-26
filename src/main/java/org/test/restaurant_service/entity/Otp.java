@@ -21,7 +21,6 @@ public class Otp {
 
     private Long chatId;
 
-    @Column(nullable = false)
     private String otpCode;
 
     @Column(nullable = false)

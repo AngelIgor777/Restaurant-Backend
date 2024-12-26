@@ -9,4 +9,6 @@ public interface OtpRepository extends JpaRepository<Otp, Integer> {
 
     Optional<Otp> findByOtpCode(String otpCode);
 
+    boolean existsOtpByChatId(Long chatId);
+    Optional<Otp> findOtpByChatId(Long chatId);
 }

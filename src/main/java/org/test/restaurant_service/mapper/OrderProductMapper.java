@@ -15,10 +15,12 @@ public interface OrderProductMapper {
 
     @Mapping(target = "order", ignore = true)
     @Mapping(target = "product", ignore = true)
+    @Mapping(target = "id", ignore = true) // Игнорирование id при маппинге
     OrderProduct toEntity(OrderProductRequestDTO requestDTO);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "order", ignore = true)
     @Mapping(target = "product", ignore = true)
+    @Mapping(target = "id", ignore = true) // Игнорирование id при маппинге
     void updateEntityFromRequestDTO(OrderProductRequestDTO requestDTO, @MappingTarget OrderProduct orderProduct);
 }

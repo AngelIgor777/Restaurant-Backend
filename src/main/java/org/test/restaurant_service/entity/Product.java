@@ -6,6 +6,7 @@ import javax.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.LocalTime;
 import java.util.Objects;
 
 @Getter
@@ -33,6 +34,8 @@ public class Product {
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
+
+    private LocalTime cookingTime;
 
     @Override
     public boolean equals(Object o) {

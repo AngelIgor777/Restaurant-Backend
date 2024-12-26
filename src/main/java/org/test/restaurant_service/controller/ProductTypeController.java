@@ -4,13 +4,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
 import org.test.restaurant_service.dto.request.ProductTypeRequestDTO;
 import org.test.restaurant_service.dto.response.ProductTypeResponseDTO;
 import org.test.restaurant_service.service.ProductTypeService;
-
 import javax.validation.Valid;
 
 @RestController

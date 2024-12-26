@@ -5,6 +5,8 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendSticker;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
@@ -14,6 +16,7 @@ import org.test.restaurant_service.entity.Otp;
 import org.test.restaurant_service.service.impl.OtpServiceImpl;
 import org.test.restaurant_service.telegram.config.BotConfig;
 
+import javax.persistence.EntityNotFoundException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 
@@ -65,6 +68,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     public String getBotUsername() {
         String botName = botConfig.getBotName();
         log.debug("BOT NAME: {}", botName);
+
         return botName;
     }
 
@@ -88,25 +92,34 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             switch (text) {
                 case "/start":
-                    sendMessage(chatId, "Добро пожаловать в ресторан ARNAUT's! Введите /help, чтобы узнать, что я могу сделать.");
+                    startRegister(chatId, user);
                     break;
                 case "/help":
                     sendHelpMessage(chatId);
                     break;
                 case "/register":
-                    register(chatId, user);
+                    registerOtpCode(chatId);
                     break;
                 case "/info":
-                    sendMessage(chatId, "Этот бот помогает вам зарегистрироваться и получать новости о мероприятиях ARNAUT's!");
+                    sendMessage(chatId, "Этот бот помогает вам зарегистрироваться и получать новости о мероприятиях ARNAUT's! ☀");
                     break;
                 case "/menu":
                     sendMenu(chatId);
                     break;
                 default:
-                    sendMessage(chatId, "Неизвестная команда. Введите /help, чтобы увидеть доступные команды.");
+                    sendMessage(chatId, "Неизвестная команда 🤯. Введите /help, чтобы увидеть доступные команды.");
                     break;
             }
+        } else if (update.getMessage().hasSticker()) {
+            stickerHandler(update);
         }
+    }
+
+    private void stickerHandler(Update update) {
+        Long chatId = update.getMessage().getChatId();
+        String fileId = update.getMessage().getSticker().getFileId();
+        sendMessage(chatId, "Какой прекрасный стикер! 🙃");
+        log.info("Получен File ID стикера: {}", fileId);
     }
 
     private void sendHelpMessage(Long chatId) {
@@ -119,16 +132,39 @@ public class TelegramBot extends TelegramLongPollingBot {
         sendMessage(chatId, menuText);
     }
 
-    private void register(Long chatId, User user) {
+    private void startRegister(Long chatId, User user) {
+        if (!otpService.existByChatId(chatId)) {
+            sendSticker(chatId, "CAACAgIAAxkBAAOIZ2wCV5OzULOMka95E5_NGb48DX8AAocQAALddzlI382554aYWfM2BA");
+            sendMessage(chatId, "Добро пожаловать в бот ресторана ARNAUT's! ☺ \n" +
+                    "Введите /help, чтобы узнать, что я могу сделать.");
+            otpService.save(chatId, user);
+        } else {
+            sendMessage(chatId, "Ой, вышла ошибочка 😅.\n" +
+                    "Мы заметили, что вы уже запустили нашего бота 😽.\n" +
+                    "Можете ввести /help, чтобы узнать, что я могу сделать. 😌");
+        }
+    }
 
-        Otp otp = otpService.generateAndSaveOtp(chatId, user);
+    private void registerOtpCode(Long chatId) {
+        if (otpService.existByChatId(chatId)) {
+            sendSticker(chatId, "CAACAgIAAxkBAAOMZ2wCg2GLi8plYN0NGFsVl2NfnMYAAgsBAAL3AsgPxfQ7mJWqcds2BA");
+            try {
+                Otp otp = otpService.generateAndSaveOtp(chatId);
 
-        String message = "🎉 Ваш код: `" + otp.getOtpCode() + "` 🎉\n" +
-                "🔒 Никому не давайте его.\n" +
-                "🌐 Заходите на наш сайт и регистрируйтесь с помощью этого кода!\n" +
-                "🎁 Вы сможете участвовать в розыгрышах, получать промокоды и видеть новости самыми первыми!";
+                String message = "Поздравляем! Теперь вы являетесь частью нашей семьи!\n" +
+                        "🎉 Ваш код: `" + otp.getOtpCode() + "` 🎉\n" +
+                        "🔒 Никому не давайте его.\n" +
+                        "🌐 Заходите на наш сайт и регистрируйтесь с помощью этого кода!\n" +
+                        "🎁 Вы сможете участвовать в розыгрышах, получать промокоды и видеть новости самыми первыми!";
 
-        sendMessageWithMarkdown(chatId, message);
+                sendMessageWithMarkdown(chatId, message);
+            } catch (EntityNotFoundException e) {
+                sendMessage(chatId, "Ой, вышла ошибочка 😅.\n" +
+                        "Мы заметили, что вы уже есть в нашем списке.\n" +
+                        "Введите /me чтобы получить персональную информацию 😌");
+            }
+
+        }
     }
 
 
@@ -143,6 +179,20 @@ public class TelegramBot extends TelegramLongPollingBot {
             log.error("Ошибка при отправке сообщения: {}", e.getMessage());
         }
     }
+
+
+    private void sendSticker(Long chatId, String stickerFileId) {
+        SendSticker sendSticker = new SendSticker();
+        sendSticker.setChatId(chatId.toString());
+        sendSticker.setSticker(new InputFile(stickerFileId)); // Используем File ID стикера или URL
+
+        try {
+            execute(sendSticker);
+        } catch (TelegramApiException e) {
+            log.error("Ошибка при отправке стикера: {}", e.getMessage());
+        }
+    }
+
 
     private void sendMessage(Long chatId, String text) {
         SendMessage message = new SendMessage();

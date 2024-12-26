@@ -14,5 +14,6 @@ public interface TableMapper {
     TableResponseDTO toResponseDTO(Table table);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "id", ignore = true)
     void updateEntityFromRequestDTO(TableRequestDTO requestDTO, @MappingTarget Table table);
 }

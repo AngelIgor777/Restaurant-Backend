@@ -6,9 +6,11 @@ import org.test.restaurant_service.entity.Otp;
 
 
 public interface OtpService {
-    Otp generateAndSaveOtp(Long chatId, User username);
+    Otp generateAndSaveOtp(Long chatId);
 
     JwtResponse verifyOtpCode(String otpCode);
 
     Otp save(Otp otp);
+
+    boolean existByChatId(Long chatId);
 }
