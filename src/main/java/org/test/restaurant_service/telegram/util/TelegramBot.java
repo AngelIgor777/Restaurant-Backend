@@ -6,26 +6,35 @@ import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendSticker;
-import org.telegram.telegrambots.meta.api.objects.InputFile;
-import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.User;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
+import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import org.test.restaurant_service.dto.response.ProductResponseDTO;
+import org.test.restaurant_service.dto.response.ProductTypeResponseDTO;
 import org.test.restaurant_service.entity.Otp;
 import org.test.restaurant_service.service.impl.OtpServiceImpl;
+import org.test.restaurant_service.service.impl.ProductServiceImpl;
+import org.test.restaurant_service.service.impl.ProductTypeServiceImpl;
 import org.test.restaurant_service.telegram.config.BotConfig;
 
 import javax.persistence.EntityNotFoundException;
-import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @Component
 public class TelegramBot extends TelegramLongPollingBot {
 
     private final OtpServiceImpl otpService;
+    private final ProductTypeServiceImpl productTypeService;
+    private final ProductServiceImpl productService;
 
+
+    private final String BUTTON_BACK_TO_MENU = "BACK_TO_MENU";
 
     private final String helpText = "\uD83D\uDCDA Доступные команды:\n" +
             "/start - Запуск бота\n" +
@@ -34,19 +43,13 @@ public class TelegramBot extends TelegramLongPollingBot {
             "/info - Информация о боте\n" +
             "/menu - Показать меню";
 
-    private final String menuText = "\uD83C\uDF74 Наше меню:\n" +
-            "1. Салаты\n" +
-            "2. Основные блюда\n" +
-            "3. Десерты\n" +
-            "4. Напитки\n\n" +
-            "Введите номер категории, чтобы узнать больше!";
-
 
     private final BotConfig botConfig;
-    private final SecureRandom random = new SecureRandom();
 
-    public TelegramBot(OtpServiceImpl otpService, BotConfig botConfig) {
+    public TelegramBot(OtpServiceImpl otpService, ProductTypeServiceImpl productTypeService, ProductServiceImpl productService, BotConfig botConfig) {
         this.otpService = otpService;
+        this.productTypeService = productTypeService;
+        this.productService = productService;
 
         this.botConfig = botConfig;
         ArrayList<BotCommand> botCommands = new ArrayList<>();
@@ -83,69 +86,261 @@ public class TelegramBot extends TelegramLongPollingBot {
     public void onUpdateReceived(Update update) {
         if (update.hasMessage() && update.getMessage().hasText()) {
             String text = update.getMessage().getText();
-            Long chatId = update.getMessage().getChatId();
-            User user = update.getMessage().getFrom();
-            String userName = user.getUserName();
-            String firstName = user.getFirstName();
-            String lastName = user.getLastName();
-            log.info("USER: {}, {}, {}", userName, firstName, lastName);
+
 
             switch (text) {
                 case "/start":
-                    startRegister(chatId, user);
+                    startRegister(update);
                     break;
                 case "/help":
-                    sendHelpMessage(chatId);
+                    sendHelpMessage(update);
                     break;
                 case "/register":
-                    registerOtpCode(chatId);
+                    registerOtpCode(update);
                     break;
                 case "/info":
-                    sendMessage(chatId, "Этот бот помогает вам зарегистрироваться и получать новости о мероприятиях ARNAUT's! ☀");
+                    sendMessage(update, "Этот бот помогает вам зарегистрироваться и получать новости о мероприятиях ARNAUT's! ☀");
                     break;
                 case "/menu":
-                    sendMenu(chatId);
+                    menu(update);
                     break;
                 default:
-                    sendMessage(chatId, "Неизвестная команда 🤯. Введите /help, чтобы увидеть доступные команды.");
+                    sendMessage(update, "Неизвестная команда 🤯. Введите /help, чтобы увидеть доступные команды.");
                     break;
             }
+        } else if (update.hasCallbackQuery()) {
+            handleCallbackQuery(update);
+
         } else if (update.getMessage().hasSticker()) {
             stickerHandler(update);
         }
     }
 
+
+    private void handleCallbackQuery(Update update) {
+        CallbackQuery callbackQuery = update.getCallbackQuery();
+        String data = callbackQuery.getData();
+
+        boolean anyMatch = callbackDataList.stream()
+                .anyMatch(callbackItem -> callbackItem.equals(data));
+
+
+        if (anyMatch) {
+            handleProductTypeCallback(callbackQuery, data);
+        } else if (data.equals(BUTTON_BACK_TO_MENU)) {
+            backToMenu(update);
+        }
+    }
+
+
+    private void backToMenu(Update update) {
+        CallbackQuery callbackQuery = update.getCallbackQuery();
+        Long chatId = callbackQuery.getMessage().getChatId();
+        Integer messageId = callbackQuery.getMessage().getMessageId();
+
+        EditMessageText editMessage = new EditMessageText();
+
+        editMessage.setChatId(String.valueOf(chatId));
+        editMessage.setText(menuText.toString());
+        editMessage.setMessageId((int) messageId);
+        InlineKeyboardMarkup menuInlineMarkup = getMenuInlineMarkup();
+        editMessage.setText(menuText.toString());
+        editMessage.setReplyMarkup(menuInlineMarkup);
+        executeMessage(editMessage);
+        deleteMenuText();
+    }
+
+    private void handleProductTypeCallback(CallbackQuery callbackQuery, String productType) {
+        List<ProductResponseDTO> products = productService.getByTypeName(productType); // TODO: Implement representation of all products in Telegram buttons
+
+        Message message = callbackQuery.getMessage();
+        Integer messageId = message.getMessageId();
+        Long chatId = message.getChatId();
+
+        String responseText = "Наше меню категории " + productType + " 😋:";
+        executeEditMessageText(responseText, chatId, messageId, products);
+    }
+
+
+    private void executeEditMessageText(String text, long chatId, long messageId, List<ProductResponseDTO> products) {
+        EditMessageText message = new EditMessageText();
+        message.setChatId(String.valueOf(chatId));
+        message.setText(text);
+        message.setMessageId((int) messageId);
+
+
+        InlineKeyboardMarkup markupInLine = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rowsInLine = new ArrayList<>();
+
+        int size = products.size();
+        int rows = (int) Math.ceil((double) size / 2);
+
+
+        // Разбиваем на строки по 2 кнопки
+        for (int i = 0; i < rows; i++) {
+            List<InlineKeyboardButton> row = new ArrayList<>();
+
+            // Индексы для кнопок в строке
+            int limitation = Math.min((i + 2) * 2, size);
+            for (int x = i * 3; x < limitation; x++) {
+                InlineKeyboardButton button = createButton();
+                String callbackData = products.get(x).getName();
+                button.setText(callbackData);
+                button.setCallbackData(callbackData);
+                callbackDataList.add(callbackData);
+                row.add(button);
+            }
+            rowsInLine.add(row);
+        }
+
+        markupInLine.setKeyboard(rowsInLine);
+        message.setReplyMarkup(markupInLine);
+
+
+        addBackButton(rowsInLine);
+
+        try {
+            execute(message);
+        } catch (TelegramApiException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    private void addBackButton(List<List<InlineKeyboardButton>> rowsInLine) {
+        List<InlineKeyboardButton> row = new ArrayList<>();
+
+        InlineKeyboardButton button = createButton();
+        button.setText("Назад 🥞");
+        button.setCallbackData(BUTTON_BACK_TO_MENU);
+        row.add(button);
+        rowsInLine.add(row);
+    }
+
+
+    private final StringBuilder menuText = new StringBuilder();
+
+    private List<String> setMenuText() {
+        List<String> productTypes = productTypeService.getAll().stream()
+                .map(ProductTypeResponseDTO::getName).toList();
+        int size = productTypes.size();
+        menuText.append("\uD83C\uDF74 Наше меню:\n\n");
+
+        for (int i = 1; i < size; i++) {
+            menuText.append(i).append(".").append(productTypes.get(i)).append("\n");
+        }
+
+        menuText.append("\nВыберите номер категории, чтобы узнать больше!\n");
+        return productTypes;
+    }
+
+
+    private List<String> callbackDataList = new ArrayList<>();
+
+    private void menu(Update update) {
+        setMenuText();
+        SendMessage message = new SendMessage(update.getMessage().getChatId().toString(), menuText.toString());
+        createMenu(message);
+    }
+
+    private void createMenu(SendMessage message) {
+        InlineKeyboardMarkup menuInlineMarkup = getMenuInlineMarkup();
+        message.setReplyMarkup(menuInlineMarkup);
+        executeMessage(message);
+        deleteMenuText();
+    }
+
+    //нужно после каждой отправки menu
+    private void deleteMenuText() {
+        menuText.delete(0, menuText.length());
+    }
+
+    private InlineKeyboardMarkup getMenuInlineMarkup() {
+
+        List<String> productTypes = setMenuText();
+
+        InlineKeyboardMarkup markupInLine = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rowsInLine = new ArrayList<>();
+
+        int size = productTypes.size();
+        int rows = (int) Math.ceil((double) size / 2); // Округление вверх для правильного расчета строк
+
+        // Разбиваем на строки по 2 кнопки
+        for (int i = 0; i < rows; i++) {
+            List<InlineKeyboardButton> row = new ArrayList<>();
+
+            // Индексы для кнопок в строке
+            int limitation = Math.min((i + 1) * 2, size);
+            for (int x = i * 2; x < limitation; x++) {
+                InlineKeyboardButton button = createButton();
+                String callbackData = productTypes.get(x);
+                button.setText(callbackData);
+                button.setCallbackData(callbackData);
+                callbackDataList.add(callbackData);
+                row.add(button);
+            }
+            rowsInLine.add(row);
+        }
+
+        markupInLine.setKeyboard(rowsInLine);
+        return markupInLine;
+    }
+
+    private InlineKeyboardButton createButton() {
+        return new InlineKeyboardButton();
+    }
+
+
+    private void executeMessage(SendMessage message) {
+        try {
+            execute(message);
+        } catch (TelegramApiException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    private void executeMessage(EditMessageText message) {
+        try {
+            execute(message);
+        } catch (TelegramApiException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+
     private void stickerHandler(Update update) {
-        Long chatId = update.getMessage().getChatId();
         String fileId = update.getMessage().getSticker().getFileId();
-        sendMessage(chatId, "Какой прекрасный стикер! 🙃");
+        sendMessage(update, "Какой прекрасный стикер! 🙃");
         log.info("Получен File ID стикера: {}", fileId);
     }
 
-    private void sendHelpMessage(Long chatId) {
+    private void sendHelpMessage(Update update) {
 
-        sendMessage(chatId, helpText);
+        sendMessage(update, helpText);
     }
 
-    private void sendMenu(Long chatId) {
+    private void sendMenu(Update up) {
 
-        sendMessage(chatId, menuText);
+        sendMessage(up, menuText.toString());
     }
 
-    private void startRegister(Long chatId, User user) {
+    private void startRegister(Update update) {
+        Long chatId = update.getMessage().getChatId();
+        User user = update.getMessage().getFrom();
+
         if (!otpService.existByChatId(chatId)) {
             sendSticker(chatId, "CAACAgIAAxkBAAOIZ2wCV5OzULOMka95E5_NGb48DX8AAocQAALddzlI382554aYWfM2BA");
-            sendMessage(chatId, "Добро пожаловать в бот ресторана ARNAUT's! ☺ \n" +
+            sendMessage(update, "Добро пожаловать в бот ресторана ARNAUT's! ☺ \n" +
                     "Введите /help, чтобы узнать, что я могу сделать.");
             otpService.save(chatId, user);
         } else {
-            sendMessage(chatId, "Ой, вышла ошибочка 😅.\n" +
+            sendMessage(update, "Ой, вышла ошибочка 😅.\n" +
                     "Мы заметили, что вы уже запустили нашего бота 😽.\n" +
                     "Можете ввести /help, чтобы узнать, что я могу сделать. 😌");
         }
     }
 
-    private void registerOtpCode(Long chatId) {
+    private void registerOtpCode(Update update) {
+        Long chatId = update.getMessage().getChatId();
         if (otpService.existByChatId(chatId)) {
             sendSticker(chatId, "CAACAgIAAxkBAAOMZ2wCg2GLi8plYN0NGFsVl2NfnMYAAgsBAAL3AsgPxfQ7mJWqcds2BA");
             try {
@@ -159,11 +354,10 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                 sendMessageWithMarkdown(chatId, message);
             } catch (EntityNotFoundException e) {
-                sendMessage(chatId, "Ой, вышла ошибочка 😅.\n" +
+                sendMessage(update, "Ой, вышла ошибочка 😅.\n" +
                         "Мы заметили, что вы уже есть в нашем списке.\n" +
                         "Введите /me чтобы получить персональную информацию 😌");
             }
-
         }
     }
 
@@ -194,9 +388,9 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
 
-    private void sendMessage(Long chatId, String text) {
+    private void sendMessage(Update update, String text) {
         SendMessage message = new SendMessage();
-        message.setChatId(chatId.toString());
+        message.setChatId(update.getMessage().getChatId().toString());
         message.setText(text);
 
         try {

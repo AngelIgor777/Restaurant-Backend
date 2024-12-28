@@ -5,6 +5,8 @@ import org.springframework.data.domain.Pageable;
 import org.test.restaurant_service.dto.request.ProductTypeRequestDTO;
 import org.test.restaurant_service.dto.response.ProductTypeResponseDTO;
 
+import java.util.List;
+
 
 public interface ProductTypeService {
     ProductTypeResponseDTO create(ProductTypeRequestDTO requestDTO);
@@ -16,4 +18,5 @@ public interface ProductTypeService {
     ProductTypeResponseDTO getById(Integer id);
 
     Page<ProductTypeResponseDTO> getAll(Pageable pageable);
+    List<ProductTypeResponseDTO> getAll( );
 }

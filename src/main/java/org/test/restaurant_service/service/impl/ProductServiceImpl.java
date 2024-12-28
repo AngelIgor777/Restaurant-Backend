@@ -15,6 +15,7 @@ import org.test.restaurant_service.repository.ProductTypeRepository;
 import org.test.restaurant_service.service.ProductService;
 
 import javax.persistence.EntityNotFoundException;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -71,5 +72,10 @@ public class ProductServiceImpl implements ProductService {
             products = productRepository.findAll(pageable);
         }
         return products.map(productMapper::toResponseDTO);
+    }
+
+    public List<ProductResponseDTO>  getByTypeName(String typeName) {
+        List<Product> allByTypeName = productRepository.findAllByType_Name(typeName);
+        return allByTypeName.stream().map(productMapper::toResponseDTO).toList();
     }
 }

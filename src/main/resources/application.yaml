@@ -35,7 +35,6 @@ jwt:
 
 bot:
   name:
-    ARNAUT's
+    ${BOT_NAME}
   key:
-    7637000511:AAHrOCWM4gW3Aq-yWfZ1Rrr2Z2O2H8gm27g
-
+    ${BOT_KEY}
