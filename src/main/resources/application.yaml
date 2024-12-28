@@ -38,3 +38,6 @@ bot:
     ${BOT_NAME}
   key:
     ${BOT_KEY}
+
+cron:
+  scheduler: 0 * * * * *

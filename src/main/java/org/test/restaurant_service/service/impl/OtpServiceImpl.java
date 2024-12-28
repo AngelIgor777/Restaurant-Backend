@@ -85,6 +85,11 @@ public class OtpServiceImpl implements OtpService {
         return otpRepository.existsOtpByChatId(chatId);
     }
 
+    @Override
+    public List<Otp> getAll() {
+        return otpRepository.findAll();
+    }
+
     private List<String> getUserRoles() {
         List<String> roles = new ArrayList<>();
 

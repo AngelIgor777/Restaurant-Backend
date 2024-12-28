@@ -1,6 +1,8 @@
 package org.test.restaurant_service.telegram.util;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
@@ -28,6 +30,8 @@ import java.util.List;
 
 @Slf4j
 @Component
+@EnableScheduling
+
 public class TelegramBot extends TelegramLongPollingBot {
 
     private final OtpServiceImpl otpService;
@@ -37,21 +41,32 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private final String BUTTON_BACK_TO_MENU = "BACK_TO_MENU";
 
-    private final String helpText = "\uD83D\uDCDA Доступные команды:\n" +
-            "/start - Запуск бота\n" +
-            "/help - Список доступных команд\n" +
-            "/register - Регистрация на нашем сайте\n" +
-            "/info - Информация о боте\n" +
-            "/menu - Показать меню";
-
-
+    private final String helpText =
+            "📖 <b>Доступные команды:</b>\n\n" +
+                    "🚀 /start - <i>Запуск бота</i>\n" +
+                    "❓ /help - <i>Список доступных команд</i>\n" +
+                    "📝 /register - <i>Регистрация на нашем сайте</i>\n" +
+                    "ℹ️ /info - <i>Информация о боте</i>\n" +
+                    "🍽️ /menu - <i>Показать меню</i>\n\n" +
+                    "✨ Используйте команды, чтобы сделать ваше настроение более радостным!";
+    private final String infoText =
+            "🤖 <b>Добро пожаловать!</b>\n\n" +
+                    "Этот бот создан, чтобы сделать вашу жизнь проще и приятнее! 🌟\n" +
+                    "С его помощью вы можете:\n" +
+                    "📝 Зарегистрироваться на нашем сайте\n" +
+                    "📢 Получать самые свежие новости о мероприятиях ARNAUT's\n\n" +
+                    "✨ Мы всегда рады быть вам полезными!";
     private final BotConfig botConfig;
+
     private final ProductServiceImpl productServiceImpl;
+    private final OtpServiceImpl otpServiceImpl;
+
     private List<String> callbackProductTypesData = new ArrayList<>();
+
     private List<String> callbackProductsData = new ArrayList<>();
 
 
-    public TelegramBot(OtpServiceImpl otpService, ProductTypeServiceImpl productTypeService, ProductServiceImpl productService, BotConfig botConfig, ProductServiceImpl productServiceImpl) {
+    public TelegramBot(OtpServiceImpl otpService, ProductTypeServiceImpl productTypeService, ProductServiceImpl productService, BotConfig botConfig, ProductServiceImpl productServiceImpl, OtpServiceImpl otpServiceImpl) {
         this.otpService = otpService;
         this.productTypeService = productTypeService;
         this.productService = productService;
@@ -71,20 +86,18 @@ public class TelegramBot extends TelegramLongPollingBot {
             log.error(e.getMessage());
         }
         this.productServiceImpl = productServiceImpl;
+        this.otpServiceImpl = otpServiceImpl;
     }
 
     @Override
     public String getBotUsername() {
         String botName = botConfig.getBotName();
-        log.debug("BOT NAME: {}", botName);
-
         return botName;
     }
 
     @Override
     public String getBotToken() {
         String botKey = botConfig.getBotKey();
-        log.debug("BOT KEY: {}", botKey);
         return botKey;
     }
 
@@ -105,7 +118,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     registerOtpCode(update);
                     break;
                 case "/info":
-                    sendMessage(update, "Этот бот помогает вам зарегистрироваться и получать новости о мероприятиях ARNAUT's! ☀");
+                    sendMessage(update, infoText);
                     break;
                 case "/menu":
                     menu(update);
@@ -122,6 +135,29 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
+    @Scheduled(cron = "${cron.scheduler}")
+    private void sendAds() {
+        String adText =
+                "🍽️ <b>Время вкусных открытий!</b>\n\n" +
+                        "✨ Сегодня у нас для вас нечто особенное:\n" +
+                        "🍕 <b>Пицца недели:</b> Сырный взрыв — только 149 mdl!\n" +
+                        "🍹 <b>Коктейли:</b> Закажи два и получи третий в подарок!\n\n" +
+                        "🎉 <i>Забронируйте столик прямо сейчас, чтобы не упустить шанс насладиться уникальными блюдами!</i>\n\n" +
+                        "📲 Нажмите /menu, чтобы посмотреть всё меню!\n\n" +
+                        "❤️ С любовью, ваш ARNAUT's!";
+
+        List<Otp> all = otpServiceImpl.getAll();
+        for (Otp otp : all) {
+            prepareAndSendMessage(otp.getChatId(), adText);
+        }
+    }
+
+    private void prepareAndSendMessage(long chatId, String textToSend) {
+        SendMessage message = new SendMessage();
+        message.setChatId(String.valueOf(chatId));
+        message.setText(textToSend);
+        executeMessage(message);
+    }
 
     private void handleCallbackQuery(Update update) {
         CallbackQuery callbackQuery = update.getCallbackQuery();
@@ -147,13 +183,14 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void setToProduct(Update update, String product) {
         ProductResponseDTO productResponse = productServiceImpl.getByName(product);
         StringBuilder productText = getProductText(productResponse);
-        EditMessageText editMessageText = setEditMessageTextProperties(update);
+        EditMessageText editMessage = setEditMessageTextProperties(update);
+        editMessage.setParseMode("HTML");
 
         InlineKeyboardMarkup markupInLine = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rowsInLine = new ArrayList<>();
         List<InlineKeyboardButton> inlineKeyboardButtons = new ArrayList<>();
 
-        editMessageText.setText(productText.toString());
+        editMessage.setText(productText.toString());
 
         InlineKeyboardButton inlineKeyboardButton = new InlineKeyboardButton();
 
@@ -165,26 +202,26 @@ public class TelegramBot extends TelegramLongPollingBot {
         rowsInLine.add(inlineKeyboardButtons);
         markupInLine.setKeyboard(rowsInLine);
 
-        editMessageText.setReplyMarkup(markupInLine);
-        executeMessage(editMessageText);
+        editMessage.setReplyMarkup(markupInLine);
+        executeMessage(editMessage);
     }
 
 
     private StringBuilder getProductText(ProductResponseDTO productResponse) {
         StringBuilder productText = new StringBuilder();
 
-        productText.append("Блюдо: ").append(productResponse.getName()).append("\n");
-        productText.append("Описание: ").append(productResponse.getDescription()).append("\n");
-        productText.append("Категория: ").append(productResponse.getTypeName()).append("\n");
-        productText.append("Стоимость: ").append(productResponse.getPrice()).append(" mdl \n");
+        productText.append("🍴 <b>Блюдо:</b> ").append(productResponse.getName()).append("\n");
+        productText.append("✨ <i>Описание:</i> ").append(productResponse.getDescription()).append("\n");
+        productText.append("📂 <i>Категория:</i> ").append(productResponse.getTypeName()).append("\n");
+        productText.append("💰 <b>Стоимость:</b> ").append(productResponse.getPrice()).append(" mdl\n");
         LocalTime cookingTime = productResponse.getCookingTime();
         if (cookingTime == null) {
-            productText.append("Время приготовления: ").append("Моментально ☺").append("\n");
-
+            productText.append("⏱️ <b>Время приготовления:</b> <i>Моментально ☺</i>\n");
         } else {
-            productText.append("Время приготовления: ").append(cookingTime.getMinute()).append(" минут \n");
+            productText.append("⏱️ <b>Время приготовления:</b> ").append(cookingTime.getMinute()).append(" минут\n");
         }
 
+        productText.append("\n🍽️ Наслаждайтесь изысканным вкусом и уютной атмосферой! ❤️");
         return productText;
     }
 
@@ -197,6 +234,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         editMessage.setChatId(String.valueOf(chatId));
         editMessage.setText(menuText.toString());
         editMessage.setMessageId((int) messageId);
+        editMessage.setParseMode("HTML");
 
         return editMessage;
     }
@@ -219,16 +257,19 @@ public class TelegramBot extends TelegramLongPollingBot {
         Integer messageId = message.getMessageId();
         Long chatId = message.getChatId();
 
-        String responseText = "Наше меню категории " + productType + " 😋:";
+        String responseText = "🍽️ Вы выбрали категорию <b>" + productType + "</b>!\n\n" +
+                "Можете нажать на блюдо, чтобы увидеть подробное описание.\n\n"
+                + "Вот, что мы с любовью приготовили для вас 😋:\n";
+
         editMessageProductsByType(responseText, chatId, messageId, products);
     }
-
 
     private void editMessageProductsByType(String text, long chatId, long messageId, List<ProductResponseDTO> products) {
         EditMessageText message = new EditMessageText();
         message.setChatId(String.valueOf(chatId));
         message.setText(text);
         message.setMessageId((int) messageId);
+        message.setParseMode("HTML");
 
 
         InlineKeyboardMarkup markupInLine = new InlineKeyboardMarkup();
@@ -285,13 +326,18 @@ public class TelegramBot extends TelegramLongPollingBot {
         List<String> productTypes = productTypeService.getAll().stream()
                 .map(ProductTypeResponseDTO::getName).toList();
         int size = productTypes.size();
-        menuText.append("\uD83C\uDF74 Наше меню:\n\n");
+        menuText.append("🍽️ <i><b>Добро пожаловать в наше уютное меню!</b></i> \n \n")
+                .append("✨ Здесь вы найдёте изысканные блюда, которые подарят вам наслаждение и радость! ✨\n\n");
 
-        for (int i = 1; i < size; i++) {
-            menuText.append(i).append(".").append(productTypes.get(i)).append("\n");
+        for (int i = 1; i <= size; i++) { // Исправлено: цикл с 1 до size включительно
+            menuText.append("🍴 <b>")
+                    .append(i).append(". ")
+                    .append(productTypes.get(i - 1))
+                    .append("\n</b>"); // Исправлено: корректный индекс
         }
 
-        menuText.append("\nВыберите номер категории, чтобы узнать больше!\n");
+        menuText.append("\n🎉 <i>Выберите номер категории, и мы поможем вам сделать лучший выбор!</i> 🎉\n")
+                .append("💌 Спасибо, что выбираете нас! Ваш вкус — наша забота! 💌\n");
         return productTypes;
     }
 
@@ -299,6 +345,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void menu(Update update) {
         setMenuText();
         SendMessage message = new SendMessage(update.getMessage().getChatId().toString(), menuText.toString());
+        message.setParseMode("HTML");
         createMenu(message);
     }
 
@@ -351,6 +398,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
 
     private void executeMessage(SendMessage message) {
+        message.setParseMode("HTML");
         try {
             execute(message);
         } catch (TelegramApiException e) {
@@ -400,6 +448,11 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void registerOtpCode(Update update) {
+
+        String errorText = "Ой, вышла ошибочка 😅.\n" +
+                "Мы заметили, что вы ещё не запустили нашего бота.\n" +
+                "Введите /start чтобы всё получилось  😌";
+
         Long chatId = update.getMessage().getChatId();
         if (otpService.existByChatId(chatId)) {
             sendSticker(chatId, "CAACAgIAAxkBAAOMZ2wCg2GLi8plYN0NGFsVl2NfnMYAAgsBAAL3AsgPxfQ7mJWqcds2BA");
@@ -414,10 +467,11 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                 sendMessageWithMarkdown(chatId, message);
             } catch (EntityNotFoundException e) {
-                sendMessage(update, "Ой, вышла ошибочка 😅.\n" +
-                        "Мы заметили, что вы уже есть в нашем списке.\n" +
-                        "Введите /me чтобы получить персональную информацию 😌");
+                sendMessage(update, errorText);
             }
+        } else {
+
+            sendMessage(update, errorText);
         }
     }
 
@@ -427,11 +481,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         sendMessage.setChatId(chatId.toString());
         sendMessage.setText(message);
         sendMessage.setParseMode("Markdown"); // Использование Markdown для форматирования текста
-        try {
-            execute(sendMessage);
-        } catch (TelegramApiException e) {
-            log.error("Ошибка при отправке сообщения: {}", e.getMessage());
-        }
+        executeMessage(sendMessage);
     }
 
 
@@ -450,6 +500,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void sendMessage(Update update, String text) {
         SendMessage message = new SendMessage();
+        message.setParseMode("HTML");
         message.setChatId(update.getMessage().getChatId().toString());
         message.setText(text);
 
