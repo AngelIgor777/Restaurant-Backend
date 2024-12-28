@@ -16,6 +16,7 @@ import org.test.restaurant_service.service.ProductService;
 
 import javax.persistence.EntityNotFoundException;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -74,7 +75,16 @@ public class ProductServiceImpl implements ProductService {
         return products.map(productMapper::toResponseDTO);
     }
 
-    public List<ProductResponseDTO>  getByTypeName(String typeName) {
+    @Override
+    public ProductResponseDTO getByName(String productName) {
+        Product product = productRepository.findByName(productName)
+                .orElseThrow(() -> new EntityNotFoundException("Product not found with name " + productName));
+
+        return productMapper.toResponseDTO(product);
+
+    }
+
+    public List<ProductResponseDTO> getByTypeName(String typeName) {
         List<Product> allByTypeName = productRepository.findAllByType_Name(typeName);
         return allByTypeName.stream().map(productMapper::toResponseDTO).toList();
     }

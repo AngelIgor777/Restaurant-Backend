@@ -22,6 +22,7 @@ import org.test.restaurant_service.service.impl.ProductTypeServiceImpl;
 import org.test.restaurant_service.telegram.config.BotConfig;
 
 import javax.persistence.EntityNotFoundException;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,8 +46,12 @@ public class TelegramBot extends TelegramLongPollingBot {
 
 
     private final BotConfig botConfig;
+    private final ProductServiceImpl productServiceImpl;
+    private List<String> callbackProductTypesData = new ArrayList<>();
+    private List<String> callbackProductsData = new ArrayList<>();
 
-    public TelegramBot(OtpServiceImpl otpService, ProductTypeServiceImpl productTypeService, ProductServiceImpl productService, BotConfig botConfig) {
+
+    public TelegramBot(OtpServiceImpl otpService, ProductTypeServiceImpl productTypeService, ProductServiceImpl productService, BotConfig botConfig, ProductServiceImpl productServiceImpl) {
         this.otpService = otpService;
         this.productTypeService = productTypeService;
         this.productService = productService;
@@ -65,6 +70,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         } catch (TelegramApiException e) {
             log.error(e.getMessage());
         }
+        this.productServiceImpl = productServiceImpl;
     }
 
     @Override
@@ -121,28 +127,84 @@ public class TelegramBot extends TelegramLongPollingBot {
         CallbackQuery callbackQuery = update.getCallbackQuery();
         String data = callbackQuery.getData();
 
-        boolean anyMatch = callbackDataList.stream()
+        boolean anyMatchProductTypes = callbackProductTypesData.stream()
+                .anyMatch(callbackItem -> callbackItem.equals(data));
+        boolean anyMatchProducts = callbackProductsData.stream()
                 .anyMatch(callbackItem -> callbackItem.equals(data));
 
 
-        if (anyMatch) {
+        if (anyMatchProductTypes) {
             handleProductTypeCallback(callbackQuery, data);
+        }
+        if (anyMatchProducts) {
+            setToProduct(update, data);
+
         } else if (data.equals(BUTTON_BACK_TO_MENU)) {
             backToMenu(update);
         }
     }
 
+    private void setToProduct(Update update, String product) {
+        ProductResponseDTO productResponse = productServiceImpl.getByName(product);
+        StringBuilder productText = getProductText(productResponse);
+        EditMessageText editMessageText = setEditMessageTextProperties(update);
 
-    private void backToMenu(Update update) {
+        InlineKeyboardMarkup markupInLine = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rowsInLine = new ArrayList<>();
+        List<InlineKeyboardButton> inlineKeyboardButtons = new ArrayList<>();
+
+        editMessageText.setText(productText.toString());
+
+        InlineKeyboardButton inlineKeyboardButton = new InlineKeyboardButton();
+
+
+        inlineKeyboardButton.setText("Назад");
+        inlineKeyboardButton.setCallbackData(productResponse.getTypeName());
+
+        inlineKeyboardButtons.add(inlineKeyboardButton);
+        rowsInLine.add(inlineKeyboardButtons);
+        markupInLine.setKeyboard(rowsInLine);
+
+        editMessageText.setReplyMarkup(markupInLine);
+        executeMessage(editMessageText);
+    }
+
+
+    private StringBuilder getProductText(ProductResponseDTO productResponse) {
+        StringBuilder productText = new StringBuilder();
+
+        productText.append("Блюдо: ").append(productResponse.getName()).append("\n");
+        productText.append("Описание: ").append(productResponse.getDescription()).append("\n");
+        productText.append("Категория: ").append(productResponse.getTypeName()).append("\n");
+        productText.append("Стоимость: ").append(productResponse.getPrice()).append(" mdl \n");
+        LocalTime cookingTime = productResponse.getCookingTime();
+        if (cookingTime == null) {
+            productText.append("Время приготовления: ").append("Моментально ☺").append("\n");
+
+        } else {
+            productText.append("Время приготовления: ").append(cookingTime.getMinute()).append(" минут \n");
+        }
+
+        return productText;
+    }
+
+    private EditMessageText setEditMessageTextProperties(Update update) {
         CallbackQuery callbackQuery = update.getCallbackQuery();
         Long chatId = callbackQuery.getMessage().getChatId();
         Integer messageId = callbackQuery.getMessage().getMessageId();
 
         EditMessageText editMessage = new EditMessageText();
-
         editMessage.setChatId(String.valueOf(chatId));
         editMessage.setText(menuText.toString());
         editMessage.setMessageId((int) messageId);
+
+        return editMessage;
+    }
+
+
+    private void backToMenu(Update update) {
+
+        EditMessageText editMessage = setEditMessageTextProperties(update);
         InlineKeyboardMarkup menuInlineMarkup = getMenuInlineMarkup();
         editMessage.setText(menuText.toString());
         editMessage.setReplyMarkup(menuInlineMarkup);
@@ -158,11 +220,11 @@ public class TelegramBot extends TelegramLongPollingBot {
         Long chatId = message.getChatId();
 
         String responseText = "Наше меню категории " + productType + " 😋:";
-        executeEditMessageText(responseText, chatId, messageId, products);
+        editMessageProductsByType(responseText, chatId, messageId, products);
     }
 
 
-    private void executeEditMessageText(String text, long chatId, long messageId, List<ProductResponseDTO> products) {
+    private void editMessageProductsByType(String text, long chatId, long messageId, List<ProductResponseDTO> products) {
         EditMessageText message = new EditMessageText();
         message.setChatId(String.valueOf(chatId));
         message.setText(text);
@@ -176,7 +238,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         int rows = (int) Math.ceil((double) size / 2);
 
 
-        // Разбиваем на строки по 2 кнопки
+        // Разбиваем на строки по 3 кнопки
         for (int i = 0; i < rows; i++) {
             List<InlineKeyboardButton> row = new ArrayList<>();
 
@@ -187,7 +249,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 String callbackData = products.get(x).getName();
                 button.setText(callbackData);
                 button.setCallbackData(callbackData);
-                callbackDataList.add(callbackData);
+                callbackProductsData.add(callbackData);
                 row.add(button);
             }
             rowsInLine.add(row);
@@ -197,7 +259,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         message.setReplyMarkup(markupInLine);
 
 
-        addBackButton(rowsInLine);
+        addBackToMenuButton(rowsInLine);
 
         try {
             execute(message);
@@ -206,7 +268,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    private void addBackButton(List<List<InlineKeyboardButton>> rowsInLine) {
+    private void addBackToMenuButton(List<List<InlineKeyboardButton>> rowsInLine) {
         List<InlineKeyboardButton> row = new ArrayList<>();
 
         InlineKeyboardButton button = createButton();
@@ -233,8 +295,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         return productTypes;
     }
 
-
-    private List<String> callbackDataList = new ArrayList<>();
 
     private void menu(Update update) {
         setMenuText();
@@ -275,7 +335,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 String callbackData = productTypes.get(x);
                 button.setText(callbackData);
                 button.setCallbackData(callbackData);
-                callbackDataList.add(callbackData);
+                callbackProductTypesData.add(callbackData);
                 row.add(button);
             }
             rowsInLine.add(row);

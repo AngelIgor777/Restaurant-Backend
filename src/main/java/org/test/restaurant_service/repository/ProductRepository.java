@@ -9,11 +9,14 @@ import org.test.restaurant_service.entity.Product;
 import org.w3c.dom.stylesheets.LinkStyle;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Integer> {
     Page<Product> findAllByTypeId(Integer typeId, Pageable pageable);
 
     List<Product> findAllByType_Name(String name);
+
+    Optional<Product> findByName(String name);
 
 }
