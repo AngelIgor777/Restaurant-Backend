@@ -99,13 +99,13 @@ public class TelegramBot extends TelegramLongPollingBot {
     public String getBotToken() {
         String botKey = botConfig.getBotKey();
         return botKey;
+
     }
 
     @Override
     public void onUpdateReceived(Update update) {
         if (update.hasMessage() && update.getMessage().hasText()) {
             String text = update.getMessage().getText();
-
 
             switch (text) {
                 case "/start":
