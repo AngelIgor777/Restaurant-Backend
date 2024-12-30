@@ -1,11 +1,31 @@
-# Используем официальный образ JDK
-FROM openjdk:17-jdk-slim
+# Этап сборки
+FROM openjdk:17-jdk-slim AS build
 
-# Указываем рабочую директорию в контейнере
+# Указываем рабочую директорию для сборки
 WORKDIR /app
 
-# Копируем jar файл в контейнер
-COPY build/libs/Restaurant_Service-0.0.1-SNAPSHOT.jar app.jar
+# Копируем файлы Gradle Wrapper
+COPY gradlew gradlew
+COPY gradle gradle
+
+# Копируем файлы проекта, кроме тех, которые игнорируются в .dockerignore
+COPY build.gradle settings.gradle ./
+COPY src src
+
+# Устанавливаем права на выполнение для Gradle Wrapper
+RUN chmod +x gradlew
+
+# Выполняем сборку проекта
+RUN ./gradlew build --no-daemon
+
+# Этап выполнения
+FROM openjdk:17-jdk-slim
+
+# Указываем рабочую директорию для приложения
+WORKDIR /app
+
+# Копируем собранный JAR из этапа сборки
+COPY --from=build /app/build/libs/*.jar app.jar
 
 # Указываем команду запуска
 ENTRYPOINT ["java", "-jar", "app.jar"]
