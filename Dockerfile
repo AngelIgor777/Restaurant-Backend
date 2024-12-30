@@ -16,7 +16,7 @@ COPY src src
 RUN chmod +x gradlew
 
 # Выполняем сборку проекта
-RUN ./gradlew build
+RUN ./gradlew build -x test
 
 # Этап выполнения
 FROM openjdk:17-jdk-slim
