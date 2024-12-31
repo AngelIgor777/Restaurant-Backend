@@ -26,5 +26,5 @@ jobs:
     # Шаг 3: Собираем Docker-образ и пушим в Docker Hub
     - name: Build and push Docker image
       run: |
-        docker build -t my-docker-repo/spring-app:latest .
-        docker push my-docker-repo/spring-app:latest
+        docker build -t default666/restaurant .
+        docker push default666/restaurant
