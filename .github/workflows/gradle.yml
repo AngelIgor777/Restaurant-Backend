@@ -31,8 +31,7 @@ jobs:
         echo "JWT_ACCESS=${{ secrets.JWT_ACCESS }}" >> src/main/resources/.env
         echo "BOT_NAME=${{ secrets.BOT_NAME }}" >> src/main/resources/.env
         echo "BOT_KEY=${{ secrets.BOT_KEY }}" >> src/main/resources/.env
-        echo "BOT_TEST_NAME=${{ secrets.BOT_TEST_NAME }}" >> src/main/resources/.env
-        echo "BOT_TEST_KEY=${{ secrets.BOT_TEST_KEY }}" >> src/main/resources/.env
+       
 
     # Шаг 4: Логинимся в Docker Hub
     - name: Log in to Docker Hub
