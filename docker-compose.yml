@@ -1,0 +1,36 @@
+services:
+
+  postgres:
+    image: postgres:14
+    container_name: restaurant_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: restaurant_service
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - restaurant_network
+
+
+  restaurant_app:
+    image: default666/restaurant:latest
+    container_name: restaurant_app
+    depends_on:
+      - postgres
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/restaurant_service
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+    ports:
+      - "8080:8080"
+    networks:
+      - restaurant_network
+
+volumes:
+  postgres_data:
+
+networks:
+  restaurant_network:

@@ -21,7 +21,9 @@ public class ProductController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ProductResponseDTO create(@Valid @RequestBody ProductRequestDTO requestDTO) {
+
         return productService.create(requestDTO);
+
     }
 
     @PatchMapping("/{id}")

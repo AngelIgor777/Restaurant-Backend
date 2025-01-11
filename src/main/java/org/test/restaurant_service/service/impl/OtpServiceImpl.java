@@ -3,6 +3,7 @@ package org.test.restaurant_service.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.User;
+import org.test.restaurant_service.dto.request.UserRegistrationDTO;
 import org.test.restaurant_service.dto.response.JwtResponse;
 import org.test.restaurant_service.entity.Otp;
 import org.test.restaurant_service.entity.RoleName;
@@ -88,6 +89,23 @@ public class OtpServiceImpl implements OtpService {
     @Override
     public List<Otp> getAll() {
         return otpRepository.findAll();
+    }
+
+    @Override
+    public Otp save(UserRegistrationDTO user) {
+        User userEntity = user.getUser();
+        String username = userEntity.getUserName() != null ? userEntity.getUserName() : "unknown";
+        String firstname = userEntity.getFirstName();
+
+        Otp otp = Otp.builder()
+                .chatId(user.getChatId())
+                .username(username)
+                .firstname(firstname)
+                .verified(false)
+                .build();
+        save(otp);
+
+        return otp;
     }
 
     private List<String> getUserRoles() {

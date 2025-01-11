@@ -1,6 +1,7 @@
 package org.test.restaurant_service.service;
 
 import org.telegram.telegrambots.meta.api.objects.User;
+import org.test.restaurant_service.dto.request.UserRegistrationDTO;
 import org.test.restaurant_service.dto.response.JwtResponse;
 import org.test.restaurant_service.entity.Otp;
 
@@ -17,4 +18,6 @@ public interface OtpService {
     boolean existByChatId(Long chatId);
 
     List<Otp> getAll();
+
+    Otp save(UserRegistrationDTO user);
 }

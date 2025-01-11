@@ -10,13 +10,30 @@ spring:
     properties:
       hibernate:
         show_sql: ${SPRING_JPA_PROPERTIES_HIBERNATE_SHOW_SQL}
-
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
   flyway:
     enabled: ${SPRING_FLYWAY_ENABLED}
     locations: ${SPRING_FLYWAY_LOCATIONS}
     baseline-on-migrate: ${SPRING_FLYWAY_BASELINE_ON_MIGRATE}
     schemas: ${SPRING_FLYWAY_SCHEMAS}
     clean-disabled: false
+
+
+
+rabbitmq:
+  queues:
+    json:
+      queue:
+        name: restaurant_json
+        routingKey: restaurant_routing_key_secret
+  exchanges:
+    exchange:
+      name: java_exchange
+
 
 server:
   port: ${SERVER_PORT}
@@ -41,3 +58,17 @@ bot:
 
 cron:
   scheduler: 0 * * * * *
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    distribution:
+      percentiles-histogram:
+        "[http.server.requests]": true
