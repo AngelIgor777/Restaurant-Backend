@@ -1,6 +1,7 @@
 package org.test.restaurant_service.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -8,28 +9,25 @@ import org.test.restaurant_service.dto.request.ProductRequestDTO;
 import org.test.restaurant_service.dto.response.PhotoResponseDTO;
 import org.test.restaurant_service.dto.response.ProductAndPhotosResponseDTO;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
-import org.test.restaurant_service.entity.Photo;
 import org.test.restaurant_service.entity.Product;
 import org.test.restaurant_service.entity.ProductType;
 import org.test.restaurant_service.mapper.PhotoMapper;
-import org.test.restaurant_service.mapper.PhotoMapperImpl;
 import org.test.restaurant_service.mapper.ProductMapper;
-import org.test.restaurant_service.repository.PhotoRepository;
 import org.test.restaurant_service.repository.ProductRepository;
 import org.test.restaurant_service.repository.ProductTypeRepository;
 import org.test.restaurant_service.service.ProductService;
-
 import javax.persistence.EntityNotFoundException;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
+
     private final ProductRepository productRepository;
-    private final PhotoRepository productPhotoRepository;
     private final ProductTypeRepository productTypeRepository;
     private final ProductMapper productMapper;
-    private final PhotoMapperImpl photoMapperImpl;
+    private final PhotoMapper photoMapper;
 
     @Override
     public ProductResponseDTO create(ProductRequestDTO requestDTO) {
@@ -63,16 +61,18 @@ public class ProductServiceImpl implements ProductService {
         productRepository.deleteById(id);
     }
 
+
+    //TODO брать данные одним запросом
     @Override
     public ProductAndPhotosResponseDTO getById(Integer id) {
-        Product product = productRepository.findById(id)
+        Product product = productRepository.findByIdWithPhotos(id)
                 .orElseThrow(() -> new EntityNotFoundException("Product not found with id " + id));
-        List<PhotoResponseDTO> allByProductId = productPhotoRepository.findAllByProductId(product.getId())
+        List<PhotoResponseDTO> photoResponseDTOS = product.getPhotos()
                 .stream()
-                .map(photoMapperImpl::toResponseDTO).toList();
+                .map(photoMapper::toResponseDTO).toList();
 
         ProductResponseDTO productResponseDTO = productMapper.toResponseDTO(product);
-        ProductAndPhotosResponseDTO productAndPhotosResponseDTO = new ProductAndPhotosResponseDTO(productResponseDTO, allByProductId);
+        ProductAndPhotosResponseDTO productAndPhotosResponseDTO = new ProductAndPhotosResponseDTO(productResponseDTO, photoResponseDTOS);
         return productAndPhotosResponseDTO;
     }
 

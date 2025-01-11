@@ -5,12 +5,17 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.test.restaurant_service.dto.request.ProductRequestDTO;
 import org.test.restaurant_service.dto.response.ProductAndPhotosResponseDTO;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
+import org.test.restaurant_service.service.ProductAndPhotoService;
 import org.test.restaurant_service.service.ProductService;
 
 import javax.validation.Valid;
+import java.math.BigDecimal;
+import java.time.LocalTime;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/products")
@@ -18,13 +23,33 @@ import javax.validation.Valid;
 public class ProductController {
 
     private final ProductService productService;
+    private final ProductAndPhotoService productAndPhotoService;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ProductResponseDTO create(@Valid @RequestBody ProductRequestDTO requestDTO) {
+    public void create(@RequestParam("name") String name,
+                       @RequestParam("description") String description,
+                       @RequestParam("typeId") Integer typeId,
+                       @RequestParam("price") BigDecimal price,
+                       @RequestParam("cookingTime") String cookingTime,
+                       @RequestParam("file") MultipartFile file) {
 
-        return productService.create(requestDTO);
+        ProductRequestDTO productRequestDTO = parseRequest(name, description, typeId, price, cookingTime);
 
+        // Обрабатываем файл и данные
+        List<MultipartFile> multipartFiles = List.of(file);
+        productAndPhotoService.createProductAndPhotos(productRequestDTO, multipartFiles);
+    }
+
+    private  ProductRequestDTO parseRequest(String name, String description, Integer typeId, BigDecimal price, String cookingTime) {
+        // Создаем ProductRequestDTO вручную
+        ProductRequestDTO productRequestDTO = new ProductRequestDTO();
+        productRequestDTO.setName(name);
+        productRequestDTO.setDescription(description);
+        productRequestDTO.setTypeId(typeId);
+        productRequestDTO.setPrice(price);
+        productRequestDTO.setCookingTime(LocalTime.parse(cookingTime));
+        return productRequestDTO;
     }
 
     @PatchMapping("/{id}")

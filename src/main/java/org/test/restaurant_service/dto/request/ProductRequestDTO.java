@@ -4,6 +4,7 @@ import lombok.Data;
 
 import javax.validation.constraints.*;
 import java.math.BigDecimal;
+import java.time.LocalTime;
 
 @Data
 public class ProductRequestDTO {
@@ -20,4 +21,7 @@ public class ProductRequestDTO {
     @DecimalMin("0.01")
     @Digits(integer = 8, fraction = 2)
     private BigDecimal price;
+
+    private LocalTime cookingTime;
+
 }

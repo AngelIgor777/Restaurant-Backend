@@ -39,6 +39,7 @@ public class Product {
 
     private LocalTime cookingTime;
 
+    @Builder.Default
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Photo> photos = new ArrayList<>();
 
