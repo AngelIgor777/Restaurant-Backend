@@ -1,0 +1,15 @@
+package org.test.restaurant_service.dto.response;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.List;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class ProductAndPhotosResponseDTO {
+    private ProductResponseDTO productResponseDTO;
+    private List<PhotoResponseDTO> photoResponseDTOList;
+}

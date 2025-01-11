@@ -18,6 +18,7 @@ public interface ProductMapper {
     @Mapping(source = "type.name", target = "typeName")
     ProductResponseDTO toResponseDTO(Product product);
 
+
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "type", ignore = true)
     @Mapping(target = "id", ignore = true) // Игнорирование id при обновлении

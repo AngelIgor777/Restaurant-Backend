@@ -7,6 +7,8 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 @Getter
@@ -36,6 +38,10 @@ public class Product {
     private BigDecimal price;
 
     private LocalTime cookingTime;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Photo> photos = new ArrayList<>();
+
 
     @Override
     public boolean equals(Object o) {

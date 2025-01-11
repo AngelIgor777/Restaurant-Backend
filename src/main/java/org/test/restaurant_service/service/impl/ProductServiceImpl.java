@@ -4,26 +4,32 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
 import org.test.restaurant_service.dto.request.ProductRequestDTO;
+import org.test.restaurant_service.dto.response.PhotoResponseDTO;
+import org.test.restaurant_service.dto.response.ProductAndPhotosResponseDTO;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
+import org.test.restaurant_service.entity.Photo;
 import org.test.restaurant_service.entity.Product;
 import org.test.restaurant_service.entity.ProductType;
+import org.test.restaurant_service.mapper.PhotoMapper;
+import org.test.restaurant_service.mapper.PhotoMapperImpl;
 import org.test.restaurant_service.mapper.ProductMapper;
+import org.test.restaurant_service.repository.PhotoRepository;
 import org.test.restaurant_service.repository.ProductRepository;
 import org.test.restaurant_service.repository.ProductTypeRepository;
 import org.test.restaurant_service.service.ProductService;
 
 import javax.persistence.EntityNotFoundException;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
+    private final PhotoRepository productPhotoRepository;
     private final ProductTypeRepository productTypeRepository;
     private final ProductMapper productMapper;
+    private final PhotoMapperImpl photoMapperImpl;
 
     @Override
     public ProductResponseDTO create(ProductRequestDTO requestDTO) {
@@ -58,10 +64,16 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ProductResponseDTO getById(Integer id) {
+    public ProductAndPhotosResponseDTO getById(Integer id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Product not found with id " + id));
-        return productMapper.toResponseDTO(product);
+        List<PhotoResponseDTO> allByProductId = productPhotoRepository.findAllByProductId(product.getId())
+                .stream()
+                .map(photoMapperImpl::toResponseDTO).toList();
+
+        ProductResponseDTO productResponseDTO = productMapper.toResponseDTO(product);
+        ProductAndPhotosResponseDTO productAndPhotosResponseDTO = new ProductAndPhotosResponseDTO(productResponseDTO, allByProductId);
+        return productAndPhotosResponseDTO;
     }
 
     @Override

@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.test.restaurant_service.dto.request.ProductRequestDTO;
+import org.test.restaurant_service.dto.response.ProductAndPhotosResponseDTO;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
 import org.test.restaurant_service.service.ProductService;
 
@@ -38,7 +39,7 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public ProductResponseDTO getById(@PathVariable Integer id) {
+    public ProductAndPhotosResponseDTO getById(@PathVariable Integer id) {
         return productService.getById(id);
     }
 
