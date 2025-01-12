@@ -27,7 +27,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                         "/api/v1/product-types/**",
                         "/api/v1/photos/**",
                         "/api/v1/order-products/**",
-                        "/actuator/**"
+                        "/actuator/**",
+                        "/images/**"
                 ).permitAll() // Разрешаем доступ без аутентификации
                 .anyRequest().authenticated() // Все остальные запросы требуют аутентификации
                 .and()

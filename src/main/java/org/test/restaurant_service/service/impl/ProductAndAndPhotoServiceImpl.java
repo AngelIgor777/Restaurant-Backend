@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.test.restaurant_service.dto.request.PhotoRequestDTO;
-import org.test.restaurant_service.dto.request.ProductAndPhotosRequest;
 import org.test.restaurant_service.dto.request.ProductRequestDTO;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
 import org.test.restaurant_service.service.PhotoService;

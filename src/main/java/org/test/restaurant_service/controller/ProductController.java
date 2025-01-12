@@ -41,7 +41,7 @@ public class ProductController {
         productAndPhotoService.createProductAndPhotos(productRequestDTO, multipartFiles);
     }
 
-    private  ProductRequestDTO parseRequest(String name, String description, Integer typeId, BigDecimal price, String cookingTime) {
+    private ProductRequestDTO parseRequest(String name, String description, Integer typeId, BigDecimal price, String cookingTime) {
         // Создаем ProductRequestDTO вручную
         ProductRequestDTO productRequestDTO = new ProductRequestDTO();
         productRequestDTO.setName(name);

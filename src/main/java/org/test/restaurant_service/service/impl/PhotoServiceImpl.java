@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PhotoServiceImpl implements PhotoService {
 
-    private static final String IMAGE_DIRECTORY = "src/main/resources/static/images/";
+    private static final String IMAGE_DIRECTORY = "uploads/images/";
 
     private final PhotoRepository photoRepository;
     private final ProductRepository productRepository;
@@ -71,7 +71,7 @@ public class PhotoServiceImpl implements PhotoService {
         Product product = productRepository.findById(requestDTO.getProductId())
                 .orElseThrow(() -> new EntityNotFoundException("Product not found with id " + requestDTO.getProductId()));
         Photo photo = photoMapper.toEntity(requestDTO);
-        photo.setUrl("/static/images/"+ Objects.requireNonNull(requestDTO.getFile().getOriginalFilename()).replace(" ", ""));
+        photo.setUrl(Objects.requireNonNull(requestDTO.getFile().getOriginalFilename()).replace(" ", ""));
 
         photo.setProduct(product);
         photo = photoRepository.save(photo);

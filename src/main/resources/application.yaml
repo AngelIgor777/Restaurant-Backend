@@ -10,6 +10,9 @@ spring:
     properties:
       hibernate:
         show_sql: ${SPRING_JPA_PROPERTIES_HIBERNATE_SHOW_SQL}
+        jdbc:
+          batch_size: 20
+        order_updates: true
   rabbitmq:
     host: localhost
     port: 5672
