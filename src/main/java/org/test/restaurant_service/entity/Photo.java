@@ -2,16 +2,21 @@ package org.test.restaurant_service.entity;
 
 import javax.persistence.Table;
 import javax.persistence.*;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Objects;
 
+@Builder
 @Getter
 @Setter
 @ToString(exclude = "product")
 @RequiredArgsConstructor
 @Entity
 @Table(name = "photo", schema = "restaurant_service")
+@AllArgsConstructor
 public class Photo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,6 +28,10 @@ public class Photo {
 
     @Column(nullable = false, length = 256)
     private String url;
+
+    @Transient
+    @JsonIgnore
+    private MultipartFile image;
 
     @Override
     public boolean equals(Object o) {

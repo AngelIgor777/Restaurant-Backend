@@ -22,7 +22,6 @@ public interface ProductMapper {
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "type", ignore = true)
     @Mapping(target = "id", ignore = true) // Игнорирование id при обновлении
-    @Mapping(target = "cookingTime", ignore = true)
     @Mapping(target = "photos", ignore = true)
     void updateEntityFromRequestDTO(ProductRequestDTO requestDTO, @MappingTarget Product product);
 }

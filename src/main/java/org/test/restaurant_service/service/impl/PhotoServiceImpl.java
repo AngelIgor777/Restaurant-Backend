@@ -1,7 +1,11 @@
 package org.test.restaurant_service.service.impl;
 
+import javassist.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.test.restaurant_service.dto.request.PhotoRequestDTO;
@@ -12,10 +16,12 @@ import org.test.restaurant_service.mapper.PhotoMapper;
 import org.test.restaurant_service.repository.PhotoRepository;
 import org.test.restaurant_service.repository.ProductRepository;
 import org.test.restaurant_service.service.PhotoService;
+
 import javax.persistence.EntityNotFoundException;
 import javax.transaction.Transactional;
 import javax.ws.rs.BadRequestException;
 import java.io.*;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -35,9 +41,9 @@ public class PhotoServiceImpl implements PhotoService {
     @Transactional(rollbackOn = Exception.class)
 
 
-    public void savePhotos(List<PhotoRequestDTO> photoRequestDTOS) {
-        for (PhotoRequestDTO requestDTO : photoRequestDTOS) {
-            MultipartFile file = requestDTO.getFile();
+    public void savePhotos(List<Photo> photoRequestDTOS) {
+        for (Photo photo : photoRequestDTOS) {
+            MultipartFile file = photo.getImage();
 
             if (file.isEmpty()) {
                 throw new BadRequestException("FILE IS EMPTY");
@@ -62,20 +68,51 @@ public class PhotoServiceImpl implements PhotoService {
             } catch (IOException e) {
                 throw new BadRequestException("File could not be saved: " + e.getMessage());
             }
-            create(requestDTO);
         }
     }
 
     @Override
-    public PhotoResponseDTO create(PhotoRequestDTO requestDTO) {
-        Product product = productRepository.findById(requestDTO.getProductId())
-                .orElseThrow(() -> new EntityNotFoundException("Product not found with id " + requestDTO.getProductId()));
-        Photo photo = photoMapper.toEntity(requestDTO);
-        photo.setUrl(Objects.requireNonNull(requestDTO.getFile().getOriginalFilename()).replace(" ", ""));
+    public PhotoResponseDTO create(Photo photo) {
+        Integer productId = photo.getProduct().getId();
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new EntityNotFoundException("Product not found with id " + productId));
+        photo.setUrl(Objects.requireNonNull(photo.getImage().getOriginalFilename()).replace(" ", ""));
 
         photo.setProduct(product);
         photo = photoRepository.save(photo);
         return photoMapper.toResponseDTO(photo);
+    }
+
+    @Override
+    public String getContentType(Resource image) {
+        String contentType;
+        try (InputStream inputStream = image.getInputStream()) {
+            contentType = Files.probeContentType(inputStream.available() > 0 ? image.getFile().toPath() : null);
+            if (contentType == null) {
+                contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
+            }
+        } catch (IOException e) {
+            try {
+                throw new IOException(e);
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+        return contentType;
+    }
+
+    @Override
+    public Resource getImage(String photoName) {
+        Resource resource = new FileSystemResource("uploads/images/" + photoName);
+
+        if (!resource.exists()) {
+            try {
+                throw new NotFoundException("Resource not found");
+            } catch (NotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return resource;
     }
 
     @Override

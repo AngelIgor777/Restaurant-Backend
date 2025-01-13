@@ -9,9 +9,9 @@ import org.springframework.web.multipart.MultipartFile;
 import org.test.restaurant_service.dto.request.ProductRequestDTO;
 import org.test.restaurant_service.dto.response.ProductAndPhotosResponseDTO;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
+import org.test.restaurant_service.entity.Product;
 import org.test.restaurant_service.service.ProductAndPhotoService;
 import org.test.restaurant_service.service.ProductService;
-
 import javax.validation.Valid;
 import java.math.BigDecimal;
 import java.time.LocalTime;
@@ -34,24 +34,23 @@ public class ProductController {
                        @RequestParam("cookingTime") String cookingTime,
                        @RequestParam("file") MultipartFile file) {
 
-        ProductRequestDTO productRequestDTO = parseRequest(name, description, typeId, price, cookingTime);
+        Product product = parseRequest(name, description, typeId, price, cookingTime);
 
         // Обрабатываем файл и данные
         List<MultipartFile> multipartFiles = List.of(file);
-        productAndPhotoService.createProductAndPhotos(productRequestDTO, multipartFiles);
+        productAndPhotoService.createProductAndPhotos(product, typeId, multipartFiles);
     }
 
-    private ProductRequestDTO parseRequest(String name, String description, Integer typeId, BigDecimal price, String cookingTime) {
-        // Создаем ProductRequestDTO вручную
-        ProductRequestDTO productRequestDTO = new ProductRequestDTO();
+    private Product parseRequest(String name, String description, Integer typeId, BigDecimal price, String cookingTime) {
+        Product productRequestDTO = new Product();
         productRequestDTO.setName(name);
         productRequestDTO.setDescription(description);
-        productRequestDTO.setTypeId(typeId);
         productRequestDTO.setPrice(price);
         productRequestDTO.setCookingTime(LocalTime.parse(cookingTime));
         return productRequestDTO;
     }
 
+    //TODO обновление продукта с фотографией
     @PatchMapping("/{id}")
     public ProductResponseDTO update(@PathVariable Integer id, @Valid @RequestBody ProductRequestDTO requestDTO) {
         return productService.update(id, requestDTO);

@@ -6,11 +6,11 @@ import org.test.restaurant_service.dto.request.ProductAndPhotosRequest;
 import org.test.restaurant_service.dto.request.ProductRequestDTO;
 import org.test.restaurant_service.dto.response.ProductAndPhotosResponseDTO;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
+import org.test.restaurant_service.entity.Product;
 
 
 public interface ProductService {
-    ProductResponseDTO create(ProductRequestDTO requestDTO);
-
+    Product create(Product product, Integer typeId);
 
     ProductResponseDTO update(Integer id, ProductRequestDTO requestDTO);
 

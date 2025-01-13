@@ -5,14 +5,27 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     url: ${SPRING_DATASOURCE_URL}
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      idle-timeout: 30000  # Таймаут для простоящих соединений (мс)
+      connection-timeout: 20000 # Таймаут для подключения (мс)
+      max-lifetime: 1800000 # Максимальное время жизни соединения (мс)
   jpa:
     show-sql: ${SPRING_JPA_SHOW_SQL}
     properties:
       hibernate:
+        connection:
+          release_mode: after_transaction
         show_sql: ${SPRING_JPA_PROPERTIES_HIBERNATE_SHOW_SQL}
         jdbc:
           batch_size: 20
+          batch_versioned_data: true
         order_updates: true
+        generate_statistics: true
+        format_sql: true
+
+
   rabbitmq:
     host: localhost
     port: 5672
@@ -49,7 +62,7 @@ jwt:
 
 #logging:
 #  level:
-#    # Логирование WebSocket
+##     Логирование WebSocket
 #    org.springframework.web.socket: DEBUG
 #    org.springframework.messaging: DEBUG
 #    org.springframework.web.socket.messaging: DEBUG

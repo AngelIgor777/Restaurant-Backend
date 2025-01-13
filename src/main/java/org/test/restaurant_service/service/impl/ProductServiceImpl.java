@@ -18,6 +18,7 @@ import org.test.restaurant_service.repository.ProductTypeRepository;
 import org.test.restaurant_service.service.ProductService;
 import javax.persistence.EntityNotFoundException;
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -30,23 +31,24 @@ public class ProductServiceImpl implements ProductService {
     private final PhotoMapper photoMapper;
 
     @Override
-    public ProductResponseDTO create(ProductRequestDTO requestDTO) {
-        ProductType type = productTypeRepository.findById(requestDTO.getTypeId())
-                .orElseThrow(() -> new EntityNotFoundException("ProductType not found with id " + requestDTO.getTypeId()));
-        Product product = productMapper.toEntity(requestDTO);
+    public Product create(Product product, Integer typeId) {
+        ProductType type = productTypeRepository.findById(typeId)
+                .orElseThrow(() -> new EntityNotFoundException("ProductType not found with id :" + typeId));
         product.setType(type);
         product = productRepository.save(product);
-        return productMapper.toResponseDTO(product);
+        return product;
     }
 
     @Override
     public ProductResponseDTO update(Integer id, ProductRequestDTO requestDTO) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Product not found with id " + id));
-        if (requestDTO.getTypeId() != null) {
-            ProductType type = productTypeRepository.findById(requestDTO.getTypeId())
-                    .orElseThrow(() -> new EntityNotFoundException("ProductType not found with id " + requestDTO.getTypeId()));
-            product.setType(type);
+        if (!Objects.equals(product.getType().getId(), requestDTO.getTypeId())) {
+            if (requestDTO.getTypeId() != null) {
+                ProductType type = productTypeRepository.findById(requestDTO.getTypeId())
+                        .orElseThrow(() -> new EntityNotFoundException("ProductType not found with id " + requestDTO.getTypeId()));
+                product.setType(type);
+            }
         }
         productMapper.updateEntityFromRequestDTO(requestDTO, product);
         product = productRepository.save(product);
@@ -62,7 +64,6 @@ public class ProductServiceImpl implements ProductService {
     }
 
 
-    //TODO брать данные одним запросом
     @Override
     public ProductAndPhotosResponseDTO getById(Integer id) {
         Product product = productRepository.findByIdWithPhotos(id)

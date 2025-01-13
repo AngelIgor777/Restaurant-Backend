@@ -15,5 +15,5 @@ public class PhotoRequestDTO {
     private Integer productId;
 
     @JsonIgnore
-    private MultipartFile file; // Используется для загрузки фото
+    private MultipartFile image; // Используется для загрузки фото
 }
