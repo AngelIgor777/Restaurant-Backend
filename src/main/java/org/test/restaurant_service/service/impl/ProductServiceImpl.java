@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.test.restaurant_service.dto.request.ProductRequestDTO;
+import org.springframework.transaction.annotation.Transactional;
 import org.test.restaurant_service.dto.response.PhotoResponseDTO;
 import org.test.restaurant_service.dto.response.ProductAndPhotosResponseDTO;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
@@ -16,12 +16,10 @@ import org.test.restaurant_service.mapper.ProductMapper;
 import org.test.restaurant_service.repository.ProductRepository;
 import org.test.restaurant_service.repository.ProductTypeRepository;
 import org.test.restaurant_service.service.ProductService;
-
 import javax.persistence.EntityNotFoundException;
 import java.math.BigDecimal;
 import java.time.LocalTime;
 import java.util.List;
-import java.util.Objects;
 
 @Slf4j
 @Service
@@ -97,6 +95,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ProductResponseDTO getByName(String productName) {
         Product product = productRepository.findByName(productName)
                 .orElseThrow(() -> new EntityNotFoundException("Product not found with name " + productName));
@@ -105,6 +104,7 @@ public class ProductServiceImpl implements ProductService {
 
     }
 
+    @Transactional(readOnly = true)
     public List<ProductResponseDTO> getByTypeName(String typeName) {
         List<Product> allByTypeName = productRepository.findAllByType_Name(typeName);
         return allByTypeName.stream().map(productMapper::toResponseDTO).toList();

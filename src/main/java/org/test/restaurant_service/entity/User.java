@@ -8,7 +8,6 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 
 @Entity
 @Table(name = "users", schema = "restaurant_service")
@@ -36,8 +35,8 @@ public class User {
     private List<Role> roles;
 
     @OneToOne
-    @JoinColumn(name = "otp_id", unique = true)
-    private Otp otp;
+    @JoinColumn(name = "chat_id", referencedColumnName = "chat_id", unique = true)
+    private TelegramUserEntity telegramUserEntity;
 
     @Override
     public boolean equals(Object o) {

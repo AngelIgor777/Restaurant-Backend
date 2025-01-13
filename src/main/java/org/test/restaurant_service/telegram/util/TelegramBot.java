@@ -1,6 +1,7 @@
 package org.test.restaurant_service.telegram.util;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.Resource;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -14,14 +15,17 @@ import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.test.restaurant_service.dto.request.UserRegistrationDTO;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
 import org.test.restaurant_service.dto.response.ProductTypeResponseDTO;
-import org.test.restaurant_service.entity.Otp;
+import org.test.restaurant_service.entity.TelegramUserEntity;
 import org.test.restaurant_service.rabbitmq.producer.RabbitMQJsonProducer;
-import org.test.restaurant_service.service.impl.OtpServiceImpl;
+import org.test.restaurant_service.service.PhotoService;
+import org.test.restaurant_service.service.impl.TelegramUserServiceImpl;
 import org.test.restaurant_service.service.impl.PhotoServiceImpl;
 import org.test.restaurant_service.service.impl.ProductServiceImpl;
 import org.test.restaurant_service.service.impl.ProductTypeServiceImpl;
@@ -29,6 +33,7 @@ import org.test.restaurant_service.telegram.config.BotConfig;
 
 import javax.persistence.EntityNotFoundException;
 import java.io.File;
+import java.io.IOException;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,11 +43,11 @@ import java.util.List;
 @EnableScheduling
 public class TelegramBot extends TelegramLongPollingBot {
 
-    private final OtpServiceImpl otpService;
+    private final TelegramUserServiceImpl telegramUserService;
     private final ProductTypeServiceImpl productTypeService;
     private final ProductServiceImpl productService;
     private final RabbitMQJsonProducer rabbitMQJsonProducer;
-
+    private final PhotoService photoService;
 
     private final String BUTTON_BACK_TO_MENU = "BACK_TO_MENU";
 
@@ -50,21 +55,20 @@ public class TelegramBot extends TelegramLongPollingBot {
             "📖 <b>Доступные команды:</b>\n\n" +
                     "🚀 /start - <i>Запуск бота</i>\n" +
                     "❓ /help - <i>Список доступных команд</i>\n" +
-                    "📝 /register - <i>Регистрация на нашем сайте</i>\n" +
                     "ℹ️ /info - <i>Информация о боте</i>\n" +
                     "🍽️ /menu - <i>Показать меню</i>\n\n" +
                     "✨ Используйте команды, чтобы сделать ваше настроение более радостным!";
     private final String infoText =
             "🤖 <b>Добро пожаловать!</b>\n\n" +
-                    "Этот бот создан, чтобы сделать вашу жизнь проще и приятнее! 🌟\n" +
+                    "Этот бот создан, чтобы сделать вашу жизнь проще и приятнее! 🌟\n\n" +
                     "С его помощью вы можете:\n" +
-                    "📝 Зарегистрироваться на нашем сайте\n" +
+                    "📝 Заказать еду на нашем сайте\n" +
                     "📢 Получать самые свежие новости о мероприятиях ARNAUT's\n\n" +
                     "✨ Мы всегда рады быть вам полезными!";
     private final BotConfig botConfig;
 
     private final ProductServiceImpl productServiceImpl;
-    private final OtpServiceImpl otpServiceImpl;
+    private final TelegramUserServiceImpl otpServiceImpl;
     private final PhotoServiceImpl photoServiceImpl;
 
     private List<String> callbackProductTypesData = new ArrayList<>();
@@ -72,17 +76,17 @@ public class TelegramBot extends TelegramLongPollingBot {
     private List<String> callbackProductsData = new ArrayList<>();
 
 
-    public TelegramBot(OtpServiceImpl otpService, ProductTypeServiceImpl productTypeService, ProductServiceImpl productService, RabbitMQJsonProducer rabbitMQJsonProducer, BotConfig botConfig, ProductServiceImpl productServiceImpl, OtpServiceImpl otpServiceImpl, PhotoServiceImpl photoServiceImpl) {
-        this.otpService = otpService;
+    public TelegramBot(TelegramUserServiceImpl telegramUserService, ProductTypeServiceImpl productTypeService, ProductServiceImpl productService, RabbitMQJsonProducer rabbitMQJsonProducer, PhotoService photoService, BotConfig botConfig, ProductServiceImpl productServiceImpl, TelegramUserServiceImpl otpServiceImpl, PhotoServiceImpl photoServiceImpl) {
+        this.telegramUserService = telegramUserService;
         this.productTypeService = productTypeService;
         this.productService = productService;
         this.rabbitMQJsonProducer = rabbitMQJsonProducer;
+        this.photoService = photoService;
 
         this.botConfig = botConfig;
         ArrayList<BotCommand> botCommands = new ArrayList<>();
         botCommands.add(new BotCommand("/start", "Запуск бота"));
         botCommands.add(new BotCommand("/help", "Список доступных команд"));
-        botCommands.add(new BotCommand("/register", "Регистрация"));
         botCommands.add(new BotCommand("/info", "Информация о боте"));
         botCommands.add(new BotCommand("/menu", "Показать меню"));
 
@@ -115,15 +119,13 @@ public class TelegramBot extends TelegramLongPollingBot {
         if (update.hasMessage() && update.getMessage().hasText()) {
             String text = update.getMessage().getText();
 
+            Long chatId = update.getMessage().getChatId();
             switch (text) {
                 case "/start":
-                    startRegister(update);
+                    registerFull(update);
                     break;
                 case "/help":
                     sendHelpMessage(update);
-                    break;
-                case "/register":
-                    registerOtpCode(update);
                     break;
                 case "/info":
                     sendMessage(update, infoText);
@@ -131,8 +133,13 @@ public class TelegramBot extends TelegramLongPollingBot {
                 case "/menu":
                     menu(update);
                     break;
+                case "/website":
+                    sendMessageWithMarkdown(chatId,
+                            String.format("🌟 Привет! Добро пожаловать на наш сайт: [arnauts.md](https://arnauts.md/%s). Мы рады, что вы с нами! 😊", chatId));
+                    break;
                 default:
-                    sendMessage(update, "Неизвестная команда 🤯. Введите /help, чтобы увидеть доступные команды.");
+                    sendMessageWithMarkdown(chatId, String.format("Неизвестная команда 🤯. Введите /help, чтобы увидеть доступные команды.\n\n" +
+                            "Можете посмотреть наше меню /menu ☺ или сделать заказ у нас на сайте [arnauts.md](https://arnauts.md/%s).", chatId));
                     break;
             }
         } else if (update.hasCallbackQuery()) {
@@ -161,31 +168,32 @@ public class TelegramBot extends TelegramLongPollingBot {
 //    }
 
 //    @Scheduled(cron = "${cron.scheduler}")
-//    public void sendPhotoWithCaption() {
-//        String adText =
-//                "🍽️ <b>Время вкусных открытий!</b>\n\n" +
-//                        "✨ Сегодня у нас для вас нечто особенное:\n" +
-//                        "🍕 <b>Пицца недели:</b> Сырный взрыв — только 149 лей!\n" +
-//                        "🎉 <i>Забронируйте столик прямо сейчас, чтобы не упустить шанс насладиться уникальными блюдами!</i>\n\n" +
-//                        "📲 Нажмите /menu, чтобы посмотреть всё меню!\n\n" +
-//                        "❤️ С любовью, ваш ARNAUT's!";
+//    public void sendPhotoWithCaption() throws IOException {
+//
 //
 //        SendPhoto photo = new SendPhoto();
-//        java.io.File file = new File("src/main/resources/static/images/pizza.jpeg");
+//        Resource image = photoService.getImage("pizza.png");
+//        File file = image.getFile();
 //        photo.setPhoto(new InputFile(file));
-//        photo.setCaption(adText);
 //        photo.setParseMode("HTML");
 //
-//        List<Otp> all = otpServiceImpl.getAll();
-//        for (Otp otp : all) {
+//        List<TelegramUserEntity> all = otpServiceImpl.getAll();
+//        for (TelegramUserEntity telegramUserEntity : all) {
+//
+//            photo.setCaption(String.format("%s Привет! 😎 У нас для тебя что-то новенькое!\n\n" +
+//                    "🍽️<b>Время вкусных открытий!</b>\n\n" +
+//                    "✨ Сегодня у нас для вас нечто особенное:\n" +
+//                    "🍕 <b>Пицца недели:</b> Сырный взрыв — только 149 лей!\n" +
+//                    "🎉 <i>Забронируйте столик прямо сейчас, чтобы не упустить шанс насладиться уникальными блюдами!</i>\n\n" +
+//                    "📲 Нажмите /menu, чтобы посмотреть всё меню!\n\n" +
+//                    "❤️ С любовью, ваш ARNAUTS!", telegramUserEntity.getFirstname()));
 //            try {
-//                photo.setChatId(otp.getChatId().toString());
+//                photo.setChatId(telegramUserEntity.getChatId().toString());
 //                execute(photo);
 //            } catch (TelegramApiException e) {
 //                e.printStackTrace();
 //            }
 //        }
-//
 //    }
 
     private void prepareAndSendMessage(long chatId, String textToSend) {
@@ -217,7 +225,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    private void setToProduct(Update update, String product) {
+    public void setToProduct(Update update, String product) {
         ProductResponseDTO productResponse = productServiceImpl.getByName(product);
         StringBuilder productText = getProductText(productResponse);
         EditMessageText editMessage = setEditMessageTextProperties(update);
@@ -459,22 +467,17 @@ public class TelegramBot extends TelegramLongPollingBot {
         sendMessage(update, helpText);
     }
 
-    private void sendMenu(Update up) {
-
-        sendMessage(up, menuText.toString());
-    }
 
     private void startRegister(Update update) {
         Long chatId = update.getMessage().getChatId();
         User user = update.getMessage().getFrom();
         UserRegistrationDTO userRegistrationDTO = new UserRegistrationDTO(chatId, user);
 
-        rabbitMQJsonProducer.send(userRegistrationDTO);
-        if (!otpService.existByChatId(chatId)) {
+        if (!telegramUserService.existByChatId(chatId)) {
+            rabbitMQJsonProducer.send(userRegistrationDTO);
             sendSticker(chatId, "CAACAgIAAxkBAAOIZ2wCV5OzULOMka95E5_NGb48DX8AAocQAALddzlI382554aYWfM2BA");
             sendMessage(update, "Добро пожаловать в бот ресторана ARNAUT's! ☺ \n" +
                     "Введите /help, чтобы узнать, что я могу сделать.");
-            otpService.save(chatId, user);
         } else {
             sendMessage(update, "Ой, вышла ошибочка 😅.\n" +
                     "Мы заметили, что вы уже запустили нашего бота 😽.\n" +
@@ -482,23 +485,23 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    private void registerOtpCode(Update update) {
-
-        String errorText = "Ой, вышла ошибочка 😅.\n" +
-                "Мы заметили, что вы ещё не запустили нашего бота.\n" +
-                "Введите /start чтобы всё получилось  😌";
+    private void registerFull(Update update) {
 
         Long chatId = update.getMessage().getChatId();
-        if (otpService.existByChatId(chatId)) {
+
+        String errorText = String.format(
+                "🌐Заходите на наш сайт https://arnauts.md/%d.\n" +
+                        "🎁Участвуйте в розыгрышах, получайте промокоды и смотрите за новостями!", chatId);
+
+
+        if (!telegramUserService.existByChatId(chatId)) {
             sendSticker(chatId, "CAACAgIAAxkBAAOMZ2wCg2GLi8plYN0NGFsVl2NfnMYAAgsBAAL3AsgPxfQ7mJWqcds2BA");
             try {
-                Otp otp = otpService.generateAndSaveOtp(chatId);
+                telegramUserService.registerUser(update);
 
-                String message = "Поздравляем! Теперь вы являетесь частью нашей семьи!\n" +
-                        "🎉 Ваш код: `" + otp.getOtpCode() + "` 🎉\n" +
-                        "🔒 Никому не давайте его.\n" +
-                        "🌐 Заходите на наш сайт и регистрируйтесь с помощью этого кода!\n" +
-                        "🎁 Вы сможете участвовать в розыгрышах, получать промокоды и видеть новости самыми первыми!";
+                String message = String.format("Поздравляем! Теперь вы являетесь частью нашей семьи!\n\n" +
+                        "🌐Заходите на наш сайт https://arnauts.md/%d\n" +
+                        "🎁Участвуйте в розыгрышах, получайте промокоды и смотрите за новостями!", chatId);
 
                 sendMessageWithMarkdown(chatId, message);
             } catch (EntityNotFoundException e) {
@@ -539,6 +542,20 @@ public class TelegramBot extends TelegramLongPollingBot {
         message.setChatId(update.getMessage().getChatId().toString());
         message.setText(text);
 
+        ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
+        keyboardMarkup.setResizeKeyboard(true);
+        List<KeyboardRow> keyboardRows = new ArrayList<>();
+
+        KeyboardRow row = new KeyboardRow();
+
+        row.add("/menu");
+        row.add("/website");
+
+        keyboardRows.add(row);
+
+        keyboardMarkup.setKeyboard(keyboardRows);
+
+        message.setReplyMarkup(keyboardMarkup);
         try {
             execute(message);
         } catch (TelegramApiException e) {
