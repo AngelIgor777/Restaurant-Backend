@@ -23,4 +23,6 @@ public interface PhotoService {
     String getContentType(Resource image);
 
     Resource getImage(String photoName);
+
+    void deletePhotos(List<String> fileNames);
 }

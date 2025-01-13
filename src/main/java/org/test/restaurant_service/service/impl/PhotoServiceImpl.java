@@ -24,6 +24,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -39,8 +40,6 @@ public class PhotoServiceImpl implements PhotoService {
 
     @Override
     @Transactional(rollbackOn = Exception.class)
-
-
     public void savePhotos(List<Photo> photoRequestDTOS) {
         for (Photo photo : photoRequestDTOS) {
             MultipartFile file = photo.getImage();
@@ -70,6 +69,30 @@ public class PhotoServiceImpl implements PhotoService {
             }
         }
     }
+
+    @Override
+    @Transactional(rollbackOn = Exception.class)
+    public void deletePhotos(List<String> fileNames) {
+        for (String fileName : fileNames) {
+            File file = new File(IMAGE_DIRECTORY + fileName.replace(" ", ""));
+            if (file.exists()) {
+                if (!file.delete()) {
+                    throw new BadRequestException("File could not be deleted: " + fileName);
+                }
+            } else {
+                throw new BadRequestException("File not found: " + fileName);
+            }
+
+            // Удаление записи из базы данных
+            Optional<Photo> photo = photoRepository.findByUrl(fileName);
+            if (photo.isPresent()) {
+                photoRepository.delete(photo.get());
+            } else {
+                throw new BadRequestException("Photo record not found for file: " + fileName);
+            }
+        }
+    }
+
 
     @Override
     public PhotoResponseDTO create(Photo photo) {

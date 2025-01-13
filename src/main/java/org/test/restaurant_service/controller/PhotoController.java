@@ -55,9 +55,11 @@ public class PhotoController {
         return photoService.update(id, requestDTO);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable Integer id) {
-        photoService.delete(id);
+    public void delete(@RequestParam String imageName) {
+
+        List<String> imageNameList = List.of(imageName);
+        photoService.deletePhotos(imageNameList);
     }
 }

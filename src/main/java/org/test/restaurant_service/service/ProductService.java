@@ -8,11 +8,16 @@ import org.test.restaurant_service.dto.response.ProductAndPhotosResponseDTO;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
 import org.test.restaurant_service.entity.Product;
 
+import java.math.BigDecimal;
+
 
 public interface ProductService {
+
+    Product parseRequest(String name, String description, Integer typeId, BigDecimal price, String cookingTime);
+
     Product create(Product product, Integer typeId);
 
-    ProductResponseDTO update(Integer id, ProductRequestDTO requestDTO);
+    Product update(Integer id, Product product);
 
     void delete(Integer id);
 
