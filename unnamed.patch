@@ -1,0 +1,17 @@
+Index: build.gradle
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/build.gradle b/build.gradle
+--- a/build.gradle	(revision d61c3f8e16e73dfcaf938cfee59a4ac7cd8db8c9)
++++ b/build.gradle	(revision 3417c1c85862f4bf6e1383cd2c7d5ca415c13fdc)
+@@ -38,6 +38,8 @@
+     implementation 'com.auth0:java-jwt:3.18.1'
+     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+     implementation 'io.micrometer:micrometer-registry-prometheus'
++    implementation 'org.springframework.boot:spring-boot-starter-cache'
++    implementation 'com.github.ben-manes.caffeine:caffeine'
+ 
+ 
+     compileOnly 'org.projectlombok:lombok'
