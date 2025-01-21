@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import org.test.restaurant_service.entity.Order;
+
 import javax.validation.constraints.*;
 import java.util.List;
 
@@ -31,23 +32,13 @@ public class OrderProductRequestDtoWithPayloadDto {
     @NotNull(message = "Payment method is required")
     private Order.PaymentMethod paymentMethod;
 
+
+    private boolean isOrderInRestaurant;
     /**
      * Table information for dine-in orders.
      * Optional for delivery orders.
      */
     private TableRequestDTO tableRequestDTO;
-
-    /**
-     * Indicates whether the user is registered in the system.
-     */
-    private boolean isRegisterUser;
-
-    /**
-     * ID of the registered user, if applicable.
-     * Required if isRegisterUser is true.
-     */
-    @Positive(message = "User ID must be a positive number")
-    private Integer userId;
 
     /**
      * Indicates if discount codes exist in the request.
@@ -64,5 +55,9 @@ public class OrderProductRequestDtoWithPayloadDto {
      * General discount code for the entire order, if applicable.
      */
     @Pattern(regexp = "^[A-Z0-9_]{5,20}$", message = "Invalid discount code format")
-    private String discountCode;
+    private String globalDiscountCode;
+
+    private AddressRequestDTO addressRequestDTO;
+
+
 }
