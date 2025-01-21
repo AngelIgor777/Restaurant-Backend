@@ -12,4 +12,6 @@ public interface PhotoRepository extends JpaRepository<Photo, Integer> {
     List<Photo> findAllByProductId(Integer productId);
 
     Optional<Photo> findByUrl(String fileUrl);
+
+    List<Photo> findAllByUrl(String fileUrl);
 }

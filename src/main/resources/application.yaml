@@ -46,13 +46,15 @@ spring:
 rabbitmq:
   queues:
     json:
-      queue:
-        name: restaurant_json
-        routingKey: restaurant_routing_key_secret
+      queue1:
+        name: json_user_registration_queue
+        routingKey: json_user_registration_routing_key
+      queue2:
+        name: json_product_save_queue
+        routingKey: json_product_save_routing_key
   exchanges:
     exchange:
       name: java_exchange
-
 
 server:
   port: ${SERVER_PORT}

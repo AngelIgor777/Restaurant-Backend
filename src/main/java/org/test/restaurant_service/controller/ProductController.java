@@ -12,8 +12,8 @@ import org.test.restaurant_service.entity.Product;
 import org.test.restaurant_service.mapper.ProductMapper;
 import org.test.restaurant_service.service.PhotoService;
 import org.test.restaurant_service.service.ProductAndPhotoService;
+import org.test.restaurant_service.service.ProductAndProductHistoryService;
 import org.test.restaurant_service.service.ProductService;
-
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -24,6 +24,7 @@ public class ProductController {
 
     private final ProductService productService;
     private final ProductAndPhotoService productAndPhotoService;
+    private final ProductAndProductHistoryService productAndProductHistoryService;
     private final ProductMapper productMapper;
     private final PhotoService photoService;
 
@@ -52,7 +53,8 @@ public class ProductController {
                                      @RequestParam("cookingTime") String cookingTime) {
 
         Product product = productService.parseRequest(name, description, typeId, price, cookingTime);
-        Product update = productService.update(id, product);
+
+        Product update = productAndProductHistoryService.update(product, id);
         return productMapper.toResponseDTO(update);
     }
 

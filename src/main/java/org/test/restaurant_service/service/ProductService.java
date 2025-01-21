@@ -9,6 +9,7 @@ import org.test.restaurant_service.dto.response.ProductResponseDTO;
 import org.test.restaurant_service.entity.Product;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 
 public interface ProductService {
@@ -17,7 +18,9 @@ public interface ProductService {
 
     Product create(Product product, Integer typeId);
 
-    Product update(Integer id, Product product);
+    Product create(ProductRequestDTO productRequestDTO);
+
+    Product update(Product product, Integer id);
 
     void delete(Integer id);
 
@@ -27,4 +30,5 @@ public interface ProductService {
 
     ProductResponseDTO getByName(String product);
 
+    List<ProductResponseDTO> getByTypeName(String typeName);
 }

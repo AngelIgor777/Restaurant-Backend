@@ -7,7 +7,7 @@ import org.test.restaurant_service.entity.Photo;
 import org.test.restaurant_service.entity.Product;
 import org.test.restaurant_service.service.PhotoService;
 import org.test.restaurant_service.service.ProductAndPhotoService;
-import org.test.restaurant_service.service.ProductService;
+import org.test.restaurant_service.service.ProductAndProductHistoryService;
 import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,24 +17,25 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class ProductAndAndPhotoServiceImpl implements ProductAndPhotoService {
 
-    private final ProductService productService;
     private final PhotoService photoService;
+    private final ProductAndProductHistoryService productAndProductHistoryService;
 
     @Override
     @Transactional(rollbackOn = Exception.class)
     public void createProductAndPhotos(Product product, Integer typeId, List<MultipartFile> photoFiles) {
 
         List<Photo> photos = new ArrayList<>();
-        for (int i = 0; i < photoFiles.size(); i++) {
+        for (MultipartFile photoFile : photoFiles) {
             Photo photo = Photo.builder()
-                    .url(Objects.requireNonNull(photoFiles.get(i).getOriginalFilename()).replace(" ", ""))
+                    .url(Objects.requireNonNull(photoFile.getOriginalFilename()).replace(" ", ""))
                     .product(product)
-                    .image(photoFiles.get(i))
+                    .image(photoFile)
                     .build();
             photos.add(photo);
         }
         product.setPhotos(photos);
-        productService.create(product, typeId);
+        Product createdProduct = productAndProductHistoryService.save(product, typeId);
+
         photoService.savePhotos(photos);
     }
 

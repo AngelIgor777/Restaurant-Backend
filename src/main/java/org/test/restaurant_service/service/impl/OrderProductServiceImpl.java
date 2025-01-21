@@ -13,12 +13,13 @@ import org.test.restaurant_service.entity.Product;
 import org.test.restaurant_service.entity.Table;
 import org.test.restaurant_service.mapper.OrderMapper;
 import org.test.restaurant_service.mapper.OrderProductMapper;
-import org.test.restaurant_service.mapper.ProductMapperImpl;
+import org.test.restaurant_service.mapper.ProductMapper;
 import org.test.restaurant_service.repository.OrderProductRepository;
 import org.test.restaurant_service.repository.OrderRepository;
 import org.test.restaurant_service.repository.ProductRepository;
 import org.test.restaurant_service.repository.TableRepository;
 import org.test.restaurant_service.service.OrderProductService;
+
 import javax.persistence.EntityNotFoundException;
 import java.math.BigDecimal;
 import java.time.LocalTime;
@@ -38,7 +39,7 @@ public class OrderProductServiceImpl implements OrderProductService {
     private final OrderMapper orderMapper;
 
     private final WebSocketController webSocketController;
-    private final ProductMapperImpl productMapperImpl;
+    private final ProductMapper productMapper;
 
     @Override
     public OrderResponseDTO createBulk(List<OrderProductRequestDTO> requestDTOs, Integer tableNumber, Order.PaymentMethod paymentMethod) {
@@ -66,7 +67,9 @@ public class OrderProductServiceImpl implements OrderProductService {
                     totalCookingTime.updateAndGet(t -> t.plusMinutes(product.getCookingTime().getMinute())
                             .plusSeconds(product.getCookingTime().getSecond()));
 
-                    ProductResponseDTO productResponseDTO = productMapperImpl.toResponseDTO(product);
+                    ProductResponseDTO productResponseDTO = productMapper.toResponseDTO(product);
+                    productResponseDTO.setQuantity(requestDTO.getQuantity());
+
                     productResponseDTOList.add(productResponseDTO);
                     return orderProduct;
                 })

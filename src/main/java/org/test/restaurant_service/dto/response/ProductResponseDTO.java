@@ -16,6 +16,7 @@ public class ProductResponseDTO {
     private String typeName;
     private BigDecimal price;
     private LocalTime cookingTime;
+    private Integer quantity;
     @JsonIgnore
     private List<Photo> photos;
 }

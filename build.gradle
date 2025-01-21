@@ -38,6 +38,8 @@ dependencies {
     implementation 'com.auth0:java-jwt:3.18.1'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'io.micrometer:micrometer-registry-prometheus'
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+    implementation 'com.github.ben-manes.caffeine:caffeine'
 
 
     compileOnly 'org.projectlombok:lombok'

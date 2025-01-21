@@ -17,17 +17,28 @@ public class RabbitMQConfig {
     @Value("${rabbitmq.exchanges.exchange.name}")
     private String exchangeName;
 
-    @Value("${rabbitmq.queues.json.queue.name}")
-    private String jsonQueueName;
+    @Value("${rabbitmq.queues.json.queue1.name}")
+    private String jsonUserRegistrationQueue;
 
-    @Value("${rabbitmq.queues.json.queue.routingKey}")
-    private String jsonRoutingKey;
+    @Value("${rabbitmq.queues.json.queue1.routingKey}")
+    private String jsonUserRegistrationRoutingKey;
 
+    @Value("${rabbitmq.queues.json.queue2.name}")
+    private String jsonProductSaveQueue;
+
+    @Value("${rabbitmq.queues.json.queue2.routingKey}")
+    private String jsonProductSaveRoutingKey;
 
     @Bean
-    public Queue jsonQueue() {
-        return new Queue(jsonQueueName);
+    public Queue userRegisterQueue() {
+        return new Queue(jsonUserRegistrationQueue);
     }
+
+    @Bean
+    public Queue productSaveQueue() {
+        return new Queue(jsonProductSaveQueue);
+    }
+
 
 
     @Bean
@@ -37,11 +48,19 @@ public class RabbitMQConfig {
 
 
     @Bean
-    public Binding jsonBinding() {
+    public Binding userRegisterBinding() {
         return BindingBuilder
-                .bind(jsonQueue())
+                .bind(userRegisterQueue())
                 .to(topicExchange())
-                .with(jsonRoutingKey);
+                .with(jsonUserRegistrationRoutingKey);
+    }
+
+    @Bean
+    public Binding productSaveBinding() {
+        return BindingBuilder
+                .bind(productSaveQueue())
+                .to(topicExchange())
+                .with(jsonProductSaveRoutingKey);
     }
 
     @Bean

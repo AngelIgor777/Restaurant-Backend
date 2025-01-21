@@ -1,5 +1,6 @@
 package org.test.restaurant_service.dto.request;
 
+import lombok.Builder;
 import lombok.Data;
 
 import javax.validation.constraints.*;
@@ -7,6 +8,7 @@ import java.math.BigDecimal;
 import java.time.LocalTime;
 
 @Data
+@Builder
 public class ProductRequestDTO {
     @NotBlank
     @Size(max = 255)

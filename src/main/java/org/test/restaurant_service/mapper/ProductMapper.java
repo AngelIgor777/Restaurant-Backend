@@ -6,6 +6,7 @@ import org.mapstruct.*;
 import org.test.restaurant_service.dto.request.ProductRequestDTO;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
 import org.test.restaurant_service.entity.Product;
+import org.test.restaurant_service.entity.ProductHistory;
 
 @Mapper(componentModel = "spring", uses = ProductTypeMapper.class)
 public interface ProductMapper {
@@ -16,12 +17,18 @@ public interface ProductMapper {
     Product toEntity(ProductRequestDTO requestDTO);
 
     @Mapping(source = "type.name", target = "typeName")
+    @Mapping(target = "quantity", ignore = true)
     ProductResponseDTO toResponseDTO(Product product);
+
+    @Mapping(target = "type", ignore = true)
+    @Mapping(target = "product", ignore = true)
+    @Mapping(target = "id", ignore = true)
+    ProductHistory toProductHistory(Product product);
 
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "type", ignore = true)
-    @Mapping(target = "id", ignore = true) // Игнорирование id при обновлении
+    @Mapping(target = "id", ignore = true)
     @Mapping(target = "photos", ignore = true)
     void updateEntityFromRequestDTO(ProductRequestDTO requestDTO, @MappingTarget Product product);
 }

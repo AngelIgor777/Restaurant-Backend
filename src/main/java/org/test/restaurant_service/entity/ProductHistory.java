@@ -5,6 +5,7 @@ import javax.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Objects;
 
 @Getter
@@ -36,6 +37,8 @@ public class ProductHistory {
 
     @Column(nullable = false)
     private BigDecimal price;
+
+    private LocalTime cookingTime;
 
     @Column(name = "changed_at", nullable = false, updatable = false)
     @Builder.Default
