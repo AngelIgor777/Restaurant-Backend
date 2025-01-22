@@ -1,5 +1,6 @@
 package org.test.restaurant_service.dto.response;
 
+import lombok.Builder;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -8,9 +9,10 @@ import java.time.LocalTime;
 import java.util.List;
 
 @Data
+@Builder
 public class OrderResponseDTO {
     private Integer id;
-    private Integer tableId;
+    private TableResponseDTO tableResponseDTO;
     private String status;
     private String paymentMethod;
     private BigDecimal totalPrice;

@@ -33,7 +33,7 @@ public class OrderProductRequestDtoWithPayloadDto {
     private Order.PaymentMethod paymentMethod;
 
 
-    private boolean isOrderInRestaurant;
+    private boolean orderInRestaurant;
     /**
      * Table information for dine-in orders.
      * Optional for delivery orders.

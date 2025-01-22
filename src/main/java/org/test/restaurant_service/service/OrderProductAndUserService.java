@@ -1,8 +1,9 @@
 package org.test.restaurant_service.service;
 
 import org.test.restaurant_service.dto.request.OrderProductRequestDtoWithPayloadDto;
+import org.test.restaurant_service.dto.response.OrderProductResponseDtoWithPayloadDto;
 
 public interface OrderProductAndUserService {
-    void createBulk(OrderProductRequestDtoWithPayloadDto requestDtoWithPayloadDto);
+    OrderProductResponseDtoWithPayloadDto createBulk(OrderProductRequestDtoWithPayloadDto requestDtoWithPayloadDto);
 
 }

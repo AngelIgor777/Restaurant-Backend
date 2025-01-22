@@ -6,8 +6,10 @@ import org.springframework.web.bind.annotation.*;
 import org.test.restaurant_service.dto.request.OrderProductRequestDTO;
 import org.test.restaurant_service.dto.request.OrderProductRequestDtoWithPayloadDto;
 import org.test.restaurant_service.dto.response.OrderProductResponseDTO;
+import org.test.restaurant_service.dto.response.OrderProductResponseDtoWithPayloadDto;
 import org.test.restaurant_service.service.OrderProductAndUserService;
 import org.test.restaurant_service.service.OrderProductService;
+
 import javax.validation.Valid;
 import java.util.List;
 
@@ -26,8 +28,8 @@ public class OrderProductController {
 
     @PostMapping("/bulk")
     @ResponseStatus(HttpStatus.CREATED)
-    public void createBulk(@Valid @RequestBody OrderProductRequestDtoWithPayloadDto requestDtoWithPayloadDto) {
-        orderProductAndUserService.createBulk(requestDtoWithPayloadDto);
+    public OrderProductResponseDtoWithPayloadDto createBulk(@Valid @RequestBody OrderProductRequestDtoWithPayloadDto requestDtoWithPayloadDto) {
+        return orderProductAndUserService.createBulk(requestDtoWithPayloadDto);
     }
 
     @PatchMapping("/{id}")

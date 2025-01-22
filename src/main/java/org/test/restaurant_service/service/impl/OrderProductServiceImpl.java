@@ -43,7 +43,7 @@ public class OrderProductServiceImpl implements OrderProductService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public OrderResponseDTO createBulk(List<OrderProductRequestDTO> requestDTOs, Integer tableNumber, Order.PaymentMethod paymentMethod) {
-        Table table = existTable(tableNumber);
+        Table table = getByNumber(tableNumber);
         Order order = Order.builder()
                 .table(table)
                 .paymentMethod(paymentMethod)
@@ -108,7 +108,7 @@ public class OrderProductServiceImpl implements OrderProductService {
     }
 
 
-    public Table existTable(Integer tableNumber) {
+    public Table getByNumber(Integer tableNumber) {
         return tableRepository.findTablesByNumber(tableNumber)
                 .orElseThrow(() -> new EntityNotFoundException("Table not found with number " + tableNumber));
     }

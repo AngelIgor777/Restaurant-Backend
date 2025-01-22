@@ -8,15 +8,16 @@ import org.test.restaurant_service.entity.Order;
 @Mapper(componentModel = "spring", uses = {TableMapper.class})
 public interface OrderMapper {
 
-    @Mapping(source = "table.id", target = "tableId")
     @Mapping(target = "products", ignore = true) // Игнорирование при создании
     @Mapping(target = "totalCookingTime", ignore = true)
+    @Mapping(target = "tableResponseDTO", ignore = true)
     OrderResponseDTO toResponseDTO(Order order);
 
     @Mapping(target = "table", ignore = true)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "user", ignore = true)
     Order toEntity(OrderRequestDTO requestDTO);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
@@ -24,5 +25,6 @@ public interface OrderMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "user", ignore = true)
     void updateEntityFromRequestDTO(OrderRequestDTO requestDTO, @MappingTarget Order order);
 }
