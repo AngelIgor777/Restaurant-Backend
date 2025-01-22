@@ -4,11 +4,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.test.restaurant_service.dto.request.OrderProductRequestDTO;
+import org.test.restaurant_service.dto.request.OrderProductRequestDtoWithPayloadDto;
 import org.test.restaurant_service.dto.response.OrderProductResponseDTO;
-import org.test.restaurant_service.dto.response.OrderResponseDTO;
-import org.test.restaurant_service.entity.Order;
+import org.test.restaurant_service.service.OrderProductAndUserService;
 import org.test.restaurant_service.service.OrderProductService;
-
 import javax.validation.Valid;
 import java.util.List;
 
@@ -18,6 +17,7 @@ import java.util.List;
 public class OrderProductController {
 
     private final OrderProductService orderProductService;
+    private final OrderProductAndUserService orderProductAndUserService;
 
     @GetMapping("/order/{orderId}")
     public List<OrderProductResponseDTO> getOrderProductsByOrderId(@PathVariable Integer orderId) {
@@ -26,10 +26,8 @@ public class OrderProductController {
 
     @PostMapping("/bulk")
     @ResponseStatus(HttpStatus.CREATED)
-    public OrderResponseDTO createBulk(@Valid @RequestBody List<OrderProductRequestDTO> requestDTOs,
-                                       @RequestParam Integer tableNumber,
-                                       @RequestParam Order.PaymentMethod paymentMethod) {
-        return orderProductService.createBulk(requestDTOs, tableNumber, paymentMethod);
+    public void createBulk(@Valid @RequestBody OrderProductRequestDtoWithPayloadDto requestDtoWithPayloadDto) {
+        orderProductAndUserService.createBulk(requestDtoWithPayloadDto);
     }
 
     @PatchMapping("/{id}")

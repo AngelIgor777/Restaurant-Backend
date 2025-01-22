@@ -10,6 +10,8 @@ public interface ProductDiscountService {
 
     ProductDiscount getProductDiscountById(Integer id);
 
+    ProductDiscount getProductDiscountByCode(String name);
+
     List<ProductDiscount> getAllProductDiscounts();
 
     ProductDiscount updateProductDiscount(Integer id, ProductDiscount productDiscount);

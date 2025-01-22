@@ -34,6 +34,16 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    public Order create(Order order) {
+        return orderRepository.save(order);
+    }
+
+    @Override
+    public List<Order> createAll(List<Order> orders) {
+        return orderRepository.saveAll(orders);
+    }
+
+    @Override
     public List<OrderResponseDTO> getAllOrders() {
         return orderRepository.findAll()
                 .stream()

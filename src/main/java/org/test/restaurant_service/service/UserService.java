@@ -5,4 +5,6 @@ import org.test.restaurant_service.entity.User;
 public interface UserService {
 
     User save(User user);
+
+    User findById(Integer id);
 }

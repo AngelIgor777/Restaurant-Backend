@@ -28,6 +28,12 @@ public class ProductDiscountServiceImpl implements ProductDiscountService {
     }
 
     @Override
+    public ProductDiscount getProductDiscountByCode(String name) {
+        return productDiscountRepository.getProductDiscountByCode(name)
+                .orElseThrow(() -> new RuntimeException("ProductDiscount not found with name: " + name));
+    }
+
+    @Override
     public List<ProductDiscount> getAllProductDiscounts() {
         return productDiscountRepository.findAll();
     }

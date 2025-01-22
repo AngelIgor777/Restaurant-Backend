@@ -15,10 +15,7 @@ import org.test.restaurant_service.entity.Table;
 import org.test.restaurant_service.mapper.OrderMapper;
 import org.test.restaurant_service.mapper.OrderProductMapper;
 import org.test.restaurant_service.mapper.ProductMapper;
-import org.test.restaurant_service.repository.OrderProductRepository;
-import org.test.restaurant_service.repository.OrderRepository;
-import org.test.restaurant_service.repository.ProductRepository;
-import org.test.restaurant_service.repository.TableRepository;
+import org.test.restaurant_service.repository.*;
 import org.test.restaurant_service.service.OrderProductService;
 
 import javax.persistence.EntityNotFoundException;
@@ -38,9 +35,10 @@ public class OrderProductServiceImpl implements OrderProductService {
     private final OrderProductMapper orderProductMapper;
     private final TableRepository tableRepository;
     private final OrderMapper orderMapper;
-
     private final WebSocketController webSocketController;
     private final ProductMapper productMapper;
+    private final UserRepository userRepository;
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -58,7 +56,7 @@ public class OrderProductServiceImpl implements OrderProductService {
 
         // Сохраняем все заказанные продукты
         orderRepository.save(order);
-        orderProductRepository.saveAll(orderProducts);
+        createAll(orderProducts);
 
 
         OrderResponseDTO orderResponse = orderMapper.toResponseDTO(order);
@@ -67,6 +65,11 @@ public class OrderProductServiceImpl implements OrderProductService {
         sendOrdersFromWebsocket();
         return orderResponse;
     }
+
+    public void createAll(List<OrderProduct> orderProducts) {
+        orderProductRepository.saveAll(orderProducts);
+    }
+
 
     private List<OrderProduct> getOrderProducts(List<OrderProductRequestDTO> requestDTOs, Order order, AtomicReference<BigDecimal> totalPrice, AtomicReference<LocalTime> totalCookingTime, List<ProductResponseDTO> productResponseDTOList) {
         return requestDTOs.stream()
@@ -105,13 +108,12 @@ public class OrderProductServiceImpl implements OrderProductService {
     }
 
 
-    private Table existTable(Integer tableNumber) {
-        Table table = tableRepository.findTablesByNumber(tableNumber)
+    public Table existTable(Integer tableNumber) {
+        return tableRepository.findTablesByNumber(tableNumber)
                 .orElseThrow(() -> new EntityNotFoundException("Table not found with number " + tableNumber));
-        return table;
     }
 
-    private void sendOrdersFromWebsocket() {
+    public void sendOrdersFromWebsocket() {
         List<OrderResponseDTO> allOrders = orderRepository.findAll().stream()
                 .map(orderMapper::toResponseDTO)
                 .collect(Collectors.toList());

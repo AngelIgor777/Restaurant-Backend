@@ -27,6 +27,10 @@ public class Order {
     @JoinColumn(name = "table_id", referencedColumnName = "id")
     private org.test.restaurant_service.entity.Table table;
 
+    @ManyToOne
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    private User user;
+
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     @Builder.Default

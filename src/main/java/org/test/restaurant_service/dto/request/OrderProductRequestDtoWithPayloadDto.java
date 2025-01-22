@@ -48,13 +48,11 @@ public class OrderProductRequestDtoWithPayloadDto {
     /**
      * Product-specific discount code, if applicable.
      */
-    @Pattern(regexp = "^[A-Z0-9_]{5,20}$", message = "Invalid product discount code format")
     private String productDiscountCode;
 
     /**
      * General discount code for the entire order, if applicable.
      */
-    @Pattern(regexp = "^[A-Z0-9_]{5,20}$", message = "Invalid discount code format")
     private String globalDiscountCode;
 
     private AddressRequestDTO addressRequestDTO;
