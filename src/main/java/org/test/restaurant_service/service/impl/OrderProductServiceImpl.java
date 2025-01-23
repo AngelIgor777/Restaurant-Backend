@@ -6,12 +6,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.test.restaurant_service.controller.websocket.WebSocketController;
 import org.test.restaurant_service.dto.request.OrderProductRequestDTO;
 import org.test.restaurant_service.dto.response.OrderProductResponseDTO;
+import org.test.restaurant_service.dto.response.OrderProductResponseDtoWithPayloadDto;
 import org.test.restaurant_service.dto.response.OrderResponseDTO;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
-import org.test.restaurant_service.entity.Order;
-import org.test.restaurant_service.entity.OrderProduct;
-import org.test.restaurant_service.entity.Product;
-import org.test.restaurant_service.entity.Table;
+import org.test.restaurant_service.entity.*;
 import org.test.restaurant_service.mapper.OrderMapper;
 import org.test.restaurant_service.mapper.OrderProductMapper;
 import org.test.restaurant_service.mapper.ProductMapper;
@@ -114,10 +112,18 @@ public class OrderProductServiceImpl implements OrderProductService {
     }
 
     public void sendOrdersFromWebsocket() {
-        List<OrderResponseDTO> allOrders = orderRepository.findAll().stream()
-                .map(orderMapper::toResponseDTO)
-                .collect(Collectors.toList());
-        webSocketController.sendOrdersFromWebsocket(allOrders);
+//        orderRepository.findAll().stream()
+//                .map(order -> {
+//                    OrderProductResponseDtoWithPayloadDto payloadDto = new OrderProductResponseDtoWithPayloadDto();
+//                    User user = order.getUser();
+//                    List<Address> address = user.getAddress();
+//
+//
+//                })
+//                .collect(Collectors.toList());
+//
+//
+//        webSocketController.sendOrdersFromWebsocket(allOrders);
     }
 
     @Override

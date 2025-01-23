@@ -13,7 +13,6 @@ public class WebSocketController {
     private final SimpMessagingTemplate messagingTemplate;
 
     public void sendOrdersFromWebsocket(List<OrderResponseDTO> orderProducts) {
-
         messagingTemplate.convertAndSend("/topic/orders", orderProducts);
     }
 }

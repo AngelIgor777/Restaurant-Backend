@@ -23,6 +23,7 @@ public interface ProductMapper {
     @Mapping(target = "type", ignore = true)
     @Mapping(target = "product", ignore = true)
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "changedAt", ignore = true)
     ProductHistory toProductHistory(Product product);
 
 

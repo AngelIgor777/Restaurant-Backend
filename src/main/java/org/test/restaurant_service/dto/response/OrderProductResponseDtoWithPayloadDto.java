@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderProductResponseDtoWithPayloadDto {
-    private OrderResponseDTO payload;
+    private OrderResponseDTO orderResponseDTO;
     private boolean orderInRestaurant;
     private boolean existDiscountCodes;
     private String productDiscountCode;

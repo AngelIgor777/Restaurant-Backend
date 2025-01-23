@@ -77,8 +77,10 @@ bot:
   key:
     ${BOT_KEY}
 
-cron:
-  scheduler: 0 * * * * *
+scheduler:
+  cron:
+    0 0 12 * * ?
+  enabled: true
 
 management:
   endpoints:

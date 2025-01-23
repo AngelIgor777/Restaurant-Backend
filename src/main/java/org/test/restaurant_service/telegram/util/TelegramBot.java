@@ -1,11 +1,14 @@
-package org.test.restaurant_service.telegram;
+package org.test.restaurant_service.telegram.util;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.Resource;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.send.SendSticker;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.*;
@@ -18,6 +21,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
 import org.test.restaurant_service.dto.response.ProductTypeResponseDTO;
+import org.test.restaurant_service.entity.TelegramUserEntity;
 import org.test.restaurant_service.rabbitmq.producer.RabbitMQJsonProducer;
 import org.test.restaurant_service.service.PhotoService;
 import org.test.restaurant_service.service.ProductService;
@@ -28,7 +32,6 @@ import org.test.restaurant_service.service.impl.PhotoServiceImpl;
 import org.test.restaurant_service.service.impl.ProductServiceImpl;
 import org.test.restaurant_service.service.impl.ProductTypeServiceImpl;
 import org.test.restaurant_service.telegram.config.BotConfig;
-import org.test.restaurant_service.telegram.util.TextService;
 import javax.persistence.EntityNotFoundException;
 import java.util.ArrayList;
 import java.util.List;

@@ -14,9 +14,9 @@ import org.test.restaurant_service.entity.*;
 import org.test.restaurant_service.mapper.*;
 import org.test.restaurant_service.repository.ProductRepository;
 import org.test.restaurant_service.service.*;
-
 import javax.persistence.EntityNotFoundException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -121,10 +121,11 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
 
         OrderResponseDTO responseDTO = orderMapper.toResponseDTO(savedOrder);
         responseDTO.setTotalCookingTime(totalCookingTime.get());
-        responseDTO.setTotalPrice(totalPrice.get());
+        BigDecimal roundedValue = totalPrice.get().setScale(2, RoundingMode.HALF_UP);
+        responseDTO.setTotalPrice(roundedValue);
         responseDTO.setProducts(productResponseDTOS);
 
-        orderProductResponseDtoWithPayloadDto.setPayload(responseDTO);
+        orderProductResponseDtoWithPayloadDto.setOrderResponseDTO(responseDTO);
 
         theOrderInRestaurant(orderInRestaurant, tableRequestDTO, order, addressRequestDTO, orderProductResponseDtoWithPayloadDto);
 
@@ -147,7 +148,7 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
         if (orderInRestaurant) {
             Table table = orderProductService.getByNumber(tableRequestDTO.getNumber());
             order.setTable(table);
-            orderProductResponseDtoWithPayloadDto.getPayload().setTableResponseDTO(tableMapper.toResponseDTO(table));
+            orderProductResponseDtoWithPayloadDto.getOrderResponseDTO().setTableResponseDTO(tableMapper.toResponseDTO(table));
             return true;
         } else {
             Address address = Address.builder()
