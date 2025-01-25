@@ -21,8 +21,6 @@ public class AddressRequestDTO {
 
     private String apartmentNumber;
 
-    private boolean isRegisterUser;
-
     private Integer userId;
 
 }

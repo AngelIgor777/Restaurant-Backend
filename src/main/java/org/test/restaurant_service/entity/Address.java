@@ -15,6 +15,7 @@ import java.util.Objects;
 @Builder
 public class Address {
 
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -31,9 +32,13 @@ public class Address {
     @Column(name = "apartment_number", length = 8)
     private String apartmentNumber;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false, foreignKey = @ForeignKey(name = "fk_address_user"))
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "user_id", referencedColumnName = "id", foreignKey = @ForeignKey(name = "fk_address_user"))
     private User user;
+
+    public boolean addressHaveUser() {
+        return user != null;
+    }
 
     @Override
     public boolean equals(Object o) {

@@ -38,8 +38,8 @@ public class User {
     @JoinColumn(name = "chat_id", referencedColumnName = "chat_id", unique = true)
     private TelegramUserEntity telegramUserEntity;
 
-    @OneToMany(mappedBy = "user",cascade = CascadeType.ALL,orphanRemoval = true)
-    private List<Address> address;
+    @OneToOne(mappedBy = "user",cascade = CascadeType.ALL,orphanRemoval = true)
+    private Address address;
 
     @Override
     public boolean equals(Object o) {

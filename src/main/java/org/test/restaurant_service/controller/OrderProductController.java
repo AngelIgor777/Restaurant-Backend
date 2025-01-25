@@ -4,9 +4,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.test.restaurant_service.dto.request.OrderProductRequestDTO;
-import org.test.restaurant_service.dto.request.OrderProductRequestDtoWithPayloadDto;
+import org.test.restaurant_service.dto.request.OrderProductRequestWithPayloadDto;
 import org.test.restaurant_service.dto.response.OrderProductResponseDTO;
-import org.test.restaurant_service.dto.response.OrderProductResponseDtoWithPayloadDto;
+import org.test.restaurant_service.dto.response.OrderProductResponseWithPayloadDto;
+import org.test.restaurant_service.entity.OrderProduct;
+import org.test.restaurant_service.mapper.OrderProductMapper;
 import org.test.restaurant_service.service.OrderProductAndUserService;
 import org.test.restaurant_service.service.OrderProductService;
 
@@ -20,15 +22,17 @@ public class OrderProductController {
 
     private final OrderProductService orderProductService;
     private final OrderProductAndUserService orderProductAndUserService;
+    private final OrderProductMapper orderProductMapper;
 
     @GetMapping("/order/{orderId}")
     public List<OrderProductResponseDTO> getOrderProductsByOrderId(@PathVariable Integer orderId) {
-        return orderProductService.getOrderProductsByOrderId(orderId);
+        List<OrderProduct> orderProductsByOrderId = orderProductService.getOrderProductsByOrderId(orderId);
+        return orderProductsByOrderId.stream().map(orderProductMapper::toResponseDTO).toList();
     }
 
     @PostMapping("/bulk")
     @ResponseStatus(HttpStatus.CREATED)
-    public OrderProductResponseDtoWithPayloadDto createBulk(@Valid @RequestBody OrderProductRequestDtoWithPayloadDto requestDtoWithPayloadDto) {
+    public OrderProductResponseWithPayloadDto createBulk(@Valid @RequestBody OrderProductRequestWithPayloadDto requestDtoWithPayloadDto) {
         return orderProductAndUserService.createBulk(requestDtoWithPayloadDto);
     }
 

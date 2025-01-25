@@ -16,46 +16,27 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class OrderProductRequestDtoWithPayloadDto {
+public class OrderProductRequestWithPayloadDto {
 
-    /**
-     * List of product requests within an order.
-     * Each request contains product details and quantity.
-     */
     @NotNull(message = "Order products cannot be null")
     @Size(min = 1, message = "At least one product must be included")
     private List<OrderProductRequestDTO> orderProductRequestDTO;
 
-    /**
-     * Payment method for the order (e.g., CARD, CASH, etc.).
-     */
     @NotNull(message = "Payment method is required")
     private Order.PaymentMethod paymentMethod;
 
-
     private boolean orderInRestaurant;
-    /**
-     * Table information for dine-in orders.
-     * Optional for delivery orders.
-     */
+
     private TableRequestDTO tableRequestDTO;
 
-    /**
-     * Indicates if discount codes exist in the request.
-     */
     private boolean existDiscountCodes;
 
-    /**
-     * Product-specific discount code, if applicable.
-     */
     private String productDiscountCode;
 
-    /**
-     * General discount code for the entire order, if applicable.
-     */
     private String globalDiscountCode;
 
+    private boolean userRegistered;
+
+    private Integer userId;
     private AddressRequestDTO addressRequestDTO;
-
-
 }

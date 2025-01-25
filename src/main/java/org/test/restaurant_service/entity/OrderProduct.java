@@ -17,6 +17,7 @@ import java.util.Objects;
 @Table(name = "order_products", schema = "restaurant_service",
         uniqueConstraints = @UniqueConstraint(name = "unique_order_item", columnNames = {"order_id", "product_id"}))
 public class OrderProduct {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;

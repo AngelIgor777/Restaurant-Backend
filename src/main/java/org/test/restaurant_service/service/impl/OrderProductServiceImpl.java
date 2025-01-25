@@ -6,7 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.test.restaurant_service.controller.websocket.WebSocketController;
 import org.test.restaurant_service.dto.request.OrderProductRequestDTO;
 import org.test.restaurant_service.dto.response.OrderProductResponseDTO;
-import org.test.restaurant_service.dto.response.OrderProductResponseDtoWithPayloadDto;
+import org.test.restaurant_service.dto.response.OrderProductResponseWithPayloadDto;
 import org.test.restaurant_service.dto.response.OrderResponseDTO;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
 import org.test.restaurant_service.entity.*;
@@ -60,7 +60,7 @@ public class OrderProductServiceImpl implements OrderProductService {
         OrderResponseDTO orderResponse = orderMapper.toResponseDTO(order);
         orderResponse.setProducts(productResponseDTOList);
         orderResponse.setTotalCookingTime(totalCookingTime.get());
-        sendOrdersFromWebsocket();
+//        sendOrdersFromWebsocket();
         return orderResponse;
     }
 
@@ -111,27 +111,13 @@ public class OrderProductServiceImpl implements OrderProductService {
                 .orElseThrow(() -> new EntityNotFoundException("Table not found with number " + tableNumber));
     }
 
-    public void sendOrdersFromWebsocket() {
-//        orderRepository.findAll().stream()
-//                .map(order -> {
-//                    OrderProductResponseDtoWithPayloadDto payloadDto = new OrderProductResponseDtoWithPayloadDto();
-//                    User user = order.getUser();
-//                    List<Address> address = user.getAddress();
-//
-//
-//                })
-//                .collect(Collectors.toList());
-//
-//
-//        webSocketController.sendOrdersFromWebsocket(allOrders);
+    public void sendOrdersFromWebsocket(OrderProductResponseWithPayloadDto payloadDto) {
+        webSocketController.sendOrdersFromWebsocket(payloadDto);
     }
 
     @Override
-    public List<OrderProductResponseDTO> getOrderProductsByOrderId(Integer orderId) {
-        return orderProductRepository.findAllByOrderId(orderId)
-                .stream()
-                .map(orderProductMapper::toResponseDTO)
-                .collect(Collectors.toList());
+    public List<OrderProduct> getOrderProductsByOrderId(Integer orderId) {
+        return orderProductRepository.findAllByOrderId(orderId);
     }
 
     @Override

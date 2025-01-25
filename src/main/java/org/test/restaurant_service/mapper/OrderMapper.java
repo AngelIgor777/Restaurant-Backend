@@ -10,7 +10,6 @@ public interface OrderMapper {
 
     @Mapping(target = "products", ignore = true) // Игнорирование при создании
     @Mapping(target = "totalCookingTime", ignore = true)
-    @Mapping(target = "tableResponseDTO", ignore = true)
     OrderResponseDTO toResponseDTO(Order order);
 
     @Mapping(target = "table", ignore = true)
@@ -18,6 +17,7 @@ public interface OrderMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "user", ignore = true)
+    @Mapping(target = "address", ignore = true)
     Order toEntity(OrderRequestDTO requestDTO);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
@@ -26,5 +26,6 @@ public interface OrderMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "user", ignore = true)
+    @Mapping(target = "address", ignore = true)
     void updateEntityFromRequestDTO(OrderRequestDTO requestDTO, @MappingTarget Order order);
 }

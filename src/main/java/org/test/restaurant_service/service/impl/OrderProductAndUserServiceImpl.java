@@ -4,16 +4,17 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.test.restaurant_service.dto.request.AddressRequestDTO;
 import org.test.restaurant_service.dto.request.OrderProductRequestDTO;
-import org.test.restaurant_service.dto.request.OrderProductRequestDtoWithPayloadDto;
+import org.test.restaurant_service.dto.request.OrderProductRequestWithPayloadDto;
 import org.test.restaurant_service.dto.request.TableRequestDTO;
 import org.test.restaurant_service.dto.response.AddressResponseDTO;
-import org.test.restaurant_service.dto.response.OrderProductResponseDtoWithPayloadDto;
+import org.test.restaurant_service.dto.response.OrderProductResponseWithPayloadDto;
 import org.test.restaurant_service.dto.response.OrderResponseDTO;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
 import org.test.restaurant_service.entity.*;
 import org.test.restaurant_service.mapper.*;
 import org.test.restaurant_service.repository.ProductRepository;
 import org.test.restaurant_service.service.*;
+
 import javax.persistence.EntityNotFoundException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -40,6 +41,7 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
     private final OrderMapper orderMapper;
     private final AddressMapper addressMapper;
     private final TableMapper tableMapper;
+    private final OrderDiscountService orderDiscountService;
 
 
     //TODO finish it
@@ -50,9 +52,9 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
     //4 save request
     //5 return all data info
     @Override
-    public OrderProductResponseDtoWithPayloadDto createBulk(OrderProductRequestDtoWithPayloadDto requestDtoWithPayloadDto) {
+    public OrderProductResponseWithPayloadDto createBulk(OrderProductRequestWithPayloadDto requestDtoWithPayloadDto) {
 
-        AddressRequestDTO addressRequestDTO = requestDtoWithPayloadDto.getAddressRequestDTO();
+
         TableRequestDTO tableRequestDTO = requestDtoWithPayloadDto.getTableRequestDTO();
         Order.PaymentMethod paymentMethod = requestDtoWithPayloadDto.getPaymentMethod();
         boolean orderInRestaurant = requestDtoWithPayloadDto.isOrderInRestaurant();
@@ -60,8 +62,8 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
         String productDiscountCode = requestDtoWithPayloadDto.getProductDiscountCode();
         String globalDiscountCode = requestDtoWithPayloadDto.getGlobalDiscountCode();
 
-        OrderProductResponseDtoWithPayloadDto orderProductResponseDtoWithPayloadDto =
-                OrderProductResponseDtoWithPayloadDto.builder()
+        OrderProductResponseWithPayloadDto orderProductResponseWithPayloadDto =
+                OrderProductResponseWithPayloadDto.builder()
                         .orderInRestaurant(orderInRestaurant)
                         .existDiscountCodes(existDiscountCodes)
                         .build();
@@ -72,7 +74,7 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
                 .build();
 
 
-        checkTheUserIsRegistered(addressRequestDTO, order);
+        checkTheUserIsRegistered(requestDtoWithPayloadDto, order);
 
 
         AtomicReference<BigDecimal> totalPrice = new AtomicReference<>(BigDecimal.valueOf(0));
@@ -97,7 +99,12 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
                         .multiply(globalDiscountPercentage)
                         .divide(new BigDecimal(100)); // (total price * discount%) / 100
 
-                orderProductResponseDtoWithPayloadDto.setGlobalDiscountCode(globalDiscountCode);
+                OrderDiscount orderDiscount = OrderDiscount.builder()
+                        .order(order)
+                        .discount(discountByCode)
+                        .build();
+                orderDiscountService.save(orderDiscount);
+                orderProductResponseWithPayloadDto.setGlobalDiscountCode(globalDiscountCode);
             }
             if (productDiscountCode != null && !productDiscountCode.isEmpty()) {
                 // Retrieve the product and global discount details
@@ -109,7 +116,7 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
                 // Apply product-specific discounts (e.g., per applicable product)
                 productDiscountAmount = addToProductDiscountAmount(productResponseDTOS, productDiscountPercentage, productDiscountAmount);
 
-                orderProductResponseDtoWithPayloadDto.setProductDiscountCode(productDiscountCode);
+                orderProductResponseWithPayloadDto.setProductDiscountCode(productDiscountCode);
             }
             BigDecimal finalTotalPrice = totalPrice.get()
                     .subtract(globalDiscountAmount)
@@ -125,49 +132,43 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
         responseDTO.setTotalPrice(roundedValue);
         responseDTO.setProducts(productResponseDTOS);
 
-        orderProductResponseDtoWithPayloadDto.setOrderResponseDTO(responseDTO);
+        orderProductResponseWithPayloadDto.setOrderResponseDTO(responseDTO);
 
-        theOrderInRestaurant(orderInRestaurant, tableRequestDTO, order, addressRequestDTO, orderProductResponseDtoWithPayloadDto);
+        theOrderInRestaurant(order, requestDtoWithPayloadDto, orderProductResponseWithPayloadDto);
 
         orderProductService.createAll(orderProducts);
 
-        orderProductService.sendOrdersFromWebsocket();
+        orderProductService.sendOrdersFromWebsocket(orderProductResponseWithPayloadDto);
 
-
-        return orderProductResponseDtoWithPayloadDto;
+        return orderProductResponseWithPayloadDto;
     }
 
-    private void checkTheUserIsRegistered(AddressRequestDTO addressRequestDTO, Order order) {
-        if (addressRequestDTO.isRegisterUser()) {
-            User user = userService.findById(addressRequestDTO.getUserId());
+    private void checkTheUserIsRegistered(OrderProductRequestWithPayloadDto requestDtoWithPayloadDto, Order order) {
+        if (requestDtoWithPayloadDto.isUserRegistered()) {
+            User user = userService.findById(requestDtoWithPayloadDto.getUserId());
             order.setUser(user);
         }
     }
 
-    private boolean theOrderInRestaurant(boolean orderInRestaurant, TableRequestDTO tableRequestDTO, Order order, AddressRequestDTO addressRequestDTO, OrderProductResponseDtoWithPayloadDto orderProductResponseDtoWithPayloadDto) {
-        if (orderInRestaurant) {
-            Table table = orderProductService.getByNumber(tableRequestDTO.getNumber());
+    private boolean theOrderInRestaurant(Order order, OrderProductRequestWithPayloadDto request, OrderProductResponseWithPayloadDto orderProductResponseWithPayloadDto) {
+        if (request.isOrderInRestaurant()) {
+            Table table = orderProductService.getByNumber(request.getTableRequestDTO().getNumber());
             order.setTable(table);
-            orderProductResponseDtoWithPayloadDto.getOrderResponseDTO().setTableResponseDTO(tableMapper.toResponseDTO(table));
+            orderProductResponseWithPayloadDto.setTableResponseDTO(tableMapper.toResponseDTO(table));
             return true;
         } else {
-            Address address = Address.builder()
-                    .city(addressRequestDTO.getCity())
-                    .street(addressRequestDTO.getStreet())
-                    .homeNumber(addressRequestDTO.getHomeNumber())
-                    .apartmentNumber(addressRequestDTO.getApartmentNumber())
-                    .build();
-
-            if (order.getUser() != null) {
-                address.setUser(order.getUser());
+            if (order.hasUser()) {
+                User user = order.getUser();
+                Address address = user.getAddress();
+                AddressResponseDTO responseDto = addressMapper.toResponseDto(address);
+                responseDto.setUserId(user.getId());
             }
-            Address savedAddress = addressService.save(address);
-            AddressResponseDTO responseDto = addressMapper.toResponseDto(savedAddress);
-            responseDto.setUserId(addressRequestDTO.getUserId());
-            responseDto.setRegisterUser(addressRequestDTO.isRegisterUser());
-
-
-            orderProductResponseDtoWithPayloadDto.setAddressResponseDTO(responseDto);
+            AddressRequestDTO addressRequestDTO = request.getAddressRequestDTO();
+            Address address = addressMapper.toEntity(addressRequestDTO);
+            order.setAddress(address);
+            addressService.save(address);
+            AddressResponseDTO responseDto = addressMapper.toResponseDto(address);
+            orderProductResponseWithPayloadDto.setAddressResponseDTO(responseDto);
             return false;
         }
     }

@@ -10,11 +10,12 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrderProductResponseDtoWithPayloadDto {
+public class OrderProductResponseWithPayloadDto {
     private OrderResponseDTO orderResponseDTO;
     private boolean orderInRestaurant;
     private boolean existDiscountCodes;
     private String productDiscountCode;
     private String globalDiscountCode;
     private AddressResponseDTO addressResponseDTO;
+    private TableResponseDTO tableResponseDTO;
 }

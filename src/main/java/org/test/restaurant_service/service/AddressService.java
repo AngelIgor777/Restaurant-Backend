@@ -22,5 +22,5 @@ public interface AddressService {
     List<Address> findByCity(String city);
 
     // Find addresses by user ID
-    List<Address> findByUserId(Integer userId);
+    Address findByUserId(Integer userId);
 }

@@ -4,6 +4,7 @@ import javax.persistence.Table;
 import javax.persistence.*;
 
 import lombok.*;
+import org.test.restaurant_service.service.OrderDiscountService;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -31,6 +32,10 @@ public class Order {
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user;
 
+    @ManyToOne
+    @JoinColumn(name = "address_id", referencedColumnName = "id")
+    private Address address;
+
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     @Builder.Default
@@ -57,6 +62,18 @@ public class Order {
         if (o == null || getClass() != o.getClass()) return false;
         Order order = (Order) o;
         return Objects.equals(id, order.id) && Objects.equals(status, order.status);
+    }
+
+    public boolean hasUser() {
+        return user != null;
+    }
+
+    public boolean isOrderInRestaurant() {
+        return table != null;
+    }
+
+    public boolean isOrderOutRestaurant() {
+        return address != null;
     }
 
     @Override

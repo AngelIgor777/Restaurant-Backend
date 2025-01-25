@@ -5,6 +5,8 @@ import org.springframework.stereotype.Service;
 import org.test.restaurant_service.entity.Address;
 import org.test.restaurant_service.repository.AddressRepository;
 import org.test.restaurant_service.service.AddressService;
+
+import javax.persistence.EntityNotFoundException;
 import java.util.List;
 
 @Service
@@ -43,7 +45,8 @@ public class AddressServiceImpl implements AddressService {
     }
 
     @Override
-    public List<Address> findByUserId(Integer userId) {
-        return addressRepository.findByUserId(userId);
+    public Address findByUserId(Integer userId) {
+        return addressRepository.findById(userId)
+                .orElseThrow(()-> new EntityNotFoundException("Address not found with ID: " + userId));
     }
 }

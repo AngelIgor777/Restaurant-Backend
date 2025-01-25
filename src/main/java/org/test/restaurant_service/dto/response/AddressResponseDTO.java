@@ -17,7 +17,5 @@ public class AddressResponseDTO {
 
     private String apartmentNumber;
 
-    private boolean isRegisterUser;
-
     private Integer userId;
 }

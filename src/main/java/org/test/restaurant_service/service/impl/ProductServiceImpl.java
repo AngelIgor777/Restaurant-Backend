@@ -17,11 +17,9 @@ import org.test.restaurant_service.entity.ProductType;
 import org.test.restaurant_service.mapper.PhotoMapper;
 import org.test.restaurant_service.mapper.ProductMapper;
 import org.test.restaurant_service.repository.PhotoRepository;
-import org.test.restaurant_service.repository.ProductHistoryRepository;
 import org.test.restaurant_service.repository.ProductRepository;
 import org.test.restaurant_service.repository.ProductTypeRepository;
 import org.test.restaurant_service.service.ProductService;
-
 import javax.persistence.EntityNotFoundException;
 import java.math.BigDecimal;
 import java.time.LocalTime;
@@ -49,7 +47,11 @@ public class ProductServiceImpl implements ProductService {
         product.setType(type);
         product.setDescription(description);
         product.setPrice(price);
-        product.setCookingTime(LocalTime.parse(cookingTime));
+        LocalTime cookingTimeStr = LocalTime.parse(cookingTime);
+        if (cookingTimeStr.getHour() > 0) {
+            throw new IllegalArgumentException("Cooking time is not valid");
+        }
+        product.setCookingTime(cookingTimeStr);
         return product;
     }
 

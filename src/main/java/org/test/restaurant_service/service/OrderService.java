@@ -1,6 +1,7 @@
 package org.test.restaurant_service.service;
 
 import org.test.restaurant_service.dto.request.OrderRequestDTO;
+import org.test.restaurant_service.dto.response.OrderProductResponseWithPayloadDto;
 import org.test.restaurant_service.dto.response.OrderResponseDTO;
 import org.test.restaurant_service.entity.Order;
 
@@ -20,4 +21,8 @@ public interface OrderService {
     OrderResponseDTO update(Integer id, OrderRequestDTO requestDTO);
 
     void delete(Integer id);
+
+    List<OrderProductResponseWithPayloadDto> getAllOrdersProductResponseWithPayloadDto();
+
+    OrderProductResponseWithPayloadDto getOrderProductResponseWithPayloadDto(Integer id);
 }
