@@ -18,6 +18,7 @@ import org.test.restaurant_service.service.OrderProductService;
 import org.test.restaurant_service.service.OrderService;
 
 import javax.persistence.EntityNotFoundException;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -115,6 +116,11 @@ public class OrderServiceImpl implements OrderService {
     public OrderProductResponseWithPayloadDto getOrderProductResponseWithPayloadDto(Integer id) {
         return getOrderProductResponseWithPayloadDto(orderRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Order not found with id " + id)));
+    }
+
+    @Override
+    public List<Order> getAllOrdersByPeriod(LocalDateTime from, LocalDateTime to) {
+        return orderRepository.findAllByCreatedAtBetween(from, to);
     }
 
     private OrderProductResponseWithPayloadDto getOrderProductResponseWithPayloadDto(Order order) {

@@ -5,6 +5,7 @@ import org.test.restaurant_service.dto.response.OrderProductResponseWithPayloadD
 import org.test.restaurant_service.dto.response.OrderResponseDTO;
 import org.test.restaurant_service.entity.Order;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface OrderService {
@@ -25,4 +26,6 @@ public interface OrderService {
     List<OrderProductResponseWithPayloadDto> getAllOrdersProductResponseWithPayloadDto();
 
     OrderProductResponseWithPayloadDto getOrderProductResponseWithPayloadDto(Integer id);
+
+    List<Order> getAllOrdersByPeriod(LocalDateTime from, LocalDateTime to);
 }

@@ -188,13 +188,18 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
     }
 
 
-    private List<OrderProduct> getOrderProductsAndSetProductsForOrderAndCountTotalCookingTimeAndTotalPriceAndAddToProductResponseDTOList(List<OrderProductRequestDTO> requestDTOs, Order order, AtomicReference<BigDecimal> totalPrice, AtomicReference<LocalTime> totalCookingTime, List<ProductResponseDTO> productResponseDTOList) {
+    private List<OrderProduct>
+    getOrderProductsAndSetProductsForOrderAndCountTotalCookingTimeAndTotalPriceAndAddToProductResponseDTOList
+            (List<OrderProductRequestDTO> requestDTOs,
+             Order order, AtomicReference<BigDecimal> totalPrice,
+             AtomicReference<LocalTime> totalCookingTime,
+             List<ProductResponseDTO> productResponseDTOList) {
         return requestDTOs.stream()
                 .map(requestDTO -> {
                     Product product = productRepository.findById(requestDTO.getProductId())
                             .orElseThrow(() -> new EntityNotFoundException("Product not found with id " + requestDTO.getProductId()));
                     OrderProduct orderProduct = createOrderProduct(order, requestDTO, product);
-                    countTotalPrice(totalPrice, product);
+                    countTotalPrice(totalPrice, product, requestDTO.getQuantity());
                     countTotalCookingTime(totalCookingTime, product);
                     ProductResponseDTO productResponseDTO = productMapper.toResponseDTO(product);
                     countQuantity(requestDTO, productResponseDTO);
@@ -217,8 +222,8 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
                 .plusSeconds(product.getCookingTime().getSecond()));
     }
 
-    private BigDecimal countTotalPrice(AtomicReference<BigDecimal> totalPrice, Product product) {
-        return totalPrice.updateAndGet(v -> v.add(product.getPrice()));
+    private BigDecimal countTotalPrice(AtomicReference<BigDecimal> totalPrice, Product product,Integer quantity) {
+        return totalPrice.updateAndGet(v -> v.add(product.getPrice().multiply(new BigDecimal(quantity))));
     }
 
     private void countQuantity(OrderProductRequestDTO requestDTO, ProductResponseDTO productResponseDTO) {

@@ -2,6 +2,7 @@ package org.test.restaurant_service.entity;
 
 import javax.persistence.Table;
 import javax.persistence.*;
+
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -30,8 +31,17 @@ public class OrderProduct {
     @JoinColumn(name = "product_id", foreignKey = @ForeignKey(name = "fk_order_product_product"), nullable = false)
     private Product product;
 
+
+    @Column(name = "price_with_discount", precision = 10, scale = 2)
+    private BigDecimal priceWithDiscount;
+
     @Column(nullable = false)
     private Integer quantity;
+
+
+    public boolean hasDiscount() {
+        return priceWithDiscount != null;
+    }
 
     @Override
     public boolean equals(Object o) {
