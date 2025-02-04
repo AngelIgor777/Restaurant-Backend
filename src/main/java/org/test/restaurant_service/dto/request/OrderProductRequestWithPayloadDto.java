@@ -5,9 +5,9 @@ import lombok.Data;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import org.test.restaurant_service.entity.Order;
-
 import javax.validation.constraints.*;
 import java.util.List;
+
 
 /**
  * DTO for handling order product requests with payload details.
@@ -39,4 +39,5 @@ public class OrderProductRequestWithPayloadDto {
 
     private Integer userId;
     private AddressRequestDTO addressRequestDTO;
+    
 }
