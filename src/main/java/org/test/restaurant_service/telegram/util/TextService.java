@@ -8,6 +8,7 @@ import org.test.restaurant_service.entity.TelegramUserEntity;
 
 import java.time.LocalTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -104,18 +105,18 @@ class TextService {
                 .append("🎉 <i>Введите номер категории или выберите из меню ниже!</i> 🎉\n");
     }
 
-    public String getErrorText(Long chatId) {
-        return String.format("🌐Заходите на наш сайт https://arnauts.md/%d.\n" +
-                "🎁Участвуйте в розыгрышах, получайте промокоды и смотрите за новостями!", chatId);
+    public String getErrorText(UUID userUUID) {
+        return String.format("🌐Заходите на наш сайт [arnauts.md](https://arnauts.md/%s).\n" +
+                "🎁Участвуйте в розыгрышах, получайте промокоды и смотрите за новостями!", userUUID);
 
     }
 
-    public String getMessageAfterRegister(Long chatId) {
+    public String getMessageAfterRegister(UUID userUUID) {
         return String.format("""
                 Поздравляем! Теперь вы являетесь частью нашей семьи!
                 
                 🌐Заходите на наш сайт [arnauts.md](https://arnauts.md/%s)
-                🎁Участвуйте в розыгрышах, получайте промокоды и смотрите за новостями!""", chatId);
+                🎁Участвуйте в розыгрышах, получайте промокоды и смотрите за новостями!""", userUUID);
     }
 
     public String getWebSiteText(Long chatId) {

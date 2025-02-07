@@ -1,14 +1,12 @@
 package org.test.restaurant_service.telegram.util;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.Resource;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.send.SendSticker;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.*;
@@ -21,20 +19,16 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
 import org.test.restaurant_service.dto.response.ProductTypeResponseDTO;
-import org.test.restaurant_service.entity.TelegramUserEntity;
+import org.test.restaurant_service.entity.User;
 import org.test.restaurant_service.rabbitmq.producer.RabbitMQJsonProducer;
-import org.test.restaurant_service.service.PhotoService;
-import org.test.restaurant_service.service.ProductService;
-import org.test.restaurant_service.service.ProductTypeService;
-import org.test.restaurant_service.service.TelegramUserService;
-import org.test.restaurant_service.service.impl.TelegramUserServiceImpl;
-import org.test.restaurant_service.service.impl.PhotoServiceImpl;
-import org.test.restaurant_service.service.impl.ProductServiceImpl;
-import org.test.restaurant_service.service.impl.ProductTypeServiceImpl;
+import org.test.restaurant_service.service.*;
+import org.test.restaurant_service.service.impl.*;
 import org.test.restaurant_service.telegram.config.BotConfig;
+
 import javax.persistence.EntityNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 @Slf4j
@@ -49,8 +43,9 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final TextService textService;
     private final BotConfig botConfig;
     private final PhotoService photoService;
+    private final UserService userService;
 
-    public TelegramBot(TelegramUserServiceImpl telegramUserService, ProductTypeServiceImpl productTypeService, ProductServiceImpl productService, RabbitMQJsonProducer rabbitMQJsonProducer, BotConfig botConfig, PhotoServiceImpl photoServiceImpl, TextService textService, PhotoService photoService) {
+    public TelegramBot(TelegramUserServiceImpl telegramUserService, ProductTypeServiceImpl productTypeService, ProductServiceImpl productService, RabbitMQJsonProducer rabbitMQJsonProducer, BotConfig botConfig, PhotoServiceImpl photoServiceImpl, TextService textService, PhotoService photoService, UserServiceImpl userServiceImpl, UserService userService) {
         this.telegramUserService = telegramUserService;
         this.productTypeService = productTypeService;
         this.productService = productService;
@@ -59,6 +54,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         this.botConfig = botConfig;
         this.textService = textService;
         this.photoService = photoService;
+        this.userService = userService;
         ArrayList<BotCommand> botCommands = getCommands();
         try {
             this.execute(new SetMyCommands(botCommands, new BotCommandScopeDefault(), null));
@@ -383,7 +379,8 @@ public class TelegramBot extends TelegramLongPollingBot {
         sendMessage(update, textService.getHelpText());
     }
 
-    private void registerFull(Update update) {
+    @Transactional(rollbackFor = Exception.class)
+    public void registerFull(Update update) {
 
         Long chatId = update.getMessage().getChatId();
 
@@ -391,19 +388,13 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         if (!telegramUserService.existByChatId(chatId)) {
             sendSticker(chatId, "CAACAgIAAxkBAAOMZ2wCg2GLi8plYN0NGFsVl2NfnMYAAgsBAAL3AsgPxfQ7mJWqcds2BA");
-            try {
-                telegramUserService.registerUser(update);
-                String message = textService.getMessageAfterRegister(chatId);
-                sendMessageWithMarkdown(chatId, message);
-            } catch (EntityNotFoundException e) {
-                errorText = textService.getErrorText(chatId);
-                sendMessage(update, errorText);
-                log.error(e.getMessage());
-            }
+            User createdUser = telegramUserService.registerUser(update);
+            String message = textService.getMessageAfterRegister(createdUser.getUuid());
+            sendMessageWithMarkdown(chatId, message);
         } else {
-            errorText = textService.getErrorText(chatId);
-
-            sendMessage(update, errorText);
+            UUID userUUID = userService.findByChatId(chatId).getUuid();
+            errorText = textService.getErrorText(userUUID);
+            sendMessageWithMarkdown(chatId, errorText);
         }
     }
 

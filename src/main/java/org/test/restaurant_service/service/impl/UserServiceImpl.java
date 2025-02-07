@@ -7,6 +7,7 @@ import org.test.restaurant_service.repository.UserRepository;
 import org.test.restaurant_service.service.UserService;
 
 import javax.persistence.EntityNotFoundException;
+import java.util.UUID;
 
 
 @Service
@@ -21,10 +22,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User findById(Integer id) {
-        return userRepository.findById(id)
-                .orElseThrow(()-> new EntityNotFoundException("User with id " + id + " not found"));
+    public User findById(UUID uuid) {
+        return userRepository.findById(uuid)
+                .orElseThrow(() -> new EntityNotFoundException("User with id " + uuid + " not found"));
     }
 
-
+    @Override
+    public User findByChatId(Long chatId) {
+        return userRepository.findUserByTelegramUserEntityChatId(chatId)
+                .orElseThrow(() -> new EntityNotFoundException("User with id " + chatId + " not found"));
+    }
 }

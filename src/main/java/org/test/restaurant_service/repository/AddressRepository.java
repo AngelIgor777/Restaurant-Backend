@@ -12,6 +12,4 @@ public interface AddressRepository extends JpaRepository<Address, Integer> {
     // Custom query to find addresses by city
     List<Address> findByCity(String city);
 
-    // Find all addresses for a specific user
-    List<Address> findByUserId(Integer userId);
 }

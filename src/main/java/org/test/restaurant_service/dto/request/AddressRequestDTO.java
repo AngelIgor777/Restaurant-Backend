@@ -2,7 +2,7 @@ package org.test.restaurant_service.dto.request;
 
 import lombok.*;
 
-import javax.validation.constraints.*;
+import java.util.UUID;
 
 /**
  * DTO for handling address requests.
@@ -21,6 +21,6 @@ public class AddressRequestDTO {
 
     private String apartmentNumber;
 
-    private Integer userId;
+    private UUID userUUID;
 
 }

@@ -34,7 +34,7 @@ public class TelegramUserServiceImpl implements TelegramUserService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public TelegramUserEntity registerUser(Update update) {
+    public org.test.restaurant_service.entity.User registerUser(Update update) {
         Message message = update.getMessage();
         User user = message.getFrom();
 
@@ -52,8 +52,7 @@ public class TelegramUserServiceImpl implements TelegramUserService {
         roleService.ensureUserHasRole(userEntity, RoleName.ROLE_ADMIN);
         TelegramUserEntity save = telegramUserRepository.save(telegramUser);
         userEntity.setTelegramUserEntity(save);
-        userRepository.save(userEntity);
-        return telegramUser;
+        return userRepository.save(userEntity);
     }
 
     @Override

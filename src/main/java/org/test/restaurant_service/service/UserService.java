@@ -2,9 +2,13 @@ package org.test.restaurant_service.service;
 
 import org.test.restaurant_service.entity.User;
 
+import java.util.UUID;
+
 public interface UserService {
 
     User save(User user);
 
-    User findById(Integer id);
+    User findById(UUID uuid);
+
+    User findByChatId(Long chatId);
 }

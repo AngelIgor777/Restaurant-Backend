@@ -8,7 +8,10 @@ import org.springframework.stereotype.Service;
 import org.test.restaurant_service.entity.User;
 import org.test.restaurant_service.repository.UserRepository;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
+
+import static com.fasterxml.jackson.databind.jsonFormatVisitors.JsonValueFormat.UUID;
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
@@ -20,8 +23,8 @@ public class CustomUserDetailsService implements UserDetailsService {
     }
 
     @Override
-    public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
-        User user = userRepository.findById(Integer.valueOf(userId))
+    public UserDetails loadUserByUsername(String userUUID) throws UsernameNotFoundException {
+        User user = userRepository.findById(java.util.UUID.fromString(userUUID))
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         List<SimpleGrantedAuthority> authorities = user.getRoles().stream()
@@ -29,7 +32,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .collect(Collectors.toList());
 
         return new org.springframework.security.core.userdetails.User(
-                user.getId().toString(),
+                user.getUuid().toString(),
                 null,
                 authorities
         );

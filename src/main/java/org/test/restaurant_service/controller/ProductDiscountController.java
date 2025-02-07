@@ -14,7 +14,6 @@ public class ProductDiscountController {
 
     private final ProductDiscountService productDiscountService;
 
-
     @PostMapping
     public ResponseEntity<ProductDiscount> createProductDiscount(@RequestBody ProductDiscount productDiscount) {
         return ResponseEntity.ok(productDiscountService.saveProductDiscount(productDiscount));

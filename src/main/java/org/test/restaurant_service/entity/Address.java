@@ -33,7 +33,7 @@ public class Address {
     private String apartmentNumber;
 
     @OneToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "user_id", referencedColumnName = "id", foreignKey = @ForeignKey(name = "fk_address_user"))
+    @JoinColumn(name = "user_uuid", referencedColumnName = "uuid", foreignKey = @ForeignKey(name = "fk_address_user"))
     private User user;
 
     public boolean addressHaveUser() {
