@@ -30,6 +30,8 @@ public class TelegramUserEntity implements Serializable {
     @Column(nullable = false)
     private String username;
 
+    private String photoUrl;
+
     @Column(nullable = false)
     private String firstname;
 

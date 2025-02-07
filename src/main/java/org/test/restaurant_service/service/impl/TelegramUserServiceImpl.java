@@ -2,13 +2,10 @@ package org.test.restaurant_service.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.test.restaurant_service.dto.request.UserRegistrationDTO;
-import org.test.restaurant_service.dto.response.JwtResponse;
-import org.test.restaurant_service.entity.Role;
 import org.test.restaurant_service.entity.TelegramUserEntity;
 import org.test.restaurant_service.entity.RoleName;
 import org.test.restaurant_service.repository.RoleRepository;
@@ -17,8 +14,6 @@ import org.test.restaurant_service.repository.UserRepository;
 import org.test.restaurant_service.service.RoleService;
 import org.test.restaurant_service.service.TelegramUserService;
 
-import javax.persistence.EntityNotFoundException;
-import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,8 +28,7 @@ public class TelegramUserServiceImpl implements TelegramUserService {
 
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public org.test.restaurant_service.entity.User registerUser(Update update) {
+    public org.test.restaurant_service.entity.User registerUser(Update update, String userPhotoUrl) {
         Message message = update.getMessage();
         User user = message.getFrom();
 
@@ -43,6 +37,12 @@ public class TelegramUserServiceImpl implements TelegramUserService {
                 .firstname(user.getFirstName())
                 .username(user.getUserName())
                 .build();
+
+        //its ensure because photo can be null
+        if (userPhotoUrl != null) {
+            telegramUser.setPhotoUrl(userPhotoUrl);
+        }
+
 
         org.test.restaurant_service.entity.User userEntity =
                 org.test.restaurant_service.entity.User.builder()
