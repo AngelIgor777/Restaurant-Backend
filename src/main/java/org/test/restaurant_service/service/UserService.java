@@ -8,7 +8,7 @@ public interface UserService {
 
     User save(User user);
 
-    User findById(UUID uuid);
+    User findByUUID(UUID uuid);
 
     User findByChatId(Long chatId);
 }

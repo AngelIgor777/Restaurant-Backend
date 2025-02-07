@@ -145,7 +145,7 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
 
     private void checkTheUserIsRegistered(OrderProductRequestWithPayloadDto requestDtoWithPayloadDto, Order order) {
         if (requestDtoWithPayloadDto.isUserRegistered()) {
-            User user = userService.findById(requestDtoWithPayloadDto.getUserUUID());
+            User user = userService.findByUUID(requestDtoWithPayloadDto.getUserUUID());
             order.setUser(user);
         }
     }
