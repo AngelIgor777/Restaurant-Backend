@@ -21,8 +21,8 @@ spring:
         jdbc:
           batch_size: 20
           batch_versioned_data: true
-        order_updates: true
-        generate_statistics: true
+        order_updates: ${SPRING_JPA_PROPERTIES_HIBERNATE_ORDER_UPDATES}
+        generate_statistics: ${SPRING_JPA_PROPERTIES_HIBERNATE_GENERATE_STATISTICS}
         format_sql: true
 
 

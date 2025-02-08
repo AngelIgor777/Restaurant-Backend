@@ -29,6 +29,7 @@ services:
 
   restaurant_app:
     image: default666/restaurant:latest
+    pull_policy: always
     container_name: restaurant_app
     depends_on:
       - postgres

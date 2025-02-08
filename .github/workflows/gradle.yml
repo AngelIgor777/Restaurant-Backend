@@ -33,6 +33,9 @@ jobs:
         echo "BOT_KEY=${{ secrets.BOT_KEY }}" >> src/main/resources/.env
         echo "RABBITMQ_PASSWORD=${{ secrets.RABBITMQ_PASSWORD }}" >> src/main/resources/.env
         echo "RABBITMQ_USERNAME=${{ secrets.RABBITMQ_USERNAME }}" >> src/main/resources/.env
+        echo "SPRING_JPA_SHOW_SQL=${{ secrets.SPRING_JPA_SHOW_SQL }}" >> src/main/resources/.env
+        echo "SPRING_JPA_PROPERTIES_HIBERNATE_ORDER_UPDATES=${{ secrets.SPRING_JPA_PROPERTIES_HIBERNATE_ORDER_UPDATES }}" >> src/main/resources/.env
+        echo "SPRING_JPA_PROPERTIES_HIBERNATE_GENERATE_STATISTICS=${{ secrets.SPRING_JPA_PROPERTIES_HIBERNATE_GENERATE_STATISTICS }}" >> src/main/resources/.env
        
 
     # Шаг 4: Логинимся в Docker Hub
