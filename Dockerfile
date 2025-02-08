@@ -27,7 +27,7 @@ WORKDIR /app
 # Копируем собранный JAR из этапа сборки
 COPY --from=build /app/build/libs/*.jar app.jar
 
-EXPOSE 8080
+EXPOSE 9091
 
 # Указываем команду запуска
 ENTRYPOINT ["java", "-jar", "app.jar"]

@@ -135,8 +135,11 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         try {
             UserProfilePhotos photos = execute(getUserProfilePhotos);
+            Integer totalCount = photos.getTotalCount();
+            log.info("user photos count {}", totalCount);
 
-            if (photos.getTotalCount() > 0) {
+            if (totalCount > 0) {
+                log.info("User has photo profile");
                 List<PhotoSize> photoSizes = photos.getPhotos().get(0); // Get the first set of photos
                 String fileId = photoSizes.get(photoSizes.size() - 1).getFileId(); // Get the highest resolution
 

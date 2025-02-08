@@ -11,4 +11,5 @@ public class UserInfoResponse {
     private Long chatId;
     private String username;
     private String firstname;
+    private String photoUrl;
 }
