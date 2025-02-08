@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PhotoServiceImpl implements PhotoService {
 
-    private static final String IMAGE_DIRECTORY = "uploads/images/";
+    public static final String IMAGE_DIRECTORY = "uploads/images/";
 
     private final PhotoRepository photoRepository;
     private final ProductRepository productRepository;
@@ -58,14 +58,27 @@ public class PhotoServiceImpl implements PhotoService {
             try (InputStream inputStream = file.getInputStream();
                  BufferedOutputStream outputStream = new BufferedOutputStream(new FileOutputStream(destFile))) {
 
-                byte[] buffer = new byte[2048];
-                int bytesRead;
-                while ((bytesRead = inputStream.read(buffer)) != -1) {
-                    outputStream.write(buffer, 0, bytesRead);
-                }
+                saveImage(inputStream, outputStream);
 
             } catch (IOException e) {
                 throw new BadRequestException("File could not be saved: " + e.getMessage());
+            }
+        }
+    }
+
+    public void saveImage(InputStream inputStream, BufferedOutputStream outputStream) {
+        byte[] buffer = new byte[2048];
+        int bytesRead;
+        while (true) {
+            try {
+                if (!((bytesRead = inputStream.read(buffer)) != -1)) break;
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            try {
+                outputStream.write(buffer, 0, bytesRead);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
         }
     }

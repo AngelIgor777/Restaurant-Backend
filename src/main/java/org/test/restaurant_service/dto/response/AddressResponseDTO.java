@@ -3,6 +3,8 @@ package org.test.restaurant_service.dto.response;
 import lombok.Builder;
 import lombok.Data;
 
+import java.util.UUID;
+
 @Data
 @Builder
 public class AddressResponseDTO {
@@ -17,5 +19,5 @@ public class AddressResponseDTO {
 
     private String apartmentNumber;
 
-    private Integer userId;
+    private UUID userUUID;
 }

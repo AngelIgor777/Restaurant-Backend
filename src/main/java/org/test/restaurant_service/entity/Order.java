@@ -29,7 +29,7 @@ public class Order {
     private org.test.restaurant_service.entity.Table table;
 
     @ManyToOne
-    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    @JoinColumn(name = "user_uuid", referencedColumnName = "uuid")
     private User user;
 
     @ManyToOne

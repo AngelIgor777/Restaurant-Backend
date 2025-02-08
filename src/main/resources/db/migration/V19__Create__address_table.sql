@@ -5,6 +5,6 @@ CREATE TABLE IF NOT EXISTS restaurant_service.address
     street           VARCHAR(128),
     home_number      VARCHAR(128),
     apartment_number VARCHAR(8),
-    user_id          INTEGER REFERENCES restaurant_service.users (id) ON DELETE CASCADE UNIQUE
+    user_uuid        uuid REFERENCES restaurant_service.users (uuid) ON DELETE CASCADE UNIQUE
 );
 

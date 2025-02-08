@@ -12,7 +12,7 @@ public interface AddressMapper {
     @Mapping(target = "id", ignore = true)
     AddressResponseDTO toAddressResponseDTO(AddressRequestDTO addressRequestDTO);
 
-    @Mapping(target = "userId", ignore = true)
+    @Mapping(target = "userUUID", ignore = true)
     AddressResponseDTO toResponseDto(Address address);
 
 

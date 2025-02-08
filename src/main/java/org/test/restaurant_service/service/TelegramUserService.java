@@ -9,7 +9,7 @@ import java.util.List;
 
 
 public interface TelegramUserService {
-    TelegramUserEntity registerUser(Update chatId);
+    org.test.restaurant_service.entity.User registerUser(Update chatId, String photoUrl);
 
     TelegramUserEntity save(TelegramUserEntity telegramUserEntity);
 

@@ -8,7 +8,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.test.restaurant_service.security.filters.JwtAuthenticationFilter;
 
 @Configuration
@@ -33,8 +32,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                         "/api/v1/orders/**",
                         "/ws-orders/**",
                         "/api/v1/statistics/**",
+                        "/api/v1/users/**",
                         "/actuator/**",
-                        "/images/**"
+                        "/images/**",
+                        "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html"
                 ).permitAll() // Разрешаем доступ без аутентификации
                 .anyRequest().authenticated() // Все остальные запросы требуют аутентификации
                 .and()
@@ -47,8 +48,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     public AuthenticationManager authenticationManagerBean() throws Exception {
         return super.authenticationManagerBean();
     }
-
-
 
 
 }
