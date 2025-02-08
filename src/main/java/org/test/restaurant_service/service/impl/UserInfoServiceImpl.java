@@ -37,6 +37,10 @@ public class UserInfoServiceImpl implements UserInfoService {
             responseDto.setUserUUID(userUUID);
             userInfoResponse.setAddressResponseDTO(responseDto);
         }
+        String photoUrl;
+        if ((photoUrl = telegramUserEntity.getPhotoUrl()) != null) {
+            userInfoResponse.setPhotoUrl(photoUrl);
+        }
 
         userInfoResponse.setChatId(telegramUserEntity.getChatId());
         userInfoResponse.setUsername(telegramUserEntity.getUsername());

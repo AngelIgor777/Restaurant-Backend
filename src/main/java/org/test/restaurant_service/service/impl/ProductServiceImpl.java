@@ -107,12 +107,12 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public void delete(Integer id) {
         List<Photo> photoList = photoRepository.findAllByProductId(id);
+        for (Photo photo : photoList) {
+            photoServiceImpl.deleteImage(photo.getUrl());
+        }
         productRepository.deleteById(id);
         photoRepository.deleteAll(photoList);
 
-        for (Photo photo : photoList) {
-            photoServiceImpl.deleteImage(Objects.requireNonNull(photo.getImage().getOriginalFilename()));
-        }
     }
 
 
