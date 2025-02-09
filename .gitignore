@@ -6,6 +6,8 @@ build/
 !**/src/test/**/build/
 /uploads
 .env
+prod
+./prod
 ### STS ###
 .apt_generated
 .classpath
