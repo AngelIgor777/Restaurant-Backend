@@ -45,6 +45,8 @@ dependencies {
     implementation 'org.springdoc:springdoc-openapi-ui:1.8.0'
     implementation 'io.swagger.core.v3:swagger-annotations:2.2.25'
 
+    //aws
+    implementation 'com.amazonaws:aws-java-sdk-s3:1.12.780'
 
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'org.postgresql:postgresql'

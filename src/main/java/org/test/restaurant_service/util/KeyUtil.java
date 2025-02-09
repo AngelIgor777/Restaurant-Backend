@@ -14,6 +14,16 @@ public class KeyUtil {
     @Getter
     private static String refreshSecret = "";
 
+    @Getter
+    private static String bucketName;
+
+    @Getter
+    private static String accessKey;
+
+    @Getter
+    private static String secretAccessKey;
+
+
     public static void setProperties(Dotenv dotenv) {
         // Прокидываем переменные в System Environment
         dotenv.entries().forEach(entry -> {
@@ -27,6 +37,16 @@ public class KeyUtil {
 
             if (entry.getKey().equals("JWT_REFRESH")) {
                 refreshSecret = value;
+            }
+
+            if (entry.getKey().equals("AWS_ACCESS_KEY")) {
+                accessKey = value;
+            }
+            if (entry.getKey().equals("AWS_SECRET_ACCESS_KEY")) {
+                secretAccessKey = value;
+            }
+            if (entry.getKey().equals("AWS_BUCKET_NAME")) {
+                bucketName = value;
             }
         });
     }
