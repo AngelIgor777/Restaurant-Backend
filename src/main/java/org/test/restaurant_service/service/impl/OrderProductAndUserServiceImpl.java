@@ -162,15 +162,17 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
                 Address address = user.getAddress();
                 AddressResponseDTO responseDto = addressMapper.toResponseDto(address);
                 responseDto.setUserUUID(user.getUuid());
+            } else {
+                AddressRequestDTO addressRequestDTO = request.getAddressRequestDTO();
+                Address address = addressMapper.toEntity(addressRequestDTO);
+                order.setAddress(address);
+                addressService.save(address);
+                AddressResponseDTO responseDto = addressMapper.toResponseDto(address);
+                orderProductResponseWithPayloadDto.setAddressResponseDTO(responseDto);
+                return false;
             }
-            AddressRequestDTO addressRequestDTO = request.getAddressRequestDTO();
-            Address address = addressMapper.toEntity(addressRequestDTO);
-            order.setAddress(address);
-            addressService.save(address);
-            AddressResponseDTO responseDto = addressMapper.toResponseDto(address);
-            orderProductResponseWithPayloadDto.setAddressResponseDTO(responseDto);
-            return false;
         }
+        return false;
     }
 
     private BigDecimal addToProductDiscountAmount(List<ProductResponseDTO> productResponseDTOS, BigDecimal productDiscountPercentage, BigDecimal productDiscountAmount) {
@@ -222,7 +224,7 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
                 .plusSeconds(product.getCookingTime().getSecond()));
     }
 
-    private BigDecimal countTotalPrice(AtomicReference<BigDecimal> totalPrice, Product product,Integer quantity) {
+    private BigDecimal countTotalPrice(AtomicReference<BigDecimal> totalPrice, Product product, Integer quantity) {
         return totalPrice.updateAndGet(v -> v.add(product.getPrice().multiply(new BigDecimal(quantity))));
     }
 

@@ -5,6 +5,7 @@ import org.test.restaurant_service.entity.ProductDiscount;
 import org.test.restaurant_service.repository.ProductDiscountRepository;
 import org.test.restaurant_service.service.ProductDiscountService;
 
+import javax.persistence.EntityNotFoundException;
 import java.util.List;
 
 @Service
@@ -24,13 +25,13 @@ public class ProductDiscountServiceImpl implements ProductDiscountService {
     @Override
     public ProductDiscount getProductDiscountById(Integer id) {
         return productDiscountRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("ProductDiscount not found with ID: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("ProductDiscount not found with ID: " + id));
     }
 
     @Override
     public ProductDiscount getProductDiscountByCode(String name) {
         return productDiscountRepository.getProductDiscountByCode(name)
-                .orElseThrow(() -> new RuntimeException("ProductDiscount not found with name: " + name));
+                .orElseThrow(() -> new EntityNotFoundException("ProductDiscount not found with name: " + name));
     }
 
     @Override

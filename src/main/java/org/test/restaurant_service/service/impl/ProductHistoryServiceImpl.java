@@ -9,6 +9,8 @@ import org.test.restaurant_service.mapper.ProductMapper;
 import org.test.restaurant_service.repository.ProductHistoryRepository;
 import org.test.restaurant_service.service.ProductHistoryService;
 
+import javax.persistence.EntityNotFoundException;
+
 
 @Service
 @RequiredArgsConstructor
@@ -30,13 +32,13 @@ public class ProductHistoryServiceImpl implements ProductHistoryService {
     @Override
     public ProductHistory getProductHistoryById(Integer id) {
         return productHistoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("ProductHistory not found with ID: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("ProductHistory not found with ID: " + id));
     }
 
     @Override
     public void deleteProductHistoryById(Integer id) {
         if (!productHistoryRepository.existsById(id)) {
-            throw new RuntimeException("ProductHistory not found with ID: " + id);
+            throw new EntityNotFoundException("ProductHistory not found with ID: " + id);
         }
         productHistoryRepository.deleteById(id);
     }

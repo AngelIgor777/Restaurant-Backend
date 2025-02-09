@@ -3,6 +3,7 @@ package org.test.restaurant_service.service;
 import org.test.restaurant_service.entity.Address;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface AddressService {
 
@@ -22,5 +23,5 @@ public interface AddressService {
     List<Address> findByCity(String city);
 
     // Find addresses by user ID
-    Address findByUserId(Integer userId);
+    Address findByUserUUID(UUID userUUID);
 }

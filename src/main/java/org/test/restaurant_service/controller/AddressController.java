@@ -11,6 +11,7 @@ import org.test.restaurant_service.service.AddressService;
 import org.test.restaurant_service.service.UserAddressService;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -48,13 +49,29 @@ public class AddressController {
         return ResponseEntity.ok(addresses);
     }
 
+    @PatchMapping("/{id}")
+    public ResponseEntity<AddressResponseDTO> updateAddress(@PathVariable Integer id, @RequestBody AddressRequestDTO addressRequestDTO) {
+        Address existingAddress = addressService.findById(id);
+
+        // MapStruct will update only non-null fields
+        addressMapper.updateAddressFromDto(addressRequestDTO, existingAddress);
+
+        Address updatedAddress = addressService.save(existingAddress);
+        AddressResponseDTO responseDTO = addressMapper.toResponseDto(updatedAddress);
+
+        return ResponseEntity.ok(responseDTO);
+    }
+
     /**
      * Get addresses by user ID
      */
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<Address> getAddressesByUserId(@PathVariable Integer userId) {
-        Address address = addressService.findByUserId(userId);
-        return ResponseEntity.ok(address);
+    @GetMapping("/user/{userUUID}")
+    public ResponseEntity<AddressResponseDTO> getAddressesByUserId(@PathVariable UUID userUUID) {
+
+        Address address = addressService.findByUserUUID(userUUID);
+        AddressResponseDTO responseDto = addressMapper.toResponseDto(address);
+        responseDto.setUserUUID(userUUID);
+        return ResponseEntity.ok(responseDto);
     }
 
 
