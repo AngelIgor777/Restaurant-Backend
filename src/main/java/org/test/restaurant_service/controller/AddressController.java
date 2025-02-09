@@ -1,20 +1,25 @@
 package org.test.restaurant_service.controller;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.test.restaurant_service.dto.request.AddressRequestDTO;
+import org.test.restaurant_service.dto.response.AddressResponseDTO;
 import org.test.restaurant_service.entity.Address;
+import org.test.restaurant_service.mapper.AddressMapper;
 import org.test.restaurant_service.service.AddressService;
+import org.test.restaurant_service.service.UserAddressService;
+
 import java.util.List;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/v1/addresses")
 public class AddressController {
 
     private final AddressService addressService;
-
-    public AddressController(AddressService addressService) {
-        this.addressService = addressService;
-    }
+    private final AddressMapper addressMapper;
+    private final UserAddressService userAddressService;
 
     /**
      * Get an address by ID
@@ -52,18 +57,20 @@ public class AddressController {
         return ResponseEntity.ok(address);
     }
 
-    /**
-     * Create or update an address
-     */
+
     @PostMapping
-    public ResponseEntity<Address> saveAddress(@RequestBody Address address) {
-        Address savedAddress = addressService.save(address);
-        return ResponseEntity.ok(savedAddress);
+    public ResponseEntity<AddressResponseDTO> saveAddress(@RequestBody AddressRequestDTO addressRequestDTO) {
+        Address address = addressMapper.toEntity(addressRequestDTO);
+        Address savedAddress = userAddressService.saveAddressToUser(address, addressRequestDTO.getUserUUID());
+
+        AddressResponseDTO responseDto = addressMapper.toResponseDto(savedAddress);
+
+        //require because uuid not mapped automatically
+        responseDto.setUserUUID(savedAddress.getUser().getUuid());
+        return ResponseEntity.ok(responseDto);
     }
 
-    /**
-     * Delete an address by ID
-     */
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteAddress(@PathVariable Integer id) {
         addressService.deleteById(id);
