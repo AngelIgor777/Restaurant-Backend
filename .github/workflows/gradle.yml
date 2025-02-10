@@ -10,43 +10,46 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
 
-    environment: Main  
+    environment: Main
 
     steps:
-    # Шаг 1: Клонируем репозиторий
-    - uses: actions/checkout@v4
+      # Шаг 1: Клонируем репозиторий
+      - uses: actions/checkout@v4
 
-    # Шаг 3: Создаем .env файл в src/main/resources
-    - name: Create .env file in src/main/resources
-      run: |
-        mkdir -p src/main/resources  # Создаем папку, если ее нет
-        echo "SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }}" >> src/main/resources/.env
-        echo "SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }}" >> src/main/resources/.env
-        echo "SPRING_DATASOURCE_URL=${{ secrets.SPRING_DATASOURCE_URL }}" >> src/main/resources/.env
-        echo "SPRING_FLYWAY_ENABLED=${{ secrets.SPRING_FLYWAY_ENABLED }}" >> src/main/resources/.env
-        echo "SPRING_FLYWAY_LOCATIONS=${{ secrets.SPRING_FLYWAY_LOCATIONS }}" >> src/main/resources/.env
-        echo "SPRING_FLYWAY_BASELINE_ON_MIGRATE=${{ secrets.SPRING_FLYWAY_BASELINE_ON_MIGRATE }}" >> src/main/resources/.env
-        echo "SPRING_FLYWAY_SCHEMAS=${{ secrets.SPRING_FLYWAY_SCHEMAS }}" >> src/main/resources/.env
-        echo "SERVER_PORT=${{ secrets.SERVER_PORT }}" >> src/main/resources/.env
-        echo "JWT_ACCESS=${{ secrets.JWT_ACCESS }}" >> src/main/resources/.env
-        echo "BOT_NAME=${{ secrets.BOT_NAME }}" >> src/main/resources/.env
-        echo "BOT_KEY=${{ secrets.BOT_KEY }}" >> src/main/resources/.env
-        echo "RABBITMQ_PASSWORD=${{ secrets.RABBITMQ_PASSWORD }}" >> src/main/resources/.env
-        echo "RABBITMQ_USERNAME=${{ secrets.RABBITMQ_USERNAME }}" >> src/main/resources/.env
-        echo "SPRING_JPA_SHOW_SQL=${{ secrets.SPRING_JPA_SHOW_SQL }}" >> src/main/resources/.env
-        echo "SPRING_JPA_PROPERTIES_HIBERNATE_ORDER_UPDATES=${{ secrets.SPRING_JPA_PROPERTIES_HIBERNATE_ORDER_UPDATES }}" >> src/main/resources/.env
-        echo "SPRING_JPA_PROPERTIES_HIBERNATE_GENERATE_STATISTICS=${{ secrets.SPRING_JPA_PROPERTIES_HIBERNATE_GENERATE_STATISTICS }}" >> src/main/resources/.env
-       
+      # Шаг 3: Создаем .env файл в src/main/resources
+      - name: Create .env file in src/main/resources
+        run: |
+          mkdir -p src/main/resources  # Создаем папку, если ее нет
+          echo "SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }}" >> src/main/resources/.env
+          echo "SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }}" >> src/main/resources/.env
+          echo "SPRING_DATASOURCE_URL=${{ secrets.SPRING_DATASOURCE_URL }}" >> src/main/resources/.env
+          echo "SPRING_FLYWAY_ENABLED=${{ secrets.SPRING_FLYWAY_ENABLED }}" >> src/main/resources/.env
+          echo "SPRING_FLYWAY_LOCATIONS=${{ secrets.SPRING_FLYWAY_LOCATIONS }}" >> src/main/resources/.env
+          echo "SPRING_FLYWAY_BASELINE_ON_MIGRATE=${{ secrets.SPRING_FLYWAY_BASELINE_ON_MIGRATE }}" >> src/main/resources/.env
+          echo "SPRING_FLYWAY_SCHEMAS=${{ secrets.SPRING_FLYWAY_SCHEMAS }}" >> src/main/resources/.env
+          echo "SERVER_PORT=${{ secrets.SERVER_PORT }}" >> src/main/resources/.env
+          echo "JWT_ACCESS=${{ secrets.JWT_ACCESS }}" >> src/main/resources/.env
+          echo "BOT_NAME=${{ secrets.BOT_NAME }}" >> src/main/resources/.env
+          echo "BOT_KEY=${{ secrets.BOT_KEY }}" >> src/main/resources/.env
+          echo "RABBITMQ_PASSWORD=${{ secrets.RABBITMQ_PASSWORD }}" >> src/main/resources/.env
+          echo "RABBITMQ_USERNAME=${{ secrets.RABBITMQ_USERNAME }}" >> src/main/resources/.env
+          echo "SPRING_JPA_SHOW_SQL=${{ secrets.SPRING_JPA_SHOW_SQL }}" >> src/main/resources/.env
+          echo "SPRING_JPA_PROPERTIES_HIBERNATE_ORDER_UPDATES=${{ secrets.SPRING_JPA_PROPERTIES_HIBERNATE_ORDER_UPDATES }}" >> src/main/resources/.env
+          echo "SPRING_JPA_PROPERTIES_HIBERNATE_GENERATE_STATISTICS=${{ secrets.SPRING_JPA_PROPERTIES_HIBERNATE_GENERATE_STATISTICS }}" >> src/main/resources/.env
+          echo "AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }}" >> src/main/resources/.env
+          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> src/main/resources/.env
+          echo "AWS_BUCKET_NAME=${{ secrets.AWS_BUCKET_NAME }}" >> src/main/resources/.env
+        
 
-    # Шаг 4: Логинимся в Docker Hub
-    - name: Log in to Docker Hub
-      uses: docker/login-action@v2
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
+        # Шаг 4: Логинимся в Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-    # Шаг 5: Собираем Docker-образ и пушим в Docker Hub
-    - name: Build and push Docker image
-      run: |
-        docker build -t default666/restaurant .
-        docker push default666/restaurant
+      # Шаг 5: Собираем Docker-образ и пушим в Docker Hub
+      - name: Build and push Docker image
+        run: |
+          docker build -t default666/restaurant .
+          docker push default666/restaurant
