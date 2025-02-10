@@ -51,5 +51,7 @@ jobs:
       # Шаг 5: Собираем Docker-образ и пушим в Docker Hub
       - name: Build and push Docker image
         run: |
+          TAG=$(date +%Y%m%d%H%M%S)  # Generates a timestamp-based tag (optional)
           docker build --no-cache -t default666/restaurant .
-          docker push default666/restaurant
+          docker push default666/restaurant:$TAG
+          docker push default666/restaurant:latest
