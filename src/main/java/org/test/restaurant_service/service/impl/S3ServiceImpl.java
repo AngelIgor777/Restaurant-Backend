@@ -10,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.test.restaurant_service.service.UploadService;
+import org.test.restaurant_service.service.S3Service;
 import org.test.restaurant_service.util.KeyUtil;
 
 import java.io.IOException;
@@ -19,7 +19,7 @@ import java.io.InputStream;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class UploadServiceImpl implements UploadService {
+public class S3ServiceImpl implements S3Service {
 
     private final TransferManager transferManager;
 
@@ -58,8 +58,9 @@ public class UploadServiceImpl implements UploadService {
         return file.getOriginalFilename();
     }
 
-    public boolean delete(String fileName) {
-        String filePath = "uploads/images/" + fileName;
+    @Override
+    public boolean delete(String fileS3Path) {
+        String filePath = fileS3Path.substring(fileS3Path.indexOf("uploads/"));
 
         try {
             // Create a delete request for the file
@@ -67,10 +68,9 @@ public class UploadServiceImpl implements UploadService {
 
             // Perform the delete operation
             amazonS3.deleteObject(deleteObjectRequest);
-            log.info("File deleted successfully: {}", fileName);
             return true;
         } catch (Exception e) {
-            log.error("Error deleting file: {}", fileName, e);
+            log.error("Error deleting file: {}", fileS3Path, e);
             return false;
         }
     }

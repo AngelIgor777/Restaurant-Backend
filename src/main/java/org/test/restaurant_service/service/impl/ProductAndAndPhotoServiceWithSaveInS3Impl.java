@@ -3,11 +3,14 @@ package org.test.restaurant_service.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.test.restaurant_service.dto.response.ProductResponseDTO;
 import org.test.restaurant_service.entity.Photo;
 import org.test.restaurant_service.entity.Product;
+import org.test.restaurant_service.mapper.ProductMapper;
 import org.test.restaurant_service.service.ProductAndPhotoService;
 import org.test.restaurant_service.service.ProductAndProductHistoryService;
-import org.test.restaurant_service.service.UploadService;
+import org.test.restaurant_service.service.S3Service;
+
 import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,12 +22,13 @@ public class ProductAndAndPhotoServiceWithSaveInS3Impl implements ProductAndPhot
 
 
     private final ProductAndProductHistoryService productAndProductHistoryService;
-    private final UploadService uploadService;
+    private final S3Service s3Service;
+    private final ProductMapper productMapper;
 
     @Override
     @Transactional(rollbackOn = Exception.class)
 
-    public void createProductAndPhotos(Product product, Integer typeId, List<MultipartFile> photoFiles) {
+    public ProductResponseDTO createProductAndPhotos(Product product, Integer typeId, List<MultipartFile> photoFiles) {
         List<Photo> photos = new ArrayList<>();
         for (MultipartFile photoFile : photoFiles) {
             String fileName = Objects.requireNonNull(photoFile.getOriginalFilename()).replace(" ", "");
@@ -34,10 +38,11 @@ public class ProductAndAndPhotoServiceWithSaveInS3Impl implements ProductAndPhot
                     .image(photoFile)
                     .build();
             photos.add(photo);
-            uploadService.upload(photoFile, fileName);
+            s3Service.upload(photoFile, fileName);
         }
         product.setPhotos(photos);
-        productAndProductHistoryService.save(product, typeId);
+        Product createdProduct = productAndProductHistoryService.save(product, typeId);
+        return productMapper.toResponseDTO(createdProduct);
 
     }
 

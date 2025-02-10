@@ -3,8 +3,10 @@ package org.test.restaurant_service.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.test.restaurant_service.dto.response.ProductResponseDTO;
 import org.test.restaurant_service.entity.Photo;
 import org.test.restaurant_service.entity.Product;
+import org.test.restaurant_service.mapper.ProductMapper;
 import org.test.restaurant_service.service.PhotoService;
 import org.test.restaurant_service.service.ProductAndPhotoService;
 import org.test.restaurant_service.service.ProductAndProductHistoryService;
@@ -19,10 +21,11 @@ public class ProductAndAndPhotoServiceImpl implements ProductAndPhotoService {
 
     private final PhotoService photoService;
     private final ProductAndProductHistoryService productAndProductHistoryService;
+    private final ProductMapper productMapper;
 
     @Override
     @Transactional(rollbackOn = Exception.class)
-    public void createProductAndPhotos(Product product, Integer typeId, List<MultipartFile> photoFiles) {
+    public ProductResponseDTO createProductAndPhotos(Product product, Integer typeId, List<MultipartFile> photoFiles) {
 
         List<Photo> photos = new ArrayList<>();
         for (MultipartFile photoFile : photoFiles) {
@@ -36,7 +39,9 @@ public class ProductAndAndPhotoServiceImpl implements ProductAndPhotoService {
         product.setPhotos(photos);
         Product createdProduct = productAndProductHistoryService.save(product, typeId);
 
+
         photoService.savePhotos(photos);
+        return   productMapper.toResponseDTO(createdProduct);
     }
 
 }

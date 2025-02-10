@@ -1,6 +1,7 @@
 package org.test.restaurant_service.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.test.restaurant_service.dto.request.AddressRequestDTO;
 import org.test.restaurant_service.dto.request.OrderProductRequestDTO;
@@ -25,7 +26,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class OrderProductAndUserServiceImpl implements OrderProductAndUserService {
 
     private final OrderService orderService;
@@ -42,6 +42,23 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
     private final AddressMapper addressMapper;
     private final TableMapper tableMapper;
     private final OrderDiscountService orderDiscountService;
+
+    public OrderProductAndUserServiceImpl(OrderService orderService, OrderProductServiceImpl orderProductService, UserService userService, ProductDiscountService productDiscountService, DiscountService discountService, ProductRepository productRepository, OrderProductMapper orderProductMapper, ProductMapper productMapper, @Qualifier("productServiceImpl") ProductService productService, AddressService addressService, OrderMapper orderMapper, AddressMapper addressMapper, TableMapper tableMapper, OrderDiscountService orderDiscountService) {
+        this.orderService = orderService;
+        this.orderProductService = orderProductService;
+        this.userService = userService;
+        this.productDiscountService = productDiscountService;
+        this.discountService = discountService;
+        this.productRepository = productRepository;
+        this.orderProductMapper = orderProductMapper;
+        this.productMapper = productMapper;
+        this.productService = productService;
+        this.addressService = addressService;
+        this.orderMapper = orderMapper;
+        this.addressMapper = addressMapper;
+        this.tableMapper = tableMapper;
+        this.orderDiscountService = orderDiscountService;
+    }
 
 
     //TODO finish it

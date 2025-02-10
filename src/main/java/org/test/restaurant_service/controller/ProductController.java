@@ -27,7 +27,7 @@ public class ProductController {
     private final ProductAndProductHistoryService productAndProductHistoryService;
     private final ProductMapper productMapper;
 
-    public ProductController(ProductService productService, @Qualifier("productAndAndPhotoServiceWithSaveInS3Impl") ProductAndPhotoService productAndPhotoService, ProductAndProductHistoryService productAndProductHistoryService, ProductMapper productMapper) {
+    public ProductController(@Qualifier("productServiceWithS3Impl") ProductService productService, @Qualifier("productAndAndPhotoServiceWithSaveInS3Impl") ProductAndPhotoService productAndPhotoService, ProductAndProductHistoryService productAndProductHistoryService, ProductMapper productMapper) {
         this.productService = productService;
         this.productAndPhotoService = productAndPhotoService;
         this.productAndProductHistoryService = productAndProductHistoryService;
@@ -36,17 +36,17 @@ public class ProductController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public void create(@RequestParam("name") String name,
-                       @RequestParam("description") String description,
-                       @RequestParam("typeId") Integer typeId,
-                       @RequestParam("price") BigDecimal price,
-                       @RequestParam("cookingTime") String cookingTime,
-                       @RequestParam("file") MultipartFile file) {
+    public ProductResponseDTO create(@RequestParam("name") String name,
+                                     @RequestParam("description") String description,
+                                     @RequestParam("typeId") Integer typeId,
+                                     @RequestParam("price") BigDecimal price,
+                                     @RequestParam("cookingTime") String cookingTime,
+                                     @RequestParam("file") MultipartFile file) {
 
         Product product = productService.parseRequest(name, description, typeId, price, cookingTime);
 
         List<MultipartFile> multipartFiles = List.of(file);
-        productAndPhotoService.createProductAndPhotos(product, typeId, multipartFiles);
+        return productAndPhotoService.createProductAndPhotos(product, typeId, multipartFiles);
     }
 
 

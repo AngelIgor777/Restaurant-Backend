@@ -2,6 +2,7 @@ package org.test.restaurant_service.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
 import org.test.restaurant_service.dto.response.StatisticsResultResponseDto;
@@ -22,13 +23,19 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class StatisticsServiceImpl implements StatisticsService {
 
     private final ProductService productService;
     private final OrderService orderService;
     private final OrderProductService orderProductService;
     private final ProductMapperImpl productMapper;
+
+    public StatisticsServiceImpl(@Qualifier("productServiceImpl") ProductService productService, OrderService orderService, OrderProductService orderProductService, ProductMapperImpl productMapper) {
+        this.productService = productService;
+        this.orderService = orderService;
+        this.orderProductService = orderProductService;
+        this.productMapper = productMapper;
+    }
 
     @Override
     public StatisticsResultResponseDto getStatistics(LocalDateTime from, LocalDateTime to) {

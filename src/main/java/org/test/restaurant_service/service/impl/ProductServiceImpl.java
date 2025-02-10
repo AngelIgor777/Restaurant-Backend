@@ -24,19 +24,18 @@ import javax.persistence.EntityNotFoundException;
 import java.math.BigDecimal;
 import java.time.LocalTime;
 import java.util.List;
-import java.util.Objects;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
 
-    private final ProductRepository productRepository;
-    private final ProductTypeRepository productTypeRepository;
-    private final ProductMapper productMapper;
-    private final PhotoMapper photoMapper;
-    private final PhotoRepository photoRepository;
-    private final PhotoServiceImpl photoServiceImpl;
+    protected final ProductRepository productRepository;
+    protected final ProductTypeRepository productTypeRepository;
+    protected final ProductMapper productMapper;
+    protected final PhotoMapper photoMapper;
+    protected final PhotoRepository photoRepository;
+    protected final PhotoServiceImpl photoServiceImpl;
 
     @Override
     public Product parseRequest(String name, String description, Integer typeId, BigDecimal price, String cookingTime) {

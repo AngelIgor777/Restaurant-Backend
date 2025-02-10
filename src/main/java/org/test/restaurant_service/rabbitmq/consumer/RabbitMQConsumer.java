@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.test.restaurant_service.dto.request.ProductRequestDTO;
 import org.test.restaurant_service.dto.request.UserRegistrationDTO;
@@ -15,11 +16,15 @@ import com.rabbitmq.client.Channel;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class RabbitMQConsumer {
 
     private final TelegramUserServiceImpl telegramUserService;
     private final ProductService productService;
+
+    public RabbitMQConsumer(TelegramUserServiceImpl telegramUserService, @Qualifier("productServiceImpl") ProductService productService) {
+        this.telegramUserService = telegramUserService;
+        this.productService = productService;
+    }
 
     /**
      * Метод для обработки сообщений из RabbitMQ.
