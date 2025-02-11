@@ -1,4 +1,10 @@
 spring:
+  cache:
+    type: redis
+  redis:
+    host: localhost
+
+    port: ${REDIS_PORT}
   application:
     name: Restaurant_Service
   datasource:

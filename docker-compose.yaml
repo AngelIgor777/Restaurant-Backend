@@ -1,0 +1,53 @@
+services:
+
+  postgres:
+    image: postgres:14
+    container_name: restaurant_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    healthcheck:
+      test: [ "CMD-SHELL","pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+      interval: 5s
+      retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - restaurant_network
+
+  rabbitmq:
+    image: rabbitmq:3.9-management
+    container_name: restaurant_rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    ports:
+      - "${RABBITMQ_BROKER_PORT}:${RABBITMQ_BROKER_PORT}"   # RabbitMQ message broker port
+      - "${RABBITMQ_UI_PORT}:${RABBITMQ_UI_PORT}" # RabbitMQ management UI port
+    networks:
+      - restaurant_network
+
+  redis:
+    image: redis:latest
+    container_name: redis_cache
+    restart: always
+    ports:
+      - "${REDIS_PORT}:${REDIS_PORT}"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - restaurant_network
+
+
+volumes:
+  postgres_data:
+  redis_data:
+    driver: local
+
+networks:
+  restaurant_network:
+    driver: bridge

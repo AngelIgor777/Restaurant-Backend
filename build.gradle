@@ -38,7 +38,6 @@ dependencies {
     implementation 'com.auth0:java-jwt:3.18.1'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'io.micrometer:micrometer-registry-prometheus'
-    implementation 'org.springframework.boot:spring-boot-starter-cache'
     implementation 'com.github.ben-manes.caffeine:caffeine'
 
 
@@ -51,6 +50,8 @@ dependencies {
 
     //aws
     implementation 'com.amazonaws:aws-java-sdk-s3:1.12.780'
+
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'org.postgresql:postgresql'
