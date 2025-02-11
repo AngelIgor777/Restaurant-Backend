@@ -2,6 +2,7 @@ package org.test.restaurant_service.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -54,6 +55,7 @@ public class ProductServiceImpl implements ProductService {
         return product;
     }
 
+    @CacheEvict(value = "products", allEntries = true)
     public Product create(Product product, Integer typeId) {
         ProductType type = productTypeRepository.findById(typeId)
                 .orElseThrow(() -> new EntityNotFoundException("ProductType not found with id :" + typeId));
@@ -63,7 +65,7 @@ public class ProductServiceImpl implements ProductService {
         return product;
     }
 
-
+    @CacheEvict(value = "products", allEntries = true)
     @Override
     public Product create(ProductRequestDTO productRequestDTO) {
         Product product = productMapper.toEntity(productRequestDTO);
@@ -74,6 +76,7 @@ public class ProductServiceImpl implements ProductService {
         return productRepository.save(product);
     }
 
+    @CacheEvict(value = "products", allEntries = true)
     @Override
     public Product update(Product updatedProduct, Integer id) {
         Product existingProduct = productRepository.findById(id)
@@ -103,6 +106,7 @@ public class ProductServiceImpl implements ProductService {
         return productRepository.save(existingProduct);
     }
 
+    @CacheEvict(value = "products", allEntries = true)
     @Override
     public void delete(Integer id) {
         List<Photo> photoList = photoRepository.findAllByProductId(id);
@@ -128,6 +132,7 @@ public class ProductServiceImpl implements ProductService {
         return productAndPhotosResponseDTO;
     }
 
+    @Cacheable(value = "products", key = "#typeId == null ? 'all' : #typeId")
     @Override
     public Page<ProductResponseDTO> getAll(Integer typeId, Pageable pageable) {
         Page<Product> products;
