@@ -120,19 +120,22 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public List<Order> getAllOrdersByPeriod(LocalDateTime from, LocalDateTime to) {
-        return orderRepository.findAllByCreatedAtBetween(from, to);
+        return orderRepository.findAllByCreatedAtBetweenAndStatus(from, to, Order.OrderStatus.COMPLETED);
     }
 
     @Override
     public void completeOrder(Integer orderId) {
         Order orderById = getOrderById(orderId);
         orderById.setStatus(Order.OrderStatus.COMPLETED);
+        orderRepository.save(orderById);
+
     }
 
     @Override
     public void confirmOrder(Integer orderId) {
         Order orderById = getOrderById(orderId);
         orderById.setStatus(Order.OrderStatus.CONFIRMED);
+        orderRepository.save(orderById);
     }
 
     private OrderProductResponseWithPayloadDto getOrderProductResponseWithPayloadDto(Order order) {

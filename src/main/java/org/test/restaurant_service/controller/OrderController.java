@@ -1,6 +1,5 @@
 package org.test.restaurant_service.controller;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.test.restaurant_service.dto.response.OrderProductResponseWithPayloadDto;
@@ -30,12 +29,12 @@ public class OrderController {
         return ResponseEntity.ok(order);
     }
 
-    @GetMapping("/complete/{orderId}")
+    @PostMapping("/complete/{orderId}")
     public void completeOrder(@PathVariable Integer orderId) {
         orderService.completeOrder(orderId);
     }
 
-    @GetMapping("/confirm/{orderId}")
+    @PostMapping("/confirm/{orderId}")
     public void confirmOrder(@PathVariable Integer orderId) {
         orderService.confirmOrder(orderId);
     }

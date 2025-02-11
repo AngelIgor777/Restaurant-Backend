@@ -43,7 +43,6 @@ public class ProductAndAndPhotoServiceWithSaveInS3Impl implements ProductAndPhot
         product.setPhotos(photos);
         Product createdProduct = productAndProductHistoryService.save(product, typeId);
         return productMapper.toResponseDTO(createdProduct);
-
     }
 
 }

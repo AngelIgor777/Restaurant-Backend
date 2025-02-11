@@ -43,7 +43,6 @@ public class StatisticsServiceImpl implements StatisticsService {
         List<Order> orders = orderService.getAllOrdersByPeriod(from, to);
 
         if (orders.isEmpty()) {
-            log.warn("No orders found");
             throw new BadRequestException("No orders found");
         }
 
