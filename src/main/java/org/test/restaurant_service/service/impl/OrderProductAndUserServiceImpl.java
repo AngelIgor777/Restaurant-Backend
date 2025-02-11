@@ -20,6 +20,7 @@ import java.math.RoundingMode;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -40,8 +41,9 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
     private final AddressMapper addressMapper;
     private final TableMapper tableMapper;
     private final OrderDiscountService orderDiscountService;
+    private final UserAddressService userAddressService;
 
-    public OrderProductAndUserServiceImpl(OrderService orderService, OrderProductServiceImpl orderProductService, UserService userService, ProductDiscountService productDiscountService, DiscountService discountService, ProductRepository productRepository, OrderProductMapper orderProductMapper, ProductMapper productMapper, @Qualifier("productServiceImpl") ProductService productService, AddressService addressService, OrderMapper orderMapper, AddressMapper addressMapper, TableMapper tableMapper, OrderDiscountService orderDiscountService) {
+    public OrderProductAndUserServiceImpl(OrderService orderService, OrderProductServiceImpl orderProductService, UserService userService, ProductDiscountService productDiscountService, DiscountService discountService, ProductRepository productRepository, OrderProductMapper orderProductMapper, ProductMapper productMapper, @Qualifier("productServiceImpl") ProductService productService, AddressService addressService, OrderMapper orderMapper, AddressMapper addressMapper, TableMapper tableMapper, OrderDiscountService orderDiscountService, UserAddressService userAddressService) {
         this.orderService = orderService;
         this.orderProductService = orderProductService;
         this.userService = userService;
@@ -56,6 +58,7 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
         this.addressMapper = addressMapper;
         this.tableMapper = tableMapper;
         this.orderDiscountService = orderDiscountService;
+        this.userAddressService = userAddressService;
     }
 
 
@@ -140,11 +143,10 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
             totalPrice.set(finalTotalPrice);
         }
         order.setTotalPrice(totalPrice.get());
-        Order savedOrder = orderService.create(order);
 
         theOrderInRestaurant(order, requestDtoWithPayloadDto, orderProductResponseWithPayloadDto);
 
-
+        Order savedOrder = orderService.create(order);
         OrderResponseDTO responseDTO = orderMapper.toResponseDTO(savedOrder);
         responseDTO.setTotalCookingTime(totalCookingTime.get());
         BigDecimal roundedValue = totalPrice.get().setScale(2, RoundingMode.HALF_UP);
@@ -162,8 +164,11 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
 
     private void checkTheUserIsRegistered(OrderProductRequestWithPayloadDto requestDtoWithPayloadDto, Order order) {
         if (requestDtoWithPayloadDto.isUserRegistered()) {
-            User user = userService.findByUUID(requestDtoWithPayloadDto.getUserUUID());
-            order.setUser(user);
+            UUID userUUID;
+            if ((userUUID = requestDtoWithPayloadDto.getUserUUID()) != null) {
+                User user = userService.findByUUID(userUUID);
+                order.setUser(user);
+            }
         }
     }
 
@@ -176,9 +181,16 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
         } else {
             if (order.hasUser()) {
                 User user = order.getUser();
-                Address address = user.getAddress();
-                AddressResponseDTO responseDto = addressMapper.toResponseDto(address);
-                responseDto.setUserUUID(user.getUuid());
+                if (user.hasAddress()) {
+                    Address address = user.getAddress();
+                    AddressResponseDTO responseDto = addressMapper.toResponseDto(address);
+                    responseDto.setUserUUID(user.getUuid());
+                    order.setAddress(address);
+                } else {
+                    AddressRequestDTO addressRequestDTO = request.getAddressRequestDTO();
+                    Address address = userAddressService.saveAddressToUser(addressRequestDTO, user.getUuid());
+                    order.setAddress(address);
+                }
             } else {
                 AddressRequestDTO addressRequestDTO = request.getAddressRequestDTO();
                 Address address = addressMapper.toEntity(addressRequestDTO);

@@ -45,6 +45,10 @@ public class User {
     @OneToOne(mappedBy = "user")
     private Address address;
 
+
+    public boolean hasAddress() {
+        return address != null;
+    }
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
