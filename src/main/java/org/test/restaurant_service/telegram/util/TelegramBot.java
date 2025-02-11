@@ -29,7 +29,6 @@ import org.test.restaurant_service.service.impl.*;
 import org.test.restaurant_service.telegram.config.BotConfig;
 
 import java.io.*;
-import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -420,6 +419,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         Long chatId = update.getMessage().getChatId();
 
         String errorText;
+
 
         if (!telegramUserService.existByChatId(chatId)) {
             String userPhotoUrl = saveUserPhoto(update);

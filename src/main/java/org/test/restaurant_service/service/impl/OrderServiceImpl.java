@@ -1,6 +1,7 @@
 package org.test.restaurant_service.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.test.restaurant_service.dto.request.OrderRequestDTO;
@@ -21,6 +22,7 @@ import javax.persistence.EntityNotFoundException;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -136,6 +138,17 @@ public class OrderServiceImpl implements OrderService {
         Order orderById = getOrderById(orderId);
         orderById.setStatus(Order.OrderStatus.CONFIRMED);
         orderRepository.save(orderById);
+    }
+
+    @Override
+    public List<OrderProductResponseWithPayloadDto> getAllUserOrdersProductResponseWithPayloadDto(UUID userUUID, Pageable pageable) {
+        List<Order> ordersByUserUuid = orderRepository.findOrdersByUser_Uuid(userUUID, pageable);
+        return ordersByUserUuid.stream()
+                .map(order -> {
+                    OrderProductResponseWithPayloadDto response = getOrderProductResponseWithPayloadDto(order);
+                    return response;
+                })
+                .toList();
     }
 
     private OrderProductResponseWithPayloadDto getOrderProductResponseWithPayloadDto(Order order) {

@@ -1,5 +1,6 @@
 package org.test.restaurant_service.service;
 
+import org.springframework.data.domain.Pageable;
 import org.test.restaurant_service.dto.request.OrderRequestDTO;
 import org.test.restaurant_service.dto.response.OrderProductResponseWithPayloadDto;
 import org.test.restaurant_service.dto.response.OrderResponseDTO;
@@ -7,6 +8,7 @@ import org.test.restaurant_service.entity.Order;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 public interface OrderService {
     OrderResponseDTO create(OrderRequestDTO requestDTO);
@@ -32,4 +34,6 @@ public interface OrderService {
     void completeOrder(Integer orderId);
 
     void confirmOrder(Integer orderId);
+
+    List<OrderProductResponseWithPayloadDto> getAllUserOrdersProductResponseWithPayloadDto(UUID userUUID, Pageable pageable);
 }

@@ -3,14 +3,12 @@ package org.test.restaurant_service.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.test.restaurant_service.dto.request.AddressRequestDTO;
 import org.test.restaurant_service.dto.request.OrderProductRequestDTO;
 import org.test.restaurant_service.dto.request.OrderProductRequestWithPayloadDto;
 import org.test.restaurant_service.dto.request.TableRequestDTO;
-import org.test.restaurant_service.dto.response.AddressResponseDTO;
-import org.test.restaurant_service.dto.response.OrderProductResponseWithPayloadDto;
-import org.test.restaurant_service.dto.response.OrderResponseDTO;
-import org.test.restaurant_service.dto.response.ProductResponseDTO;
+import org.test.restaurant_service.dto.response.*;
 import org.test.restaurant_service.entity.*;
 import org.test.restaurant_service.mapper.*;
 import org.test.restaurant_service.repository.ProductRepository;
@@ -69,6 +67,7 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
     //4 save request
     //5 return all data info
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public OrderProductResponseWithPayloadDto createBulk(OrderProductRequestWithPayloadDto requestDtoWithPayloadDto) {
 
 
@@ -210,11 +209,13 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
     private List<OrderProduct>
     getOrderProductsAndSetProductsForOrderAndCountTotalCookingTimeAndTotalPriceAndAddToProductResponseDTOList
             (List<OrderProductRequestDTO> requestDTOs,
-             Order order, AtomicReference<BigDecimal> totalPrice,
+             Order order,
+             AtomicReference<BigDecimal> totalPrice,
              AtomicReference<LocalTime> totalCookingTime,
              List<ProductResponseDTO> productResponseDTOList) {
         return requestDTOs.stream()
                 .map(requestDTO -> {
+                    //todo change the finding product with productService
                     Product product = productRepository.findById(requestDTO.getProductId())
                             .orElseThrow(() -> new EntityNotFoundException("Product not found with id " + requestDTO.getProductId()));
                     OrderProduct orderProduct = createOrderProduct(order, requestDTO, product);

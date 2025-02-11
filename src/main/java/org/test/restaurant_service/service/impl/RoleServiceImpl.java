@@ -8,7 +8,6 @@ import org.test.restaurant_service.entity.User;
 import org.test.restaurant_service.repository.RoleRepository;
 import org.test.restaurant_service.service.RoleService;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
