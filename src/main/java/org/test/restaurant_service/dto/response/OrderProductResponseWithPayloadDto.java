@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 
 @Data
 @Builder
@@ -18,4 +20,5 @@ public class OrderProductResponseWithPayloadDto {
     private String globalDiscountCode;
     private AddressResponseDTO addressResponseDTO;
     private TableResponseDTO tableResponseDTO;
+    private UUID userUUID;
 }

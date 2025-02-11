@@ -170,6 +170,10 @@ public class OrderServiceImpl implements OrderService {
         orderResponseDTO.setTotalCookingTime(totalCookingTime.get());
         orderResponseDTO.setProducts(productResponseDTOS);
 
+
+        if (order.hasUser()) {
+            response.setUserUUID(order.getUser().getUuid());
+        }
         if (order.isOrderInRestaurant()) {
             response.setOrderInRestaurant(true);
             Table table = order.getTable();

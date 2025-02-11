@@ -1,6 +1,7 @@
 package org.test.restaurant_service.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.GenericResponseService;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,8 +43,9 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
     private final TableMapper tableMapper;
     private final OrderDiscountService orderDiscountService;
     private final UserAddressService userAddressService;
+    private final GenericResponseService responseBuilder;
 
-    public OrderProductAndUserServiceImpl(OrderService orderService, OrderProductServiceImpl orderProductService, UserService userService, ProductDiscountService productDiscountService, DiscountService discountService, ProductRepository productRepository, OrderProductMapper orderProductMapper, ProductMapper productMapper, @Qualifier("productServiceImpl") ProductService productService, AddressService addressService, OrderMapper orderMapper, AddressMapper addressMapper, TableMapper tableMapper, OrderDiscountService orderDiscountService, UserAddressService userAddressService) {
+    public OrderProductAndUserServiceImpl(OrderService orderService, OrderProductServiceImpl orderProductService, UserService userService, ProductDiscountService productDiscountService, DiscountService discountService, ProductRepository productRepository, OrderProductMapper orderProductMapper, ProductMapper productMapper, @Qualifier("productServiceImpl") ProductService productService, AddressService addressService, OrderMapper orderMapper, AddressMapper addressMapper, TableMapper tableMapper, OrderDiscountService orderDiscountService, UserAddressService userAddressService, GenericResponseService responseBuilder) {
         this.orderService = orderService;
         this.orderProductService = orderProductService;
         this.userService = userService;
@@ -59,6 +61,7 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
         this.tableMapper = tableMapper;
         this.orderDiscountService = orderDiscountService;
         this.userAddressService = userAddressService;
+        this.responseBuilder = responseBuilder;
     }
 
 
@@ -73,8 +76,6 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
     @Transactional(rollbackFor = Exception.class)
     public OrderProductResponseWithPayloadDto createBulk(OrderProductRequestWithPayloadDto requestDtoWithPayloadDto) {
 
-
-        TableRequestDTO tableRequestDTO = requestDtoWithPayloadDto.getTableRequestDTO();
         Order.PaymentMethod paymentMethod = requestDtoWithPayloadDto.getPaymentMethod();
         boolean orderInRestaurant = requestDtoWithPayloadDto.isOrderInRestaurant();
         boolean existDiscountCodes = requestDtoWithPayloadDto.isExistDiscountCodes();
@@ -93,7 +94,7 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
                 .build();
 
 
-        checkTheUserIsRegistered(requestDtoWithPayloadDto, order);
+        checkTheUserIsRegistered(requestDtoWithPayloadDto, order, orderProductResponseWithPayloadDto);
 
 
         AtomicReference<BigDecimal> totalPrice = new AtomicReference<>(BigDecimal.valueOf(0));
@@ -162,12 +163,13 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
         return orderProductResponseWithPayloadDto;
     }
 
-    private void checkTheUserIsRegistered(OrderProductRequestWithPayloadDto requestDtoWithPayloadDto, Order order) {
+    private void checkTheUserIsRegistered(OrderProductRequestWithPayloadDto requestDtoWithPayloadDto, Order order, OrderProductResponseWithPayloadDto orderProductResponseWithPayloadDto) {
         if (requestDtoWithPayloadDto.isUserRegistered()) {
             UUID userUUID;
             if ((userUUID = requestDtoWithPayloadDto.getUserUUID()) != null) {
                 User user = userService.findByUUID(userUUID);
                 order.setUser(user);
+                orderProductResponseWithPayloadDto.setUserUUID(userUUID);
             }
         }
     }
@@ -177,6 +179,9 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
             Table table = orderProductService.getByNumber(request.getTableRequestDTO().getNumber());
             order.setTable(table);
             orderProductResponseWithPayloadDto.setTableResponseDTO(tableMapper.toResponseDTO(table));
+            if (order.hasUser()) {
+                orderProductResponseWithPayloadDto.setUserUUID(request.getUserUUID());
+            }
             return true;
         } else {
             if (order.hasUser()) {
@@ -186,10 +191,13 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
                     AddressResponseDTO responseDto = addressMapper.toResponseDto(address);
                     responseDto.setUserUUID(user.getUuid());
                     order.setAddress(address);
+                    orderProductResponseWithPayloadDto.setAddressResponseDTO(responseDto);
                 } else {
                     AddressRequestDTO addressRequestDTO = request.getAddressRequestDTO();
                     Address address = userAddressService.saveAddressToUser(addressRequestDTO, user.getUuid());
+                    AddressResponseDTO responseDto = addressMapper.toResponseDto(address);
                     order.setAddress(address);
+                    orderProductResponseWithPayloadDto.setAddressResponseDTO(responseDto);
                 }
             } else {
                 AddressRequestDTO addressRequestDTO = request.getAddressRequestDTO();
