@@ -5,14 +5,19 @@ import com.amazonaws.services.s3.model.DeleteObjectRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.transfer.TransferManager;
-import com.amazonaws.services.s3.transfer.Upload;
+import com.amazonaws.services.s3.transfer.TransferManagerBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.test.restaurant_service.service.S3Service;
 import org.test.restaurant_service.util.KeyUtil;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -20,8 +25,6 @@ import java.io.InputStream;
 @Service
 @RequiredArgsConstructor
 public class S3ServiceImpl implements S3Service {
-
-    private final TransferManager transferManager;
 
     private final AmazonS3 amazonS3;
 
@@ -32,30 +35,61 @@ public class S3ServiceImpl implements S3Service {
     public String upload(MultipartFile file, String fileName) {
         String filePath = "uploads/images/" + fileName;
 
-        // Automatically set content type based on file extension
+        // Determine content type
         String contentType = determineContentType(file.getOriginalFilename());
-
         if (contentType == null) {
             log.error("Unsupported file type for file: {}", file.getOriginalFilename());
             return null;
         }
 
-        ObjectMetadata metadata = new ObjectMetadata();
-        metadata.setContentType(contentType);
-        metadata.setContentLength(file.getSize());
+        try {
+            // Compress and resize image
+            byte[] optimizedImage = optimizeImage(file.getBytes());
 
-        try (InputStream inputStream = file.getInputStream()) {
-            Upload upload = transferManager.upload(new PutObjectRequest(
-                    KeyUtil.getBucketName(),
-                    filePath,
-                    inputStream,
-                    metadata)
-            );
-            upload.waitForCompletion();
-        } catch (InterruptedException | IOException e) {
+            // Upload to S3
+            InputStream inputStream = new ByteArrayInputStream(optimizedImage);
+            ObjectMetadata metadata = new ObjectMetadata();
+            metadata.setContentType(contentType);
+            metadata.setContentLength(optimizedImage.length);
+
+            TransferManager transferManager = TransferManagerBuilder.standard()
+                    .withS3Client(amazonS3)
+                    .withMultipartUploadThreshold((long) (10 * 1024 * 1024))
+                    .build();
+
+
+            PutObjectRequest request = new PutObjectRequest(
+                    KeyUtil.getBucketName(), filePath, inputStream, metadata);
+
+            transferManager.upload(request);
+
+            return fileName;
+
+        } catch (IOException e) {
             log.error("Error uploading file", e);
         }
-        return file.getOriginalFilename();
+        return null;
+    }
+
+
+    private byte[] optimizeImage(byte[] imageBytes) throws IOException {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+        // Convert to BufferedImage
+        BufferedImage image = ImageIO.read(new ByteArrayInputStream(imageBytes));
+
+        // Resize image (e.g., max width: 800px)
+        int maxWidth = 800;
+        int newHeight = (image.getHeight() * maxWidth) / image.getWidth();
+
+
+        Thumbnails.of(image)
+                .size(maxWidth, newHeight)
+                .outputQuality(0.95)
+                .outputFormat("jpg")
+                .toOutputStream(outputStream);
+
+        return outputStream.toByteArray();
     }
 
     @Override

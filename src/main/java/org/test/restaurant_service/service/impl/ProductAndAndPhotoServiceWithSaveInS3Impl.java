@@ -15,6 +15,7 @@ import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -31,14 +32,15 @@ public class ProductAndAndPhotoServiceWithSaveInS3Impl implements ProductAndPhot
     public ProductResponseDTO createProductAndPhotos(Product product, Integer typeId, List<MultipartFile> photoFiles) {
         List<Photo> photos = new ArrayList<>();
         for (MultipartFile photoFile : photoFiles) {
-            String fileName = Objects.requireNonNull(photoFile.getOriginalFilename()).replace(" ", "");
+            StringBuilder fileName = new StringBuilder().append(UUID.randomUUID())
+                    .append(photoFile.getOriginalFilename().substring(photoFile.getOriginalFilename().lastIndexOf(".")));
             Photo photo = Photo.builder()
                     .url("https://s3.timeweb.cloud/cf1b889c-51893717-bc35-4427-a93b-2be350132697/uploads/images/" + fileName)
                     .product(product)
                     .image(photoFile)
                     .build();
             photos.add(photo);
-            s3Service.upload(photoFile, fileName);
+            s3Service.upload(photoFile, fileName.toString());
         }
         product.setPhotos(photos);
         Product createdProduct = productAndProductHistoryService.save(product, typeId);
