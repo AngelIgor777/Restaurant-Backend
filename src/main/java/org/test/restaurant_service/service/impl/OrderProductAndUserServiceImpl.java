@@ -142,6 +142,9 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
         order.setTotalPrice(totalPrice.get());
         Order savedOrder = orderService.create(order);
 
+        theOrderInRestaurant(order, requestDtoWithPayloadDto, orderProductResponseWithPayloadDto);
+
+
         OrderResponseDTO responseDTO = orderMapper.toResponseDTO(savedOrder);
         responseDTO.setTotalCookingTime(totalCookingTime.get());
         BigDecimal roundedValue = totalPrice.get().setScale(2, RoundingMode.HALF_UP);
@@ -149,8 +152,6 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
         responseDTO.setProducts(productResponseDTOS);
 
         orderProductResponseWithPayloadDto.setOrderResponseDTO(responseDTO);
-
-        theOrderInRestaurant(order, requestDtoWithPayloadDto, orderProductResponseWithPayloadDto);
 
         orderProductService.createAll(orderProducts);
 
