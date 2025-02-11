@@ -69,10 +69,10 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public OrderResponseDTO getOrderById(Integer id) {
-        Order order = orderRepository.findById(id)
+    public Order getOrderById(Integer id) {
+        return orderRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Order not found with id " + id));
-        return orderMapper.toResponseDTO(order);
+
     }
 
     @Override
@@ -121,6 +121,18 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public List<Order> getAllOrdersByPeriod(LocalDateTime from, LocalDateTime to) {
         return orderRepository.findAllByCreatedAtBetween(from, to);
+    }
+
+    @Override
+    public void completeOrder(Integer orderId) {
+        Order orderById = getOrderById(orderId);
+        orderById.setStatus(Order.OrderStatus.COMPLETED);
+    }
+
+    @Override
+    public void confirmOrder(Integer orderId) {
+        Order orderById = getOrderById(orderId);
+        orderById.setStatus(Order.OrderStatus.CONFIRMED);
     }
 
     private OrderProductResponseWithPayloadDto getOrderProductResponseWithPayloadDto(Order order) {

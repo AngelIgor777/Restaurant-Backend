@@ -1,10 +1,8 @@
 package org.test.restaurant_service.controller;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.test.restaurant_service.dto.response.OrderProductResponseWithPayloadDto;
 import org.test.restaurant_service.service.OrderService;
 
@@ -30,5 +28,15 @@ public class OrderController {
     public ResponseEntity<OrderProductResponseWithPayloadDto> getOrder(@PathVariable Integer id) {
         OrderProductResponseWithPayloadDto order = orderService.getOrderProductResponseWithPayloadDto(id);
         return ResponseEntity.ok(order);
+    }
+
+    @GetMapping("/complete/{orderId}")
+    public void completeOrder(@PathVariable Integer orderId) {
+        orderService.completeOrder(orderId);
+    }
+
+    @GetMapping("/confirm/{orderId}")
+    public void confirmOrder(@PathVariable Integer orderId) {
+        orderService.confirmOrder(orderId);
     }
 }

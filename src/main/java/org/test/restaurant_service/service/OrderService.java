@@ -17,7 +17,7 @@ public interface OrderService {
 
     List<OrderResponseDTO> getAllOrders();
 
-    OrderResponseDTO getOrderById(Integer id);
+    Order getOrderById(Integer id);
 
     OrderResponseDTO update(Integer id, OrderRequestDTO requestDTO);
 
@@ -28,4 +28,8 @@ public interface OrderService {
     OrderProductResponseWithPayloadDto getOrderProductResponseWithPayloadDto(Integer id);
 
     List<Order> getAllOrdersByPeriod(LocalDateTime from, LocalDateTime to);
+
+    void completeOrder(Integer orderId);
+
+    void confirmOrder(Integer orderId);
 }
