@@ -17,7 +17,6 @@ public class ProductHistoryController {
     private final ProductHistoryMapper productHistoryMapper;
 
 
-    //todo method which gets list of product for product history
     @GetMapping("{productId}")
     public List<ProductHistoryResponseDTO> getProductHistory(@PathVariable Integer productId) {
         return productHistoryService.getProductHistoryByProductId(productId)

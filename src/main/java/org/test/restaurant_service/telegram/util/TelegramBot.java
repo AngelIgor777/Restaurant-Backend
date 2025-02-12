@@ -100,6 +100,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             String text = update.getMessage().getText();
 
             Long chatId = update.getMessage().getChatId();
+            User user;
             switch (text) {
                 case "/start":
                     registerFull(update);
@@ -114,11 +115,12 @@ public class TelegramBot extends TelegramLongPollingBot {
                     menu(update);
                     break;
                 case "/website":
-                    sendMessageWithMarkdown(chatId,
-                            textService.getWebSiteText(chatId));
+                    user = userService.findByChatId(chatId);
+                    sendMessageWithMarkdown(chatId, textService.getWebSiteText(user.getUuid()));
                     break;
                 default:
-                    sendMessageWithMarkdown(chatId, textService.getDefaultMessage(chatId));
+                    user = userService.findByChatId(chatId);
+                    sendMessageWithMarkdown(chatId, textService.getDefaultMessage(user.getUuid()));
                     break;
             }
         } else if (update.hasCallbackQuery()) {
