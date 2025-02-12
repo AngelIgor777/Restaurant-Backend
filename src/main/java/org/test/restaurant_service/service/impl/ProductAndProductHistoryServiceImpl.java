@@ -8,6 +8,8 @@ import org.test.restaurant_service.service.ProductAndProductHistoryService;
 import org.test.restaurant_service.service.ProductHistoryService;
 import org.test.restaurant_service.service.ProductService;
 
+import java.util.List;
+
 @Service
 public class ProductAndProductHistoryServiceImpl implements ProductAndProductHistoryService {
 
@@ -33,4 +35,5 @@ public class ProductAndProductHistoryServiceImpl implements ProductAndProductHis
         productHistoryService.saveToProductHistory(update);
         return update;
     }
+
 }

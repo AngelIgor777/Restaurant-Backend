@@ -10,13 +10,13 @@ import java.util.List;
 
 @Data
 public class ProductResponseDTO {
-    private Integer id;
-    private String name;
-    private String description;
-    private String typeName;
-    private BigDecimal price;
-    private LocalTime cookingTime;
-    private Integer quantity;
+    protected Integer id;
+    protected String name;
+    protected String description;
+    protected String typeName;
+    protected BigDecimal price;
+    protected LocalTime cookingTime;
+    protected Integer quantity;
     @JsonIgnore
-    private List<Photo> photos;
+    protected List<Photo> photos;
 }

@@ -10,6 +10,7 @@ import org.test.restaurant_service.repository.ProductHistoryRepository;
 import org.test.restaurant_service.service.ProductHistoryService;
 
 import javax.persistence.EntityNotFoundException;
+import java.util.List;
 
 
 @Service
@@ -27,6 +28,11 @@ public class ProductHistoryServiceImpl implements ProductHistoryService {
         productHistory.setProduct(product);
         productHistory.setType(type);
         productHistoryRepository.save(productHistory);
+    }
+
+    @Override
+    public List<ProductHistory> getProductHistoryByProductId(Integer productId) {
+        return productHistoryRepository.getProductHistoriesByProductId(productId);
     }
 
     @Override

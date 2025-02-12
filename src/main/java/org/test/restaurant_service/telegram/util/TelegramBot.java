@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.GetUserProfilePhotos;
@@ -29,6 +30,7 @@ import org.test.restaurant_service.service.impl.*;
 import org.test.restaurant_service.telegram.config.BotConfig;
 
 import java.io.*;
+import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,8 +50,9 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final BotConfig botConfig;
     private final PhotoServiceImpl photoService;
     private final UserService userService;
+    private final S3Service s3Service;
 
-    public TelegramBot(TelegramUserServiceImpl telegramUserService, ProductTypeServiceImpl productTypeService, @Qualifier("productServiceImpl") ProductServiceImpl productService, RabbitMQJsonProducer rabbitMQJsonProducer, BotConfig botConfig, PhotoServiceImpl photoServiceImpl, TextService textService, UserServiceImpl userServiceImpl, PhotoServiceImpl photoService, UserService userService) {
+    public TelegramBot(TelegramUserServiceImpl telegramUserService, ProductTypeServiceImpl productTypeService, @Qualifier("productServiceImpl") ProductServiceImpl productService, RabbitMQJsonProducer rabbitMQJsonProducer, BotConfig botConfig, PhotoServiceImpl photoServiceImpl, TextService textService, UserServiceImpl userServiceImpl, PhotoServiceImpl photoService, UserService userService, S3Service s3Service) {
         this.telegramUserService = telegramUserService;
         this.productTypeService = productTypeService;
         this.productService = productService;
@@ -59,6 +62,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         this.textService = textService;
         this.photoService = photoService;
         this.userService = userService;
+        this.s3Service = s3Service;
         ArrayList<BotCommand> botCommands = getCommands();
         try {
             this.execute(new SetMyCommands(botCommands, new BotCommandScopeDefault(), null));
@@ -152,13 +156,12 @@ public class TelegramBot extends TelegramLongPollingBot {
                     // Construct the file download URL
                     String fileUrl = "https://api.telegram.org/file/bot" + getBotToken() + "/" + file.getFilePath();
 
-                    String filename = fileId + ".jpg";
-                    // Define local path to save the image
-                    String localFilePath = PhotoServiceImpl.IMAGE_DIRECTORY + filename;
+                    String fileName = fileId + ".jpg";
+                    String fileUrlInS3 = "https://s3.timeweb.cloud/cf1b889c-51893717-bc35-4427-a93b-2be350132697/uploads/images/" + fileName;
 
                     // Download and save the image
-                    downloadFile(fileUrl, localFilePath);
-                    return filename;
+                    s3Service.upload(fileUrl, fileName);
+                    return fileUrlInS3;
                 } else {
                     log.warn("Could not retrieve file path.");
                 }
@@ -174,6 +177,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void downloadFile(String fileUrl, String savePath) {
         try (InputStream in = new URL(fileUrl).openStream();
              FileOutputStream out = new FileOutputStream(savePath)) {
+
 
             byte[] buffer = new byte[1024];
             int bytesRead;

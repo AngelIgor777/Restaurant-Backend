@@ -1,6 +1,7 @@
 package org.test.restaurant_service.service.impl;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.DeleteObjectRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
@@ -9,6 +10,7 @@ import com.amazonaws.services.s3.transfer.TransferManagerBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.test.restaurant_service.service.S3Service;
@@ -20,6 +22,9 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -32,13 +37,14 @@ public class S3ServiceImpl implements S3Service {
     private static final String IMAGE_MIME_TYPE_PREFIX = "image/";
 
     @Override
-    public String upload(MultipartFile file, String fileName) {
+    @Async
+    public CompletableFuture<String> upload(MultipartFile file, String fileName) {
         String filePath = "uploads/images/" + fileName;
 
         // Determine content type
         String contentType = determineContentType(file.getOriginalFilename());
         if (contentType == null) {
-            log.error("Unsupported file type for file: {}", file.getOriginalFilename());
+            log.warn("Unsupported file type for file: {}", file.getOriginalFilename());
             return null;
         }
 
@@ -47,28 +53,66 @@ public class S3ServiceImpl implements S3Service {
             byte[] optimizedImage = optimizeImage(file.getBytes());
 
             // Upload to S3
-            InputStream inputStream = new ByteArrayInputStream(optimizedImage);
-            ObjectMetadata metadata = new ObjectMetadata();
-            metadata.setContentType(contentType);
-            metadata.setContentLength(optimizedImage.length);
+            save(filePath, contentType, optimizedImage);
 
-            TransferManager transferManager = TransferManagerBuilder.standard()
-                    .withS3Client(amazonS3)
-                    .withMultipartUploadThreshold((long) (10 * 1024 * 1024))
-                    .build();
-
-
-            PutObjectRequest request = new PutObjectRequest(
-                    KeyUtil.getBucketName(), filePath, inputStream, metadata);
-
-            transferManager.upload(request);
-
-            return fileName;
+            return CompletableFuture.completedFuture(fileName);
 
         } catch (IOException e) {
             log.error("Error uploading file", e);
+            return CompletableFuture.completedFuture(null);
         }
-        return null;
+    }
+
+
+    @Override
+    public CompletableFuture<String>  upload(String fileUrl, String fileName) {
+        String filePath = "uploads/images/" + fileName;
+
+        try (InputStream inputStream = new URL(fileUrl).openStream()) {
+
+            // Get content type from URL connection
+            URLConnection connection = new URL(fileUrl).openConnection();
+            String contentType = "image/jpeg";
+            if (contentType == null) {
+                log.warn("Cannot determine content type for file: {}", fileUrl);
+                return null;
+            }
+
+            // Read file as bytes
+            byte[] fileBytes = inputStream.readAllBytes();
+
+            // Optimize image if needed
+            byte[] optimizedImage = optimizeImage(fileBytes);
+
+            // Upload to S3
+            save(filePath, contentType, optimizedImage);
+
+            log.info("File uploaded successfully to S3: {}", filePath);
+            return CompletableFuture.completedFuture(fileName);
+
+        } catch (IOException e) {
+            log.error("Error uploading file from URL: {}", fileUrl, e);
+            return null;
+        }
+    }
+
+    private void save(String filePath, String contentType, byte[] optimizedImage) {
+        InputStream optimizedInputStream = new ByteArrayInputStream(optimizedImage);
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentType(contentType);
+        metadata.setContentLength(optimizedImage.length);
+        metadata.setContentDisposition("inline");
+
+        TransferManager transferManager = TransferManagerBuilder.standard()
+                .withS3Client(amazonS3)
+                .withMultipartUploadThreshold((long) (10 * 1024 * 1024)) // 10MB threshold
+                .build();
+
+        PutObjectRequest request = new PutObjectRequest(
+                KeyUtil.getBucketName(), filePath, optimizedInputStream, metadata
+        ).withCannedAcl(CannedAccessControlList.PublicRead);
+
+        transferManager.upload(request);
     }
 
 
