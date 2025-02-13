@@ -26,6 +26,8 @@ public interface ProductService {
 
     ProductAndPhotosResponseDTO getById(Integer id);
 
+    Product getSimpleById(Integer id);
+
     Page<ProductResponseDTO> getAll(Integer typeId, Pageable pageable);
 
     ProductResponseDTO getByName(String product);

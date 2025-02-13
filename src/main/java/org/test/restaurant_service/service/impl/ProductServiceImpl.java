@@ -21,6 +21,7 @@ import org.test.restaurant_service.repository.PhotoRepository;
 import org.test.restaurant_service.repository.ProductRepository;
 import org.test.restaurant_service.repository.ProductTypeRepository;
 import org.test.restaurant_service.service.ProductService;
+
 import javax.persistence.EntityNotFoundException;
 import java.math.BigDecimal;
 import java.time.LocalTime;
@@ -121,8 +122,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public ProductAndPhotosResponseDTO getById(Integer id) {
-        Product product = productRepository.findByIdWithPhotos(id)
-                .orElseThrow(() -> new EntityNotFoundException("Product not found with id " + id));
+        Product product = get(id);
         List<PhotoResponseDTO> photoResponseDTOS = product.getPhotos()
                 .stream()
                 .map(photoMapper::toResponseDTO).toList();
@@ -130,6 +130,17 @@ public class ProductServiceImpl implements ProductService {
         ProductResponseDTO productResponseDTO = productMapper.toResponseDTO(product);
         ProductAndPhotosResponseDTO productAndPhotosResponseDTO = new ProductAndPhotosResponseDTO(productResponseDTO, photoResponseDTOS);
         return productAndPhotosResponseDTO;
+    }
+
+    protected Product get(Integer id) {
+        Product product = productRepository.findByIdWithPhotos(id)
+                .orElseThrow(() -> new EntityNotFoundException("Product not found with id " + id));
+        return product;
+    }
+
+    @Override
+    public Product getSimpleById(Integer id) {
+        return get(id);
     }
 
     @Cacheable(value = "products", key = "#typeId == null ? 'all' : #typeId")

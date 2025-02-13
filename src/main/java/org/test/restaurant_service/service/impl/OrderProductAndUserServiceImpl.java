@@ -107,23 +107,61 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
 
         BigDecimal globalDiscountAmount = BigDecimal.ZERO;
         BigDecimal productDiscountAmount = BigDecimal.ZERO;
+        order.setTotalPrice(totalPrice.get());
+
+        theOrderInRestaurant(order, requestDtoWithPayloadDto, orderProductResponseWithPayloadDto);
+
+        OrderDiscount orderDiscount = handleDiscountCodes(existDiscountCodes, globalDiscountCode, productDiscountCode, globalDiscountAmount, productDiscountAmount, totalPrice, order, orderProductResponseWithPayloadDto, productResponseDTOS);
+        Order savedOrder = orderService.create(order);
+        if (orderDiscount != null) {
+            orderDiscountService.save(orderDiscount);
+        }
+        OrderResponseDTO responseDTO = handleOrderResponse(savedOrder, totalCookingTime, totalPrice, productResponseDTOS);
+
+        orderProductResponseWithPayloadDto.setOrderResponseDTO(responseDTO);
+
+        orderProductService.createAll(orderProducts);
+
+        orderProductService.sendOrdersFromWebsocket(orderProductResponseWithPayloadDto);
+
+        return orderProductResponseWithPayloadDto;
+    }
+
+    private OrderResponseDTO handleOrderResponse(Order savedOrder, AtomicReference<LocalTime> totalCookingTime, AtomicReference<BigDecimal> totalPrice, List<ProductResponseDTO> productResponseDTOS) {
+        OrderResponseDTO responseDTO = orderMapper.toResponseDTO(savedOrder);
+        responseDTO.setTotalCookingTime(totalCookingTime.get());
+        BigDecimal roundedValue = totalPrice.get().setScale(2, RoundingMode.HALF_UP);
+        responseDTO.setTotalPrice(roundedValue);
+        responseDTO.setProducts(productResponseDTOS);
+        return responseDTO;
+    }
+
+    private OrderDiscount handleDiscountCodes(boolean existDiscountCodes,
+                                              String globalDiscountCode,
+                                              String productDiscountCode,
+                                              BigDecimal globalDiscountAmount,
+                                              BigDecimal productDiscountAmount,
+                                              AtomicReference<BigDecimal> totalPrice,
+                                              Order order,
+                                              OrderProductResponseWithPayloadDto orderProductResponseWithPayloadDto,
+                                              List<ProductResponseDTO> productResponseDTOS) {
+        BigDecimal finalTotalPrice = totalPrice.get();
+        OrderDiscount orderDiscount = null;
         if (existDiscountCodes) {
             if (globalDiscountCode != null && !globalDiscountCode.isEmpty()) {
                 Discount discountByCode = discountService.getDiscountByCode(globalDiscountCode);
 
-                // Calculate the global discount percentage
                 BigDecimal globalDiscountPercentage = discountByCode.getDiscount();
 
                 // Calculate the global discount amount
                 globalDiscountAmount = totalPrice.get()
                         .multiply(globalDiscountPercentage)
-                        .divide(new BigDecimal(100)); // (total price * discount%) / 100
+                        .divide(new BigDecimal(100), RoundingMode.HALF_UP); // (total price * discount%) / 100
 
-                OrderDiscount orderDiscount = OrderDiscount.builder()
+                orderDiscount = OrderDiscount.builder()
                         .order(order)
                         .discount(discountByCode)
                         .build();
-                orderDiscountService.save(orderDiscount);
                 orderProductResponseWithPayloadDto.setGlobalDiscountCode(globalDiscountCode);
             }
             if (productDiscountCode != null && !productDiscountCode.isEmpty()) {
@@ -138,29 +176,14 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
 
                 orderProductResponseWithPayloadDto.setProductDiscountCode(productDiscountCode);
             }
-            BigDecimal finalTotalPrice = totalPrice.get()
+            finalTotalPrice = totalPrice.get()
                     .subtract(globalDiscountAmount)
                     .subtract(productDiscountAmount);
             totalPrice.set(finalTotalPrice);
+            order.setTotalPrice(finalTotalPrice);
+            return orderDiscount;
         }
-        order.setTotalPrice(totalPrice.get());
-
-        theOrderInRestaurant(order, requestDtoWithPayloadDto, orderProductResponseWithPayloadDto);
-
-        Order savedOrder = orderService.create(order);
-        OrderResponseDTO responseDTO = orderMapper.toResponseDTO(savedOrder);
-        responseDTO.setTotalCookingTime(totalCookingTime.get());
-        BigDecimal roundedValue = totalPrice.get().setScale(2, RoundingMode.HALF_UP);
-        responseDTO.setTotalPrice(roundedValue);
-        responseDTO.setProducts(productResponseDTOS);
-
-        orderProductResponseWithPayloadDto.setOrderResponseDTO(responseDTO);
-
-        orderProductService.createAll(orderProducts);
-
-        orderProductService.sendOrdersFromWebsocket(orderProductResponseWithPayloadDto);
-
-        return orderProductResponseWithPayloadDto;
+        return orderDiscount;
     }
 
     private void checkTheUserIsRegistered(OrderProductRequestWithPayloadDto requestDtoWithPayloadDto, Order order, OrderProductResponseWithPayloadDto orderProductResponseWithPayloadDto) {

@@ -1,10 +1,15 @@
 package org.test.restaurant_service.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.test.restaurant_service.dto.request.ProductDiscountRequestDTO;
+import org.test.restaurant_service.dto.response.ProductDiscountResponseDTO;
 import org.test.restaurant_service.entity.ProductDiscount;
+import org.test.restaurant_service.mapper.ProductDiscountMapper;
 import org.test.restaurant_service.service.ProductDiscountService;
+
 import java.util.List;
 
 @RestController
@@ -13,10 +18,15 @@ import java.util.List;
 public class ProductDiscountController {
 
     private final ProductDiscountService productDiscountService;
+    private final ProductDiscountMapper productDiscountMapper;
 
     @PostMapping
-    public ResponseEntity<ProductDiscount> createProductDiscount(@RequestBody ProductDiscount productDiscount) {
-        return ResponseEntity.ok(productDiscountService.saveProductDiscount(productDiscount));
+    @ResponseStatus(HttpStatus.CREATED)
+    public ProductDiscountResponseDTO createProductDiscount(@RequestBody ProductDiscountRequestDTO productDiscountRequestDTO) {
+        ProductDiscount productDiscount = productDiscountMapper.toEntity(productDiscountRequestDTO);
+        ProductDiscount createdProductDiscount = productDiscountService.saveProductDiscount(productDiscount);
+
+        return productDiscountMapper.toResponseDTO(createdProductDiscount);
     }
 
     @GetMapping("/{id}")
