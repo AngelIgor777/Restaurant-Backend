@@ -1,8 +1,6 @@
 package org.test.restaurant_service.dto.request;
 
 import lombok.Data;
-import org.test.restaurant_service.entity.Product;
-
 
 import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotBlank;

@@ -1,6 +1,5 @@
 package org.test.restaurant_service.service.impl;
 
-import lombok.RequiredArgsConstructor;
 import org.springdoc.core.GenericResponseService;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -8,7 +7,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.test.restaurant_service.dto.request.AddressRequestDTO;
 import org.test.restaurant_service.dto.request.OrderProductRequestDTO;
 import org.test.restaurant_service.dto.request.OrderProductRequestWithPayloadDto;
-import org.test.restaurant_service.dto.request.TableRequestDTO;
 import org.test.restaurant_service.dto.response.*;
 import org.test.restaurant_service.entity.*;
 import org.test.restaurant_service.mapper.*;
@@ -18,6 +16,7 @@ import org.test.restaurant_service.service.*;
 import javax.persistence.EntityNotFoundException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -102,14 +101,14 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
         List<ProductResponseDTO> productResponseDTOS = new ArrayList<>();
         List<OrderProductRequestDTO> orderProductRequestDTO = requestDtoWithPayloadDto.getOrderProductRequestDTO();
 
-        List<OrderProduct> orderProducts = getOrderProductsAndSetProductsForOrderAndCountTotalCookingTimeAndTotalPriceAndAddToProductResponseDTOList(orderProductRequestDTO, order, totalPrice, totalCookingTime, productResponseDTOS);
+        List<OrderProduct> orderProducts = getOrderProductsAndSetProductsForOrderAndCountTotalCookingTimeAndTotalPriceAndAddToProductResponseDTOList(orderProductRequestDTO, order, totalPrice, totalCookingTime, productResponseDTOS, existDiscountCodes, productDiscountCode);
 
 
         BigDecimal globalDiscountAmount = BigDecimal.ZERO;
         BigDecimal productDiscountAmount = BigDecimal.ZERO;
         order.setTotalPrice(totalPrice.get());
 
-        theOrderInRestaurant(order, requestDtoWithPayloadDto, orderProductResponseWithPayloadDto);
+        checkTheOrderIsInRestaurant(order, requestDtoWithPayloadDto, orderProductResponseWithPayloadDto);
 
         OrderDiscount orderDiscount = handleDiscountCodes(existDiscountCodes, globalDiscountCode, productDiscountCode, globalDiscountAmount, productDiscountAmount, totalPrice, order, orderProductResponseWithPayloadDto, productResponseDTOS);
         Order savedOrder = orderService.create(order);
@@ -145,7 +144,8 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
                                               Order order,
                                               OrderProductResponseWithPayloadDto orderProductResponseWithPayloadDto,
                                               List<ProductResponseDTO> productResponseDTOS) {
-        BigDecimal finalTotalPrice = totalPrice.get();
+        totalPrice.get();
+        BigDecimal finalTotalPrice;
         OrderDiscount orderDiscount = null;
         if (existDiscountCodes) {
             if (globalDiscountCode != null && !globalDiscountCode.isEmpty()) {
@@ -165,16 +165,7 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
                 orderProductResponseWithPayloadDto.setGlobalDiscountCode(globalDiscountCode);
             }
             if (productDiscountCode != null && !productDiscountCode.isEmpty()) {
-                // Retrieve the product and global discount details
-                ProductDiscount productDiscountByCode = productDiscountService.getProductDiscountByCode(productDiscountCode);
-
-                // Calculate the product discount percentage
-                BigDecimal productDiscountPercentage = productDiscountByCode.getDiscount();
-
-                // Apply product-specific discounts (e.g., per applicable product)
-                productDiscountAmount = addToProductDiscountAmount(productResponseDTOS, productDiscountPercentage, productDiscountAmount);
-
-                orderProductResponseWithPayloadDto.setProductDiscountCode(productDiscountCode);
+                productDiscountAmount = handleProductDiscountCode(productDiscountCode, productDiscountAmount, orderProductResponseWithPayloadDto, productResponseDTOS);
             }
             finalTotalPrice = totalPrice.get()
                     .subtract(globalDiscountAmount)
@@ -184,6 +175,20 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
             return orderDiscount;
         }
         return orderDiscount;
+    }
+
+    private BigDecimal handleProductDiscountCode(String productDiscountCode, BigDecimal productDiscountAmount, OrderProductResponseWithPayloadDto orderProductResponseWithPayloadDto, List<ProductResponseDTO> productResponseDTOS) {
+        // Retrieve the product and global discount details
+        ProductDiscount productDiscountByCode = productDiscountService.getProductDiscountByCode(productDiscountCode);
+
+        // Calculate the product discount percentage
+        BigDecimal productDiscountPercentage = productDiscountByCode.getDiscount();
+
+        // Apply product-specific discounts (e.g., per applicable product)
+        productDiscountAmount = addToProductDiscountAmount(productResponseDTOS, productDiscountPercentage, productDiscountAmount);
+
+        orderProductResponseWithPayloadDto.setProductDiscountCode(productDiscountCode);
+        return productDiscountAmount;
     }
 
     private void checkTheUserIsRegistered(OrderProductRequestWithPayloadDto requestDtoWithPayloadDto, Order order, OrderProductResponseWithPayloadDto orderProductResponseWithPayloadDto) {
@@ -197,7 +202,7 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
         }
     }
 
-    private boolean theOrderInRestaurant(Order order, OrderProductRequestWithPayloadDto request, OrderProductResponseWithPayloadDto orderProductResponseWithPayloadDto) {
+    private void checkTheOrderIsInRestaurant(Order order, OrderProductRequestWithPayloadDto request, OrderProductResponseWithPayloadDto orderProductResponseWithPayloadDto) {
         if (request.isOrderInRestaurant()) {
             Table table = orderProductService.getByNumber(request.getTableRequestDTO().getNumber());
             order.setTable(table);
@@ -205,7 +210,6 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
             if (order.hasUser()) {
                 orderProductResponseWithPayloadDto.setUserUUID(request.getUserUUID());
             }
-            return true;
         } else {
             if (order.hasUser()) {
                 User user = order.getUser();
@@ -229,19 +233,18 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
                 addressService.save(address);
                 AddressResponseDTO responseDto = addressMapper.toResponseDto(address);
                 orderProductResponseWithPayloadDto.setAddressResponseDTO(responseDto);
-                return false;
             }
         }
-        return false;
     }
+
 
     private BigDecimal addToProductDiscountAmount(List<ProductResponseDTO> productResponseDTOS, BigDecimal productDiscountPercentage, BigDecimal productDiscountAmount) {
         for (ProductResponseDTO productRequest : productResponseDTOS) {
             BigDecimal productPrice = productRequest.getPrice();
-            BigDecimal productTotal = productPrice.multiply(new BigDecimal(productRequest.getQuantity()));
+            BigDecimal productTotalPrice = productPrice.multiply(new BigDecimal(productRequest.getQuantity()));
 
             // Calculate the discount for this product
-            BigDecimal productDiscount = productTotal
+            BigDecimal productDiscount = productTotalPrice
                     .multiply(productDiscountPercentage)
                     .divide(new BigDecimal(100));
             productDiscountAmount = productDiscountAmount.add(productDiscount);
@@ -256,13 +259,15 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
              Order order,
              AtomicReference<BigDecimal> totalPrice,
              AtomicReference<LocalTime> totalCookingTime,
-             List<ProductResponseDTO> productResponseDTOList) {
+             List<ProductResponseDTO> productResponseDTOList,
+             boolean existDiscountCodes,
+             String productDiscountCode) {
         return requestDTOs.stream()
                 .map(requestDTO -> {
                     //todo change the finding product with productService
                     Product product = productRepository.findById(requestDTO.getProductId())
                             .orElseThrow(() -> new EntityNotFoundException("Product not found with id " + requestDTO.getProductId()));
-                    OrderProduct orderProduct = createOrderProduct(order, requestDTO, product);
+                    OrderProduct orderProduct = createOrderProduct(order, requestDTO, product, existDiscountCodes, productDiscountCode);
                     countTotalPrice(totalPrice, product, requestDTO.getQuantity());
                     countTotalCookingTime(totalCookingTime, product);
                     ProductResponseDTO productResponseDTO = productMapper.toResponseDTO(product);
@@ -273,10 +278,29 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
                 .collect(Collectors.toList());
     }
 
-    private OrderProduct createOrderProduct(Order order, OrderProductRequestDTO requestDTO, Product product) {
+    private OrderProduct createOrderProduct(Order order,
+                                            OrderProductRequestDTO requestDTO,
+                                            Product product,
+                                            boolean existDiscountCodes,
+                                            String productDiscountCode) {
         OrderProduct orderProduct = orderProductMapper.toEntity(requestDTO);
         orderProduct.setOrder(order);
         orderProduct.setProduct(product);
+        if (existDiscountCodes) {
+            ProductDiscount productDiscountByCode = productDiscountService.getProductDiscountByCode(productDiscountCode);
+            if (productDiscountByCode.getProduct().equals(product) &&
+                    productDiscountByCode.getValidTo().isAfter(productDiscountByCode.getValidFrom())
+                    && !LocalDateTime.now().isAfter(productDiscountByCode.getValidTo())) {
+
+                BigDecimal discountPercentage = productDiscountByCode.getDiscount();
+                BigDecimal price = product.getPrice();
+
+                BigDecimal discount = price.multiply(discountPercentage).divide(new BigDecimal(100), RoundingMode.HALF_UP);
+
+                BigDecimal resultPrice = price.subtract(discount);
+                orderProduct.setPriceWithDiscount(resultPrice);
+            }
+        }
         return orderProduct;
     }
 
