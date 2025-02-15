@@ -16,7 +16,12 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     Optional<Order> findOrderByTable_Number(Integer tableNumber);
 
     List<Order> findAllByCreatedAtBetween(LocalDateTime from, LocalDateTime to);
+
     List<Order> findAllByCreatedAtBetweenAndStatus(LocalDateTime from, LocalDateTime to, Order.OrderStatus status);
 
     List<Order> findOrdersByUser_Uuid(UUID userUUID, Pageable pageable);
+
+    Integer countAllByUser_Uuid(UUID userUUID);
+
+    Integer countAllByUser_TelegramUserEntity_ChatId(Long chatIdp);
 }

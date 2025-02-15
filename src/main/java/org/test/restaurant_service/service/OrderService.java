@@ -36,4 +36,6 @@ public interface OrderService {
     void confirmOrder(Integer orderId);
 
     List<OrderProductResponseWithPayloadDto> getAllUserOrdersProductResponseWithPayloadDto(UUID userUUID, Pageable pageable);
+
+    Integer getCountOrdersByUserChatId(Long chatId);
 }

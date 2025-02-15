@@ -23,6 +23,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
 import org.test.restaurant_service.dto.response.ProductTypeResponseDTO;
+import org.test.restaurant_service.entity.TelegramUserEntity;
 import org.test.restaurant_service.entity.User;
 import org.test.restaurant_service.rabbitmq.producer.RabbitMQJsonProducer;
 import org.test.restaurant_service.service.*;
@@ -81,6 +82,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         botCommands.add(new BotCommand("/help", "Список доступных команд"));
         botCommands.add(new BotCommand("/info", "Информация о боте"));
         botCommands.add(new BotCommand("/menu", "Показать меню"));
+        botCommands.add(new BotCommand("/about", "Показать мою информацию"));
         return botCommands;
     }
 
@@ -118,6 +120,9 @@ public class TelegramBot extends TelegramLongPollingBot {
                     user = userService.findByChatId(chatId);
                     sendMessageWithMarkdown(chatId, textService.getWebSiteText(user.getUuid()));
                     break;
+                case "/about":
+                    sendUserInfo(update);
+                    break;
                 default:
                     user = userService.findByChatId(chatId);
                     sendMessageWithMarkdown(chatId, textService.getDefaultMessage(user.getUuid()));
@@ -129,6 +134,12 @@ public class TelegramBot extends TelegramLongPollingBot {
         } else if (update.getMessage().hasSticker()) {
             stickerHandler(update);
         }
+    }
+
+    private void sendUserInfo(Update update) {
+        User user = userService.findByChatId(update.getMessage().getChatId());
+        String userInfo = textService.getUserInfo(user);
+        sendMessage(update,userInfo);
     }
 
     private String saveUserPhoto(Update update) {
@@ -174,21 +185,6 @@ public class TelegramBot extends TelegramLongPollingBot {
             log.warn(e.getMessage());
         }
         return null;
-    }
-
-    private void downloadFile(String fileUrl, String savePath) {
-        try (InputStream in = new URL(fileUrl).openStream();
-             FileOutputStream out = new FileOutputStream(savePath)) {
-
-
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-            while ((bytesRead = in.read(buffer)) != -1) {
-                out.write(buffer, 0, bytesRead);
-            }
-        } catch (IOException e) {
-            log.error(e.getMessage());
-        }
     }
 
 
@@ -447,6 +443,8 @@ public class TelegramBot extends TelegramLongPollingBot {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(chatId.toString());
         sendMessage.setText(message);
+        ReplyKeyboardMarkup replyKeyboard = getReplyKeyboard();
+        sendMessage.setReplyMarkup(replyKeyboard);
         sendMessage.setParseMode("Markdown"); // Использование Markdown для форматирования текста
         executeMessage(sendMessage);
     }
@@ -471,6 +469,18 @@ public class TelegramBot extends TelegramLongPollingBot {
         message.setChatId(update.getMessage().getChatId().toString());
         message.setText(text);
 
+        ReplyKeyboardMarkup keyboardMarkup = getReplyKeyboard();
+
+        message.setReplyMarkup(keyboardMarkup);
+        try {
+            execute(message);
+        } catch (TelegramApiException e) {
+            log.error("Ошибка при отправке сообщения: {}", e.getMessage());
+        }
+
+    }
+
+    private static ReplyKeyboardMarkup getReplyKeyboard() {
         ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
         keyboardMarkup.setResizeKeyboard(true);
         List<KeyboardRow> keyboardRows = new ArrayList<>();
@@ -483,14 +493,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         keyboardRows.add(row);
 
         keyboardMarkup.setKeyboard(keyboardRows);
-
-        message.setReplyMarkup(keyboardMarkup);
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            log.error("Ошибка при отправке сообщения: {}", e.getMessage());
-        }
-
+        return keyboardMarkup;
     }
 
     private enum CallBackButton {

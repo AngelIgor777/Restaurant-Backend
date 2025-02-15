@@ -9,5 +9,5 @@ public interface TelegramUserRepository extends JpaRepository<TelegramUserEntity
 
 
     boolean existsTelegramUserEntitiesByChatId(Long chatId);
-    Optional<TelegramUserEntity> findOtpByChatId(Long chatId);
+    Optional<TelegramUserEntity> findTelegramUserEntityByChatId(Long chatId);
 }

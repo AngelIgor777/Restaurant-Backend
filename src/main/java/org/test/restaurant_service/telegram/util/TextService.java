@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
 import org.test.restaurant_service.entity.TelegramUserEntity;
+import org.test.restaurant_service.entity.User;
+import org.test.restaurant_service.service.OrderService;
 
 import java.time.LocalTime;
 import java.util.List;
@@ -16,7 +18,9 @@ import java.util.UUID;
 public
 class TextService {
 
-    String adText =
+    private final OrderService orderService;
+
+    private String adText =
             """
                     🍽️ <b>Время вкусных открытий!</b>
                     
@@ -129,5 +133,19 @@ class TextService {
                 Неизвестная команда 🤯. Введите /help, чтобы увидеть доступные команды.
                 
                 Можете посмотреть наше меню /menu ☺ или сделать заказ у нас на сайте [parktown.md](http://195.133.27.38/#menu/%s).""", userUUID);
+    }
+
+    //todo
+    public String getUserInfo(User user) {
+        TelegramUserEntity telegramUserEntity = user.getTelegramUserEntity();
+
+        StringBuilder userInfoText = new StringBuilder();
+        userInfoText.append("<i><b>Имя</b></i>: ").append(telegramUserEntity.getFirstname()).append("\n");
+        userInfoText.append("<i><b>Никнейм</b></i>: ").append(telegramUserEntity.getUsername()).append("\n");
+        userInfoText.append("<i><b>Сделано заказов</b></i>: ").append(orderService.getCountOrdersByUserChatId(telegramUserEntity.getChatId())).append("\n");
+        userInfoText.append("<i><b>Дата регистрации в боте</b></i>: ").append(telegramUserEntity.getCreatedAt().toString()).append("\n");
+        userInfoText.append("<i><b>Номер чата</b></i>: ").append(telegramUserEntity.getChatId()).append("\n");
+
+        return userInfoText.toString();
     }
 }

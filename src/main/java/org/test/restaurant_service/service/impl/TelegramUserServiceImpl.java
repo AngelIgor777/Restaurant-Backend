@@ -14,6 +14,7 @@ import org.test.restaurant_service.repository.UserRepository;
 import org.test.restaurant_service.service.RoleService;
 import org.test.restaurant_service.service.TelegramUserService;
 
+import javax.persistence.EntityNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -84,6 +85,13 @@ public class TelegramUserServiceImpl implements TelegramUserService {
         save(telegramUserEntity);
 
         return telegramUserEntity;
+    }
+
+    @Override
+    public TelegramUserEntity get(Update update) {
+        Long chatId = update.getMessage().getChatId();
+        return telegramUserRepository.findTelegramUserEntityByChatId(chatId)
+                .orElseThrow(() -> new EntityNotFoundException("Telegram-User with " + chatId + " not found"));
     }
 
     private List<String> getUserRoles() {

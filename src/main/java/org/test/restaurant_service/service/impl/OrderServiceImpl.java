@@ -151,6 +151,11 @@ public class OrderServiceImpl implements OrderService {
                 .toList();
     }
 
+    @Override
+    public Integer getCountOrdersByUserChatId(Long chatId) {
+        return orderRepository.countAllByUser_TelegramUserEntity_ChatId(chatId);
+    }
+
     private OrderProductResponseWithPayloadDto getOrderProductResponseWithPayloadDto(Order order) {
         OrderProductResponseWithPayloadDto response = new OrderProductResponseWithPayloadDto();
         OrderResponseDTO orderResponseDTO = orderMapper.toResponseDTO(order);
