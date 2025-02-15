@@ -109,3 +109,7 @@ aws:
   accessKey: ${AWS_ACCESS_KEY}
   secretAccessKey: ${AWS_SECRET_ACCESS_KEY}
   bucketName: ${AWS_BUCKET_NAME}
+
+admin:
+  code1: ${ADMIN_CODE1}
+  code2: ${ADMIN_CODE2}

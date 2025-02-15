@@ -23,6 +23,13 @@ public class KeyUtil {
     @Getter
     private static String secretAccessKey;
 
+    @Getter
+    private static String adminCode1;
+
+    @Getter
+    private static String adminCode2;
+
+
 
     public static void setProperties(Dotenv dotenv) {
         // Прокидываем переменные в System Environment
@@ -47,6 +54,12 @@ public class KeyUtil {
             }
             if (entry.getKey().equals("AWS_BUCKET_NAME")) {
                 bucketName = value;
+            }
+            if (entry.getKey().equals("ADMIN_CODE1")) {
+                adminCode1 = value;
+            }
+            if (entry.getKey().equals("ADMIN_CODE2")) {
+                adminCode2 = value;
             }
         });
     }

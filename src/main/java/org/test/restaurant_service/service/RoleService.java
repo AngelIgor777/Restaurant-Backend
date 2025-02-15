@@ -6,4 +6,6 @@ import org.test.restaurant_service.entity.User;
 public interface RoleService {
 
     void ensureUserHasRole(User user, RoleName roleName);
+
+    void ensureUserHasRole(Long chatId, RoleName roleName);
 }

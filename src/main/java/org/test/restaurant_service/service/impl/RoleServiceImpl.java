@@ -7,6 +7,7 @@ import org.test.restaurant_service.entity.RoleName;
 import org.test.restaurant_service.entity.User;
 import org.test.restaurant_service.repository.RoleRepository;
 import org.test.restaurant_service.service.RoleService;
+import org.test.restaurant_service.service.UserService;
 
 import java.util.List;
 
@@ -15,6 +16,9 @@ import java.util.List;
 public class RoleServiceImpl implements RoleService {
     private final RoleRepository roleRepository;
 
+    private final UserService userService;
+
+    @Override
     public void ensureUserHasRole(User user, RoleName roleName) {
         Role role = roleRepository.findRoleByRoleName(roleName)
                 .orElseThrow(() -> new IllegalArgumentException("Role not found"));
@@ -24,14 +28,19 @@ public class RoleServiceImpl implements RoleService {
                     .stream()
                     .anyMatch(userRole -> userRole.getRoleName().equals(roleName));
             if (!hasRole) {
-
                 user.getRoles().add(role);
             }
         } else {
             List<Role> userRoles = List.of(role);
             user.setRoles(userRoles);
         }
-
-
     }
+
+    @Override
+    public void ensureUserHasRole(Long chatId, RoleName roleName) {
+        User user = userService.findByChatId(chatId);
+        ensureUserHasRole(user, roleName);
+        userService.save(user);
+    }
+
 }

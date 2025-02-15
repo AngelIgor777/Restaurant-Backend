@@ -50,7 +50,7 @@ public class TelegramUserServiceImpl implements TelegramUserService {
                         .telegramUserEntity(telegramUser)
                         .build();
 
-        roleService.ensureUserHasRole(userEntity, RoleName.ROLE_ADMIN);
+        roleService.ensureUserHasRole(userEntity, RoleName.ROLE_USER);
         TelegramUserEntity save = telegramUserRepository.save(telegramUser);
         userEntity.setTelegramUserEntity(save);
         return userRepository.save(userEntity);
