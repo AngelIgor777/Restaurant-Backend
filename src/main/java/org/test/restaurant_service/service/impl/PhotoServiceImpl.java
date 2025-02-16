@@ -34,9 +34,9 @@ public class PhotoServiceImpl implements PhotoService {
 
     public static final String IMAGE_DIRECTORY = "uploads/images/";
 
-    private final PhotoRepository photoRepository;
-    private final ProductRepository productRepository;
-    private final PhotoMapper photoMapper;
+    protected final PhotoRepository photoRepository;
+    protected final ProductRepository productRepository;
+    protected final PhotoMapper photoMapper;
 
     @Override
     @Transactional(rollbackOn = Exception.class)

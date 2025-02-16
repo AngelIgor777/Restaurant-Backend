@@ -49,7 +49,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final UserService userService;
     private final S3Service s3Service;
 
-    public TelegramBot(TelegramUserServiceImpl telegramUserService, ProductTypeServiceImpl productTypeService, @Qualifier("productServiceImpl") ProductServiceImpl productService, RabbitMQJsonProducer rabbitMQJsonProducer, BotConfig botConfig, PhotoServiceImpl photoServiceImpl, TextUtil textUtil, UserServiceImpl userServiceImpl, PhotoServiceImpl photoService, UserService userService, S3Service s3Service) {
+    public TelegramBot(TelegramUserServiceImpl telegramUserService, ProductTypeServiceImpl productTypeService, @Qualifier("productServiceImpl") ProductServiceImpl productService, RabbitMQJsonProducer rabbitMQJsonProducer, BotConfig botConfig, PhotoServiceImpl photoServiceImpl, TextUtil textUtil, UserServiceImpl userServiceImpl,@Qualifier("photoServiceImplS3") PhotoServiceImpl photoService, UserService userService, S3Service s3Service) {
         this.telegramUserService = telegramUserService;
         this.productTypeService = productTypeService;
         this.productService = productService;

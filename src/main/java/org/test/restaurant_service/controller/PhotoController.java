@@ -2,6 +2,7 @@ package org.test.restaurant_service.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -20,11 +21,15 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/photos")
-@RequiredArgsConstructor
 public class PhotoController {
 
     private final PhotoService photoService;
     private final PhotoMapper photoMapper;
+
+    public PhotoController(@Qualifier("photoServiceImplS3") PhotoService photoService, PhotoMapper photoMapper) {
+        this.photoService = photoService;
+        this.photoMapper = photoMapper;
+    }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -57,9 +62,9 @@ public class PhotoController {
 
     @DeleteMapping
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@RequestParam String imageName) {
+    public void delete(@RequestParam String photoUrl) {
 
-        List<String> imageNameList = List.of(imageName);
+        List<String> imageNameList = List.of(photoUrl);
         photoService.deletePhotos(imageNameList);
     }
 }

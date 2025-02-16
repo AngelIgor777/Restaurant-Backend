@@ -1,6 +1,7 @@
 package org.test.restaurant_service.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
@@ -16,12 +17,17 @@ import java.util.List;
 import java.util.Objects;
 
 @Service
-@RequiredArgsConstructor
 public class ProductAndAndPhotoServiceImpl implements ProductAndPhotoService {
 
     private final PhotoService photoService;
     private final ProductAndProductHistoryService productAndProductHistoryService;
     private final ProductMapper productMapper;
+
+    public ProductAndAndPhotoServiceImpl(@Qualifier("photoServiceImplS3") PhotoService photoService, ProductAndProductHistoryService productAndProductHistoryService, ProductMapper productMapper) {
+        this.photoService = photoService;
+        this.productAndProductHistoryService = productAndProductHistoryService;
+        this.productMapper = productMapper;
+    }
 
     @Override
     @Transactional(rollbackOn = Exception.class)

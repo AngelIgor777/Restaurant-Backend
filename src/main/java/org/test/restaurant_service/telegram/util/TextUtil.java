@@ -141,7 +141,6 @@ class TextUtil {
                 Можете посмотреть наше меню /menu ☺ или сделать заказ у нас на сайте [parktown.md](http://195.133.27.38/#menu/%s).""", userUUID);
     }
 
-    //todo
     public String getUserInfo(User user) {
         TelegramUserEntity telegramUserEntity = user.getTelegramUserEntity();
 
@@ -172,7 +171,6 @@ class TextUtil {
         ZonedDateTime validFromZoned = discount.getValidFrom().atZone(zoneId);
         ZonedDateTime validToZoned = discount.getValidTo().atZone(zoneId);
 
-        // Форматируем дату как "день месяц, часы:минуты"
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM, HH:mm", new Locale("ru"));
         String formattedValidFrom = validFromZoned.format(formatter);
         String formattedValidTo = validToZoned.format(formatter);
@@ -198,7 +196,6 @@ class TextUtil {
         ZonedDateTime validFromZoned = productDiscount.getValidFrom().atZone(zoneId);
         ZonedDateTime validToZoned = productDiscount.getValidTo().atZone(zoneId);
 
-        // Форматируем дату как "день месяц, часы:минуты"
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM, HH:mm", new Locale("ru"));
         String formattedValidFrom = validFromZoned.format(formatter);
         String formattedValidTo = validToZoned.format(formatter);
