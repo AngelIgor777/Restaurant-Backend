@@ -1,26 +1,33 @@
 package org.test.restaurant_service.service.impl;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.test.restaurant_service.entity.ProductDiscount;
 import org.test.restaurant_service.repository.ProductDiscountRepository;
 import org.test.restaurant_service.service.ProductDiscountService;
+import org.test.restaurant_service.service.SendingUsersService;
+import org.test.restaurant_service.telegram.util.TextUtil;
 
 import javax.persistence.EntityNotFoundException;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @Service
+@RequiredArgsConstructor
 public class ProductDiscountServiceImpl implements ProductDiscountService {
 
     private final ProductDiscountRepository productDiscountRepository;
-
-    public ProductDiscountServiceImpl(ProductDiscountRepository productDiscountRepository) {
-        this.productDiscountRepository = productDiscountRepository;
-    }
+    private final SendingUsersService sendingUsersService;
 
     @Override
     public ProductDiscount saveProductDiscount(ProductDiscount productDiscount) {
-        return productDiscountRepository.save(productDiscount);
+
+        ProductDiscount savedProductDiscount = productDiscountRepository.save(productDiscount);
+        CompletableFuture.runAsync(() -> sendingUsersService.sendDiscountMessages(savedProductDiscount));
+
+        return savedProductDiscount;
     }
+
 
     @Override
     public ProductDiscount getProductDiscountById(Integer id) {

@@ -1,8 +1,9 @@
 package org.test.restaurant_service.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.test.restaurant_service.dto.response.UserInfoResponse;
 import org.test.restaurant_service.entity.User;
 import org.test.restaurant_service.repository.UserRepository;
 import org.test.restaurant_service.service.UserService;
@@ -33,4 +34,9 @@ public class UserServiceImpl implements UserService {
         return userRepository.findUserByTelegramUserEntityChatId(chatId)
                 .orElseThrow(() -> new EntityNotFoundException("User with id " + chatId + " not found"));
     }
+
+    @Override
+    public Page<User> getAll(Pageable pageable) {
+        return userRepository.findAll(pageable);
+     }
 }

@@ -1,6 +1,8 @@
 package org.test.restaurant_service.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -67,8 +69,8 @@ public class TelegramUserServiceImpl implements TelegramUserService {
     }
 
     @Override
-    public List<TelegramUserEntity> getAll() {
-        return telegramUserRepository.findAll();
+    public Page<TelegramUserEntity> getAll(Pageable pageable) {
+        return telegramUserRepository.findAll(pageable);
     }
 
     @Override

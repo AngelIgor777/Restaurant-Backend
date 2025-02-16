@@ -1,5 +1,7 @@
 package org.test.restaurant_service.service;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.test.restaurant_service.dto.request.UserRegistrationDTO;
 import org.test.restaurant_service.entity.TelegramUserEntity;
@@ -14,7 +16,7 @@ public interface TelegramUserService {
 
     boolean existByChatId(Long chatId);
 
-    List<TelegramUserEntity> getAll();
+    Page<TelegramUserEntity> getAll(Pageable pageable);
 
     TelegramUserEntity save(UserRegistrationDTO user);
 

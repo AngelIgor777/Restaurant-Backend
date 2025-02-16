@@ -4,12 +4,18 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
-import org.test.restaurant_service.entity.TelegramUserEntity;
-import org.test.restaurant_service.entity.User;
+import org.test.restaurant_service.entity.*;
 import org.test.restaurant_service.service.OrderService;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 @Service
@@ -156,4 +162,63 @@ class TextUtil {
         textForSendingOtpCode.append("Проверочный код для входа в аккаунт: `").append(otp).append("`\n");
         return textForSendingOtpCode.toString();
     }
+
+    public String getTextForGlobalDiscount(Discount discount, UUID userUUID) {
+        BigDecimal discountPercentage = discount.getDiscount();
+        String code = discount.getCode();
+        String description = discount.getDescription();
+
+        ZoneId zoneId = ZoneId.of("Europe/Chisinau");
+        ZonedDateTime validFromZoned = discount.getValidFrom().atZone(zoneId);
+        ZonedDateTime validToZoned = discount.getValidTo().atZone(zoneId);
+
+        // Форматируем дату как "день месяц, часы:минуты"
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM, HH:mm", new Locale("ru"));
+        String formattedValidFrom = validFromZoned.format(formatter);
+        String formattedValidTo = validToZoned.format(formatter);
+
+        String userLink = String.format("[parktown.md](http://195.133.27.38/#menu/%s)", userUUID);
+
+        return new StringBuilder()
+                .append("🔥 Внимание! Специальное предложение! 🔥\n\n")
+                .append("🎉 Скидка ").append(discountPercentage).append("% на все заказы!\n\n")
+                .append("📅 Акция действует с ").append(formattedValidFrom).append(" до ").append(formattedValidTo).append("\n\n")
+                .append("🎟 Используйте промокод: `").append(code).append("`\n\n")
+                .append(description).append("\n\n")
+                .append("⚡ Не упустите шанс сэкономить! Заходите на наш сайт и заказывайте прямо сейчас: ").append(userLink)
+                .toString();
+    }
+
+    public String getTextForProductDiscount(ProductDiscount productDiscount, UUID userUUID) {
+        BigDecimal discountPercentage = productDiscount.getDiscount();
+        String code = productDiscount.getCode();
+        String description = productDiscount.getDescription();
+
+        ZoneId zoneId = ZoneId.of("Europe/Chisinau");
+        ZonedDateTime validFromZoned = productDiscount.getValidFrom().atZone(zoneId);
+        ZonedDateTime validToZoned = productDiscount.getValidTo().atZone(zoneId);
+
+        // Форматируем дату как "день месяц, часы:минуты"
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM, HH:mm", new Locale("ru"));
+        String formattedValidFrom = validFromZoned.format(formatter);
+        String formattedValidTo = validToZoned.format(formatter);
+
+        String userLink = String.format("[parktown.md](http://195.133.27.38/#menu/%s)", userUUID);
+
+        Product product = productDiscount.getProduct();
+        BigDecimal priceWithDiscount = product.getPrice()
+                .multiply(BigDecimal.ONE.subtract(discountPercentage.divide(BigDecimal.valueOf(100))))
+                .setScale(2, RoundingMode.HALF_UP);  // Округление до двух знаков после запятой
+
+        return new StringBuilder()
+                .append("🔥 Внимание! Специальное предложение! 🔥\n\n")
+                .append("🎉 Скидка ").append(discountPercentage).append("% на блюдо!\n\n")
+                .append("💰 Вместо ").append(product.getPrice()).append(" леев всего ").append(priceWithDiscount).append(" леев\n")
+                .append("📅 Акция действует с ").append(formattedValidFrom).append(" до ").append(formattedValidTo).append("\n\n")
+                .append("🎟 Используйте промокод: `").append(code).append("`\n\n")
+                .append(description).append("\n\n")
+                .append("⚡ Не упустите шанс сэкономить! Заходите на наш сайт и заказывайте прямо сейчас: ").append(userLink)
+                .toString();
+    }
+
 }
