@@ -14,8 +14,8 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.test.restaurant_service.entity.TelegramUserEntity;
 import org.test.restaurant_service.service.PhotoService;
 import org.test.restaurant_service.service.TelegramUserService;
-import org.test.restaurant_service.telegram.util.TelegramBot;
-import org.test.restaurant_service.telegram.util.TextService;
+import org.test.restaurant_service.telegram.handling.TelegramBot;
+import org.test.restaurant_service.telegram.util.TextUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -29,7 +29,7 @@ public class ScheduledTask {
     private final PhotoService photoService;
     private final TelegramUserService telegramUserService;
     private final TaskScheduler taskScheduler;
-    private final TextService textService;
+    private final TextUtil textUtil;
     private final TelegramBot telegramBot;
     private ScheduledFuture<?> future;
 
@@ -77,7 +77,7 @@ public class ScheduledTask {
         List<TelegramUserEntity> all = telegramUserService.getAll();
         for (TelegramUserEntity telegramUserEntity : all) {
 
-            String adCaption = textService.getCaptionForUser(telegramUserEntity);
+            String adCaption = textUtil.getCaptionForUser(telegramUserEntity);
 
             photo.setCaption(adCaption);
             try {

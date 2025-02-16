@@ -21,4 +21,5 @@ public interface AddressMapper {
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateAddressFromDto(AddressRequestDTO addressRequestDTO, @MappingTarget Address address);
+
 }

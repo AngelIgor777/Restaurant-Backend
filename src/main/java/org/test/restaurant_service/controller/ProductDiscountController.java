@@ -3,6 +3,7 @@ package org.test.restaurant_service.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.test.restaurant_service.dto.request.ProductDiscountRequestDTO;
 import org.test.restaurant_service.dto.response.ProductDiscountResponseDTO;
@@ -21,6 +22,7 @@ public class ProductDiscountController {
     private final ProductDiscountMapper productDiscountMapper;
 
     @PostMapping
+    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
     @ResponseStatus(HttpStatus.CREATED)
     public ProductDiscountResponseDTO createProductDiscount(@RequestBody ProductDiscountRequestDTO productDiscountRequestDTO) {
         ProductDiscount productDiscount = productDiscountMapper.toEntity(productDiscountRequestDTO);
@@ -35,16 +37,19 @@ public class ProductDiscountController {
     }
 
     @GetMapping
+    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
     public ResponseEntity<List<ProductDiscount>> getAllProductDiscounts() {
         return ResponseEntity.ok(productDiscountService.getAllProductDiscounts());
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
     public ResponseEntity<ProductDiscount> updateProductDiscount(@PathVariable Integer id, @RequestBody ProductDiscount productDiscount) {
         return ResponseEntity.ok(productDiscountService.updateProductDiscount(id, productDiscount));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
     public ResponseEntity<Void> deleteProductDiscountById(@PathVariable Integer id) {
         productDiscountService.deleteProductDiscountById(id);
         return ResponseEntity.noContent().build();

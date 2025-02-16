@@ -2,7 +2,6 @@ package org.test.restaurant_service.entity;
 
 
 import lombok.*;
-import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.Table;
 import javax.persistence.*;
@@ -49,6 +48,25 @@ public class User {
     public boolean hasAddress() {
         return address != null;
     }
+
+    public boolean isAdminOrModerator() {
+        List<Role> userRoles = this.getRoles();
+        return userRoles.stream()
+                .anyMatch(role -> role.getRoleName().name().equals("ROLE_ADMIN") || role.getRoleName().name().equals("ROLE_MODERATOR"));
+    }
+
+    public boolean isAdmin() {
+        List<Role> userRoles = this.getRoles();
+        return userRoles.stream()
+                .anyMatch(role -> role.getRoleName().name().equals("ROLE_ADMIN"));
+    }
+
+    public boolean isModerator() {
+        List<Role> userRoles = this.getRoles();
+        return userRoles.stream()
+                .anyMatch(role -> role.getRoleName().name().equals("ROLE_MODERATOR"));
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

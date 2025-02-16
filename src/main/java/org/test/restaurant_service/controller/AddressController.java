@@ -87,10 +87,4 @@ public class AddressController {
         return ResponseEntity.ok(responseDto);
     }
 
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteAddress(@PathVariable Integer id) {
-        addressService.deleteById(id);
-        return ResponseEntity.noContent().build();
-    }
 }

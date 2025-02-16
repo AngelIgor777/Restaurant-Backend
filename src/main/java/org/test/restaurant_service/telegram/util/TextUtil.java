@@ -16,7 +16,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Getter
 public
-class TextService {
+class TextUtil {
 
     private final OrderService orderService;
 
@@ -147,5 +147,13 @@ class TextService {
         userInfoText.append("<i><b>Номер чата</b></i>: ").append(telegramUserEntity.getChatId()).append("\n");
 
         return userInfoText.toString();
+    }
+
+    public String getTextForSendingOtpCode(String otp) {
+        StringBuilder textForSendingOtpCode = new StringBuilder();
+        textForSendingOtpCode.append("Попытка входа в ваш аккаунт❗\n");
+        textForSendingOtpCode.append("Если вы не совершали попытки входа то просто проигнорируйте это сообщение.\n\n");
+        textForSendingOtpCode.append("Проверочный код для входа в аккаунт: `").append(otp).append("`\n");
+        return textForSendingOtpCode.toString();
     }
 }

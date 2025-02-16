@@ -3,6 +3,7 @@ package org.test.restaurant_service.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.test.restaurant_service.dto.request.DiscountRequestDTO;
 import org.test.restaurant_service.dto.response.DiscountResponseDTO;
@@ -22,6 +23,7 @@ public class DiscountController {
     private final DiscountMapper discountMapper;
 
     @PostMapping
+    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
     public ResponseEntity<DiscountResponseDTO> createDiscount(
             @Valid @RequestBody DiscountRequestDTO discountRequestDTO) {
         Discount discount = discountMapper.toEntity(discountRequestDTO);
@@ -36,6 +38,7 @@ public class DiscountController {
     }
 
     @GetMapping
+    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
     public ResponseEntity<List<DiscountResponseDTO>> getAllDiscounts() {
         List<Discount> discounts = discountService.getAllDiscounts();
         List<DiscountResponseDTO> response = discounts.stream()
@@ -45,6 +48,7 @@ public class DiscountController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
     public ResponseEntity<DiscountResponseDTO> updateDiscount(
             @PathVariable Integer id,
             @Valid @RequestBody DiscountRequestDTO discountRequestDTO) {
@@ -55,6 +59,7 @@ public class DiscountController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
     public ResponseEntity<Void> deleteDiscount(@PathVariable Integer id) {
         discountService.deleteDiscount(id);
         return ResponseEntity.noContent().build();

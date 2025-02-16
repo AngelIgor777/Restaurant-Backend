@@ -2,6 +2,7 @@ package org.test.restaurant_service.controller;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.test.restaurant_service.dto.response.OrderProductResponseWithPayloadDto;
 import org.test.restaurant_service.service.OrderService;
@@ -21,6 +22,7 @@ public class OrderController {
     }
 
     @GetMapping
+    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
     public ResponseEntity<List<OrderProductResponseWithPayloadDto>> getAllOrders() {
         List<OrderProductResponseWithPayloadDto> orders = orderService.getAllOrdersProductResponseWithPayloadDto();
         return ResponseEntity.ok(orders);
@@ -33,6 +35,7 @@ public class OrderController {
     }
 
     @PostMapping("/complete/{orderId}")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
     public void completeOrder(@PathVariable Integer orderId) {
         orderService.completeOrder(orderId);
     }

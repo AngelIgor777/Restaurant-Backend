@@ -1,6 +1,7 @@
 package org.test.restaurant_service.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.test.restaurant_service.telegram.util.scheduling.ScheduledTask;
 
@@ -16,6 +17,7 @@ public class SchedulerController {
     }
 
     @PostMapping("/update-cron")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
     public String updateCron(@RequestParam String cronExpression) {
         try {
             scheduledTask.updateCronExpression(cronExpression);
@@ -26,12 +28,14 @@ public class SchedulerController {
     }
 
     @PostMapping("/start")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
     public String startScheduler() {
         scheduledTask.startTask();
         return "Scheduler started.";
     }
 
     @PostMapping("/stop")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
     public String stopScheduler() {
         scheduledTask.stopTask();
         return "Scheduler stopped.";

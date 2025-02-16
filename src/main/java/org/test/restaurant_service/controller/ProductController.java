@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.test.restaurant_service.dto.response.ProductAndPhotosResponseDTO;
@@ -35,6 +36,7 @@ public class ProductController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
     public ProductResponseDTO create(@RequestParam("name") String name,
                                      @RequestParam("description") String description,
                                      @RequestParam("typeId") Integer typeId,
@@ -50,6 +52,7 @@ public class ProductController {
 
 
     @PatchMapping
+    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
     public ProductResponseDTO update(@RequestParam("id") Integer id,
                                      @RequestParam("name") String name,
                                      @RequestParam("description") String description,
@@ -64,6 +67,7 @@ public class ProductController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Integer id) {
         productService.delete(id);

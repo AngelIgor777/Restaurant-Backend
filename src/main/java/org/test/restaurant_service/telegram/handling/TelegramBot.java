@@ -1,11 +1,10 @@
-package org.test.restaurant_service.telegram.util;
+package org.test.restaurant_service.telegram.handling;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.GetUserProfilePhotos;
@@ -23,16 +22,13 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
 import org.test.restaurant_service.dto.response.ProductTypeResponseDTO;
-import org.test.restaurant_service.entity.TelegramUserEntity;
 import org.test.restaurant_service.entity.User;
 import org.test.restaurant_service.rabbitmq.producer.RabbitMQJsonProducer;
 import org.test.restaurant_service.service.*;
 import org.test.restaurant_service.service.impl.*;
 import org.test.restaurant_service.telegram.config.BotConfig;
+import org.test.restaurant_service.telegram.util.TextUtil;
 
-import java.io.*;
-import java.io.File;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -47,20 +43,20 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final ProductTypeService productTypeService;
     private final ProductService productService;
     private final RabbitMQJsonProducer rabbitMQJsonProducer;
-    private final TextService textService;
+    private final TextUtil textUtil;
     private final BotConfig botConfig;
     private final PhotoServiceImpl photoService;
     private final UserService userService;
     private final S3Service s3Service;
 
-    public TelegramBot(TelegramUserServiceImpl telegramUserService, ProductTypeServiceImpl productTypeService, @Qualifier("productServiceImpl") ProductServiceImpl productService, RabbitMQJsonProducer rabbitMQJsonProducer, BotConfig botConfig, PhotoServiceImpl photoServiceImpl, TextService textService, UserServiceImpl userServiceImpl, PhotoServiceImpl photoService, UserService userService, S3Service s3Service) {
+    public TelegramBot(TelegramUserServiceImpl telegramUserService, ProductTypeServiceImpl productTypeService, @Qualifier("productServiceImpl") ProductServiceImpl productService, RabbitMQJsonProducer rabbitMQJsonProducer, BotConfig botConfig, PhotoServiceImpl photoServiceImpl, TextUtil textUtil, UserServiceImpl userServiceImpl, PhotoServiceImpl photoService, UserService userService, S3Service s3Service) {
         this.telegramUserService = telegramUserService;
         this.productTypeService = productTypeService;
         this.productService = productService;
         this.rabbitMQJsonProducer = rabbitMQJsonProducer;
 
         this.botConfig = botConfig;
-        this.textService = textService;
+        this.textUtil = textUtil;
         this.photoService = photoService;
         this.userService = userService;
         this.s3Service = s3Service;
@@ -111,21 +107,21 @@ public class TelegramBot extends TelegramLongPollingBot {
                     sendHelpMessage(update);
                     break;
                 case "/info":
-                    sendMessage(update, textService.getInfoText());
+                    sendMessage(update, textUtil.getInfoText());
                     break;
                 case "/menu":
                     menu(update);
                     break;
                 case "/website":
                     user = userService.findByChatId(chatId);
-                    sendMessageWithMarkdown(chatId, textService.getWebSiteText(user.getUuid()));
+                    sendMessageWithMarkdown(chatId, textUtil.getWebSiteText(user.getUuid()));
                     break;
                 case "/about":
                     sendUserInfo(update);
                     break;
                 default:
                     user = userService.findByChatId(chatId);
-                    sendMessageWithMarkdown(chatId, textService.getDefaultMessage(user.getUuid()));
+                    sendMessageWithMarkdown(chatId, textUtil.getDefaultMessage(user.getUuid()));
                     break;
             }
         } else if (update.hasCallbackQuery()) {
@@ -138,8 +134,8 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void sendUserInfo(Update update) {
         User user = userService.findByChatId(update.getMessage().getChatId());
-        String userInfo = textService.getUserInfo(user);
-        sendMessage(update,userInfo);
+        String userInfo = textUtil.getUserInfo(user);
+        sendMessage(update, userInfo);
     }
 
     private String saveUserPhoto(Update update) {
@@ -210,7 +206,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     public void setToProduct(Update update, String product) {
         ProductResponseDTO productResponse = productService.getByName(product);
-        StringBuilder productText = textService.getProductText(productResponse);
+        StringBuilder productText = textUtil.getProductText(productResponse);
         EditMessageText editMessage = setEditMessageTextProperties(update);
         editMessage.setParseMode("HTML");
 
@@ -262,7 +258,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         Integer messageId = message.getMessageId();
         Long chatId = message.getChatId();
 
-        String responseText = textService.getProductTypeTextByType(productType);
+        String responseText = textUtil.getProductTypeTextByType(productType);
 
         editMessageProductsByType(responseText, chatId, messageId, products);
     }
@@ -327,7 +323,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         List<String> productTypes = productTypeService.getAll().stream()
                 .map(ProductTypeResponseDTO::getName).toList();
 
-        textService.addAllProductsToMenu(menuText, productTypes);
+        textUtil.addAllProductsToMenu(menuText, productTypes);
         return productTypes;
     }
 
@@ -412,7 +408,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void sendHelpMessage(Update update) {
 
-        sendMessage(update, textService.getHelpText());
+        sendMessage(update, textUtil.getHelpText());
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -426,20 +422,20 @@ public class TelegramBot extends TelegramLongPollingBot {
         if (!telegramUserService.existByChatId(chatId)) {
             String userPhotoUrl = saveUserPhoto(update);
             User createdUser = telegramUserService.registerUser(update, userPhotoUrl);
-            String message = textService.getMessageAfterRegister(createdUser.getUuid());
+            String message = textUtil.getMessageAfterRegister(createdUser.getUuid());
 
 
             sendSticker(chatId, "CAACAgIAAxkBAAOMZ2wCg2GLi8plYN0NGFsVl2NfnMYAAgsBAAL3AsgPxfQ7mJWqcds2BA");
             sendMessageWithMarkdown(chatId, message);
         } else {
             UUID userUUID = userService.findByChatId(chatId).getUuid();
-            errorText = textService.getErrorText(userUUID);
+            errorText = textUtil.getErrorText(userUUID);
             sendMessageWithMarkdown(chatId, errorText);
         }
     }
 
 
-    private void sendMessageWithMarkdown(Long chatId, String message) {
+    public void sendMessageWithMarkdown(Long chatId, String message) {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(chatId.toString());
         sendMessage.setText(message);
@@ -463,7 +459,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
 
-    private void sendMessage(Update update, String text) {
+    public void sendMessage(Update update, String text) {
         SendMessage message = new SendMessage();
         message.setParseMode("HTML");
         message.setChatId(update.getMessage().getChatId().toString());

@@ -1,6 +1,7 @@
 package org.test.restaurant_service.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.test.restaurant_service.dto.response.ProductHistoryResponseDTO;
 import org.test.restaurant_service.mapper.ProductHistoryMapper;
@@ -18,6 +19,7 @@ public class ProductHistoryController {
 
 
     @GetMapping("{productId}")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
     public List<ProductHistoryResponseDTO> getProductHistory(@PathVariable Integer productId) {
         return productHistoryService.getProductHistoryByProductId(productId)
                 .stream()
