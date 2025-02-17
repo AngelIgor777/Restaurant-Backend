@@ -24,7 +24,7 @@ public class ProductTranslation {
     private Product product;
 
     @Column(name = "language_code", nullable = false, length = 5)
-    private String languageCode;
+    private String languageCode; // 'en', 'ru', etc.
 
     @Column(nullable = false)
     private String name;
