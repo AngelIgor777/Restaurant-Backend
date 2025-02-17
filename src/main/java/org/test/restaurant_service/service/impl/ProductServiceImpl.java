@@ -5,7 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.test.restaurant_service.dto.request.ProductRequestDTO;
@@ -168,5 +170,13 @@ public class ProductServiceImpl implements ProductService {
     public List<ProductResponseDTO> getByTypeName(String typeName) {
         List<Product> allByTypeName = productRepository.findAllByType_Name(typeName);
         return allByTypeName.stream().map(productMapper::toResponseDTO).toList();
+    }
+
+    @Override
+    public List<ProductResponseDTO> getTop10WeekProducts(Pageable pageable ) {
+        return productRepository.getTop10ProductsWeek(pageable)
+                .stream()
+                .map(productMapper::toResponseDTO)
+                .toList();
     }
 }

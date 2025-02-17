@@ -33,4 +33,7 @@ public interface ProductService {
     ProductResponseDTO getByName(String product);
 
     List<ProductResponseDTO> getByTypeName(String typeName);
+
+    List<ProductResponseDTO> getTop10WeekProducts(Pageable pageable );
+
 }
