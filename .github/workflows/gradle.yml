@@ -41,7 +41,8 @@ jobs:
           echo "AWS_BUCKET_NAME=${{ secrets.AWS_BUCKET_NAME }}" >> src/main/resources/.env
           echo "REDIS_PORT=${{ secrets.REDIS_PORT }}" >> src/main/resources/.env
           echo "RABBITMQ_HOST=${{ secrets.RABBITMQ_HOST }}" >> src/main/resources/.env
-        
+          echo "ADMIN_CODE1=${{ secrets.ADMIN_CODE1 }}" >> src/main/resources/.env
+          echo "ADMIN_CODE2=${{ secrets.ADMIN_CODE2 }}" >> src/main/resources/.env
 
         # Шаг 4: Логинимся в Docker Hub
       - name: Log in to Docker Hub
