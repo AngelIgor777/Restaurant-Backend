@@ -54,7 +54,6 @@ public class PhotoController {
                 .body(image);
     }
 
-
     @PatchMapping("/{id}")
     public PhotoResponseDTO update(@PathVariable Integer id, @Valid @RequestBody PhotoRequestDTO requestDTO) {
         return photoService.update(id, requestDTO);

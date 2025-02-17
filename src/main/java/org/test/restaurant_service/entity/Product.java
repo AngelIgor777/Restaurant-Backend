@@ -20,6 +20,7 @@ import java.util.Objects;
 @Entity
 @Table(name = "products", schema = "restaurant_service")
 public class Product {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
