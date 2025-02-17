@@ -82,4 +82,9 @@ public class ProductController {
     public Page<ProductResponseDTO> getAll(@RequestParam(required = false) Integer typeId, Pageable pageable) {
         return productService.getAll(typeId, pageable);
     }
+
+    @GetMapping("/top-weekly")
+    public List<ProductResponseDTO> getTop10WeekProducts(Pageable pageable) {
+        return productService.getTop10WeekProducts(pageable);
+    }
 }

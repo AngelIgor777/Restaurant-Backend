@@ -31,7 +31,6 @@ public class OrderProduct {
     @JoinColumn(name = "product_id", foreignKey = @ForeignKey(name = "fk_order_product_product"), nullable = false)
     private Product product;
 
-
     @Column(name = "price_with_discount", precision = 10, scale = 2)
     private BigDecimal priceWithDiscount;
 

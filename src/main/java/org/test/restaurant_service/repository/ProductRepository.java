@@ -23,4 +23,12 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     @Query("SELECT DISTINCT p FROM Product  p WHERE  p.id = :id")
     Optional<Product> findByIdWithPhotos(@Param("id") Integer id);
 
+    @Query("SELECT p FROM Product p " +
+            "JOIN OrderProduct op ON p.id = op.product.id " +
+            "JOIN Order o ON o.id = op.order.id " +
+            "WHERE o.createdAt >= CURRENT_DATE - 7 " +
+            "GROUP BY p.id " +
+            "ORDER BY COUNT(op.id) DESC")
+    List<Product> getTop10ProductsWeek(Pageable pageable);
+
 }

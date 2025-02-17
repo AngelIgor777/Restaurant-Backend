@@ -1,30 +1,33 @@
 package org.test.restaurant_service.telegram.util;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
 import org.test.restaurant_service.entity.*;
 import org.test.restaurant_service.service.OrderService;
+import org.test.restaurant_service.service.ProductService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
+import java.util.Random;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 @Getter
 public
 class TextUtil {
 
     private final OrderService orderService;
+    private final ProductService productService;
 
     private String adText =
             """
@@ -61,6 +64,11 @@ class TextUtil {
                     📢 Получать самые свежие новости о мероприятиях PARK TOWN
                     
                     ✨ Мы всегда рады быть вам полезными!""";
+
+    public TextUtil(OrderService orderService, @Qualifier("productServiceWithS3Impl") ProductService productService) {
+        this.orderService = orderService;
+        this.productService = productService;
+    }
 
     public StringBuilder getProductText(ProductResponseDTO productResponse) {
         StringBuilder productText = new StringBuilder();
@@ -216,6 +224,43 @@ class TextUtil {
                 .append(description).append("\n\n")
                 .append("⚡ Не упустите шанс сэкономить! Заходите на наш сайт и заказывайте прямо сейчас: ").append(userLink)
                 .toString();
+    }
+
+
+    public String getTopWeekProducts(UUID userUUID) {
+        String userLink = String.format("[parktown.md](http://195.133.27.38/#menu/%s)", userUUID);
+
+        Pageable pageable = PageRequest.of(0, 10);
+        List<ProductResponseDTO> top10WeekProducts = productService.getTop10WeekProducts(pageable);
+
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("🔥 Топ-10 самых популярных блюд недели! 🔥\n\n");
+
+        int index = 1;
+        for (ProductResponseDTO product : top10WeekProducts) {
+            stringBuilder.append(index).append(". ")
+                    .append("🍽 ").append(product.getName()).append(" - ")
+                    .append(product.getPrice()).append("₽")
+                    .append("\n⏳ Время приготовления: ")
+                    .append(product.getCookingTime() != null ? product.getCookingTime() : "уточните у официанта")
+                    .append("\n✨ ").append(getHotSlogan())
+                    .append("\n\n");
+            index++;
+        }
+
+        stringBuilder.append("💥 Спешите попробовать! 🍔🔥Заходите на наш сайт и заказывайте прямо сейчас: ").append(userLink);
+        return stringBuilder.toString();
+    }
+
+    private String getHotSlogan() {
+        List<String> slogans = List.of(
+                "Попробуй и влюбись! 💕",
+                "Идеально для гурманов! 🍷",
+                "Вкус, который покоряет! 🌟",
+                "Не отказывай себе в удовольствии! 😋",
+                "Это хит! 🔥"
+        );
+        return slogans.get(new Random().nextInt(slogans.size()));
     }
 
 }
