@@ -2,6 +2,7 @@ package org.test.restaurant_service.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.test.restaurant_service.dto.request.ProductTranslationRequestDTO;
 import org.test.restaurant_service.dto.response.ProductTranslationResponseDTO;
@@ -25,13 +26,8 @@ public class ProductTranslationController {
         return translation.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @GetMapping
-    public ResponseEntity<List<ProductTranslationResponseDTO>> getAllTranslations(@RequestParam(defaultValue = "en") String lang) {
-        List<ProductTranslationResponseDTO> translations = translationService.getAllTranslations(lang);
-        return ResponseEntity.ok(translations);
-    }
-
     @PostMapping
+    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
     public ResponseEntity<ProductTranslationResponseDTO> createOrUpdateTranslation(
             @Valid @RequestBody ProductTranslationRequestDTO requestDTO) {
         ProductTranslationResponseDTO savedTranslation = translationService.createOrUpdateTranslation(requestDTO);
@@ -39,6 +35,7 @@ public class ProductTranslationController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
     public ResponseEntity<Void> deleteTranslation(@PathVariable Integer id) {
         translationService.deleteTranslation(id);
         return ResponseEntity.noContent().build();
