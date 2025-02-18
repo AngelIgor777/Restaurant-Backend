@@ -39,6 +39,9 @@ public class S3ServiceImpl implements S3Service {
     @Override
     @Async
     public CompletableFuture<String> upload(MultipartFile file, String fileName) {
+        if (fileName.charAt(0) == '/') {
+            fileName = fileName.substring(1);
+        }
         String filePath = "uploads/images/" + fileName;
 
         // Determine content type
@@ -65,7 +68,7 @@ public class S3ServiceImpl implements S3Service {
 
 
     @Override
-    public CompletableFuture<String>  upload(String fileUrl, String fileName) {
+    public CompletableFuture<String> upload(String fileUrl, String fileName) {
         String filePath = "uploads/images/" + fileName;
 
         try (InputStream inputStream = new URL(fileUrl).openStream()) {

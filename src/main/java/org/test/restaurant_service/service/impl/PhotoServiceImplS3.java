@@ -22,6 +22,14 @@ public class PhotoServiceImplS3 extends PhotoServiceImpl {
     }
 
     @Override
+    public void savePhotos(List<Photo> photos) {
+        for (Photo photo : photos) {
+            photoRepository.save(photo);
+            s3Service.upload(photo.getImage(), photo.getUrl().substring(photo.getUrl().lastIndexOf("uploads/images")));
+        }
+    }
+
+    @Override
     @Transactional(rollbackOn = Exception.class)
     public void deletePhotos(List<String> fileNames) {
         for (String fileName : fileNames) {
@@ -32,6 +40,7 @@ public class PhotoServiceImplS3 extends PhotoServiceImpl {
             photo.ifPresent(photoRepository::delete);
         }
     }
+
 
     @Override
     public void deleteImage(String fileName) {

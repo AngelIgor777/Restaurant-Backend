@@ -51,6 +51,7 @@ public class ProductController {
     }
 
 
+    //todo save photo to productHistory
     @PatchMapping
     @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
     public ProductResponseDTO update(@RequestParam("id") Integer id,
@@ -58,11 +59,12 @@ public class ProductController {
                                      @RequestParam("description") String description,
                                      @RequestParam("typeId") Integer typeId,
                                      @RequestParam("price") BigDecimal price,
-                                     @RequestParam("cookingTime") String cookingTime) {
+                                     @RequestParam("cookingTime") String cookingTime,
+                                     @RequestParam("file") MultipartFile file) {
 
         Product product = productService.parseRequest(name, description, typeId, price, cookingTime);
 
-        Product update = productAndProductHistoryService.update(product, id);
+        Product update = productAndProductHistoryService.update(product, id, file);
         return productMapper.toResponseDTO(update);
     }
 

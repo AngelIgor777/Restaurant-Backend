@@ -79,12 +79,15 @@ public class ProductServiceImpl implements ProductService {
         return productRepository.save(product);
     }
 
+
+    //in the future override for many photos
     @CacheEvict(value = "products", allEntries = true)
     @Override
-    public Product update(Product updatedProduct, Integer id) {
+    public Product update(Product updatedProduct, Integer id, List<Photo> photos) {
         Product existingProduct = productRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Product not found with ID: " + id));
 
+        existingProduct.getPhotos().get(0).setUrl(photos.get(0).getUrl());
         // Update only non-null fields in the updatedProduct
         if (updatedProduct.getName() != null) {
             existingProduct.setName(updatedProduct.getName());
@@ -173,10 +176,15 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public List<ProductResponseDTO> getTop10WeekProducts(Pageable pageable ) {
+    public List<ProductResponseDTO> getTop10WeekProducts(Pageable pageable) {
         return productRepository.getTop10ProductsWeek(pageable)
                 .stream()
                 .map(productMapper::toResponseDTO)
                 .toList();
+    }
+
+    @Override
+    public boolean existByName(String name) {
+        return productRepository.existsByName(name);
     }
 }

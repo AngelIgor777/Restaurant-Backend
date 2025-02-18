@@ -2,10 +2,10 @@ package org.test.restaurant_service.service;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.test.restaurant_service.dto.request.ProductAndPhotosRequest;
 import org.test.restaurant_service.dto.request.ProductRequestDTO;
 import org.test.restaurant_service.dto.response.ProductAndPhotosResponseDTO;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
+import org.test.restaurant_service.entity.Photo;
 import org.test.restaurant_service.entity.Product;
 
 import java.math.BigDecimal;
@@ -20,7 +20,7 @@ public interface ProductService {
 
     Product create(ProductRequestDTO productRequestDTO);
 
-    Product update(Product product, Integer id);
+    Product update(Product product, Integer id, List<Photo> photos);
 
     void delete(Integer id);
 
@@ -34,6 +34,7 @@ public interface ProductService {
 
     List<ProductResponseDTO> getByTypeName(String typeName);
 
-    List<ProductResponseDTO> getTop10WeekProducts(Pageable pageable );
+    List<ProductResponseDTO> getTop10WeekProducts(Pageable pageable);
 
+    boolean existByName(String name);
 }

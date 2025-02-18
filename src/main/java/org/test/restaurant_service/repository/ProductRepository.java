@@ -31,4 +31,5 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
             "ORDER BY COUNT(op.id) DESC")
     List<Product> getTop10ProductsWeek(Pageable pageable);
 
+    boolean existsByName(String name);
 }

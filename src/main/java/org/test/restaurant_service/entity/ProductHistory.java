@@ -2,7 +2,9 @@ package org.test.restaurant_service.entity;
 
 import javax.persistence.Table;
 import javax.persistence.*;
+
 import lombok.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -30,6 +32,9 @@ public class ProductHistory {
     private String name;
 
     private String description;
+
+    @Column(nullable = false)
+    private String photoUrl;
 
     @ManyToOne
     @JoinColumn(name = "type_id", referencedColumnName = "id")

@@ -24,6 +24,7 @@ public class ProductHistoryServiceImpl implements ProductHistoryService {
     @Override
     public void saveToProductHistory(Product product) {
         ProductHistory productHistory = productMapper.toProductHistory(product);
+        productHistory.setPhotoUrl(product.getPhotos().get(0).getUrl());
         ProductType type = product.getType();
         productHistory.setProduct(product);
         productHistory.setType(type);
