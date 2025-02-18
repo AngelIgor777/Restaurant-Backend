@@ -2,6 +2,8 @@ package org.test.restaurant_service.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.test.restaurant_service.dto.response.ProductResponseDTO;
+import org.test.restaurant_service.entity.Photo;
 import org.test.restaurant_service.entity.Product;
 import org.test.restaurant_service.entity.ProductHistory;
 import org.test.restaurant_service.entity.ProductType;
@@ -10,6 +12,7 @@ import org.test.restaurant_service.repository.ProductHistoryRepository;
 import org.test.restaurant_service.service.ProductHistoryService;
 
 import javax.persistence.EntityNotFoundException;
+import java.util.ArrayList;
 import java.util.List;
 
 

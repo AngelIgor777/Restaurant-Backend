@@ -32,20 +32,27 @@ public class ProductDiscountController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ProductDiscount> getProductDiscountById(@PathVariable Integer id) {
-        return ResponseEntity.ok(productDiscountService.getProductDiscountById(id));
+    public ResponseEntity<ProductDiscountResponseDTO> getProductDiscountById(@PathVariable Integer id) {
+        ProductDiscount productDiscountById = productDiscountService.getProductDiscountById(id);
+        ProductDiscountResponseDTO responseDTO = productDiscountMapper.toResponseDTO(productDiscountById);
+        return ResponseEntity.ok(responseDTO);
     }
 
     @GetMapping
     @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
-    public ResponseEntity<List<ProductDiscount>> getAllProductDiscounts() {
-        return ResponseEntity.ok(productDiscountService.getAllProductDiscounts());
+    public ResponseEntity<List<ProductDiscountResponseDTO>> getAllProductDiscounts() {
+        List<ProductDiscountResponseDTO> allProductDiscounts = productDiscountService.getAllProductDiscounts()
+                .stream()
+                .map(productDiscountMapper::toResponseDTO)
+                .toList();
+        return ResponseEntity.ok(allProductDiscounts);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
-    public ResponseEntity<ProductDiscount> updateProductDiscount(@PathVariable Integer id, @RequestBody ProductDiscount productDiscount) {
-        return ResponseEntity.ok(productDiscountService.updateProductDiscount(id, productDiscount));
+    public ResponseEntity<ProductDiscountResponseDTO> updateProductDiscount(@PathVariable Integer id, @RequestBody ProductDiscount productDiscount) {
+
+        return ResponseEntity.ok(productDiscountMapper.toResponseDTO(productDiscountService.updateProductDiscount(id, productDiscount)));
     }
 
     @DeleteMapping("/{id}")
