@@ -42,24 +42,30 @@ public class ProductAndProductHistoryServiceImpl implements ProductAndProductHis
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Product update(Product product, Integer id, MultipartFile photoFile) {
-        StringBuilder fileName = new StringBuilder().append(UUID.randomUUID())
-                .append(Objects.requireNonNull(photoFile.getOriginalFilename()).substring(photoFile.getOriginalFilename().lastIndexOf(".")));
+        List<Photo> photos = null;
+        if (photoFile != null) {
+            StringBuilder fileName = new StringBuilder().append(UUID.randomUUID())
+                    .append(Objects.requireNonNull(photoFile.getOriginalFilename()).substring(photoFile.getOriginalFilename().lastIndexOf(".")));
 
 
-        List<Photo> photos = new ArrayList<>();
-        photos.add(Photo.builder()
-                .product(product)
-                .url("https://s3.timeweb.cloud/cf1b889c-51893717-bc35-4427-a93b-2be350132697/uploads/images/" + fileName)
-                .image(photoFile)
-                .build());
+            photos = new ArrayList<>();
+            photos.add(Photo.builder()
+                    .product(product)
+                    .url("https://s3.timeweb.cloud/cf1b889c-51893717-bc35-4427-a93b-2be350132697/uploads/images/" + fileName)
+                    .image(photoFile)
+                    .build());
+        }
 
         Product updatedProduct = productService.update(product, id, photos);
 
-        for (Photo photo : photos) {
-            photo.setProduct(updatedProduct);
-            String photoName = photo.getUrl().substring(photo.getUrl().lastIndexOf("/"));
-            s3Service.upload(photo.getImage(), photoName);
+        if (photos != null) {
+            for (Photo photo : photos) {
+                photo.setProduct(updatedProduct);
+                String photoName = photo.getUrl().substring(photo.getUrl().lastIndexOf("/"));
+                s3Service.upload(photo.getImage(), photoName);
+            }
         }
+
 
         productHistoryService.saveToProductHistory(updatedProduct);
         return updatedProduct;

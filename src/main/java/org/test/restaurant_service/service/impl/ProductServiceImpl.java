@@ -87,7 +87,9 @@ public class ProductServiceImpl implements ProductService {
         Product existingProduct = productRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Product not found with ID: " + id));
 
-        existingProduct.getPhotos().get(0).setUrl(photos.get(0).getUrl());
+        if (photos != null) {
+            existingProduct.getPhotos().get(0).setUrl(photos.get(0).getUrl());
+        }
         // Update only non-null fields in the updatedProduct
         if (updatedProduct.getName() != null) {
             existingProduct.setName(updatedProduct.getName());

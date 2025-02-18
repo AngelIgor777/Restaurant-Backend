@@ -60,7 +60,7 @@ public class ProductController {
                                      @RequestParam("typeId") Integer typeId,
                                      @RequestParam("price") BigDecimal price,
                                      @RequestParam("cookingTime") String cookingTime,
-                                     @RequestParam("file") MultipartFile file) {
+                                     @RequestParam(value = "file", required = false) MultipartFile file) {
 
         Product product = productService.parseRequest(name, description, typeId, price, cookingTime);
 
