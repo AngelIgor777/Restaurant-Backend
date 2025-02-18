@@ -445,6 +445,16 @@ public class TelegramBot extends TelegramLongPollingBot {
         executeMessage(sendMessage);
     }
 
+    public void sendMessageWithHTML(Long chatId, String message) {
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.setChatId(chatId.toString());
+        sendMessage.setText(message);
+        ReplyKeyboardMarkup replyKeyboard = getReplyKeyboard();
+        sendMessage.setReplyMarkup(replyKeyboard);
+        sendMessage.setParseMode("HTML"); // Использование Markdown для форматирования текста
+        executeMessage(sendMessage);
+    }
+
 
     private void sendSticker(Long chatId, String stickerFileId) {
         SendSticker sendSticker = new SendSticker();

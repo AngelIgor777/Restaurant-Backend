@@ -47,6 +47,7 @@ public class SecurityConfig {
                         "/api/v1/product-discounts/**",
                         "/api/v1/admin/**",
                         "/api/v1/product-translations/**",
+                        "/api/v1/connection/**",
                         "/actuator/**",
                         "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html"
                 ).permitAll()

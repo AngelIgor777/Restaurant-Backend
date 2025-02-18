@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
 import org.test.restaurant_service.entity.*;
 import org.test.restaurant_service.service.OrderService;
@@ -262,5 +263,24 @@ class TextUtil {
         );
         return slogans.get(new Random().nextInt(slogans.size()));
     }
+
+    public String getTextForConnection(String name,
+                                       String email,
+                                       String event,
+                                       String phoneNumber,
+                                       String message) {
+        StringBuilder stringBuilder = new StringBuilder();
+
+        stringBuilder.append("\uD83D\uDCDE <i>Новая заявка!</i>\n\n");
+        stringBuilder.append("👤 <b>Имя:</b> ").append(name).append("\n");
+        stringBuilder.append("✉️ <b>Email:</b> ").append(email).append("\n");
+        stringBuilder.append("🎉 <b>Событие:</b> ").append(event).append("\n");
+        stringBuilder.append("📞 <b>Телефон:</b> ").append(phoneNumber).append("\n");
+        stringBuilder.append("📝 <b>Сообщение:</b> ").append(message).append("\n\n");
+        stringBuilder.append("⚡ <i>Пожалуйста, свяжитесь с пользователем как можно скорее!</i>");
+
+        return stringBuilder.toString();
+    }
+
 
 }
