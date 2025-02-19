@@ -37,8 +37,6 @@ public class ProductAndProductHistoryServiceImpl implements ProductAndProductHis
         return createdProduct;
     }
 
-
-    //todo
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Product update(Product product, Integer id, MultipartFile photoFile) {

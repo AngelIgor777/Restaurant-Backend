@@ -40,6 +40,8 @@ public class OrderController {
         orderService.completeOrder(orderId);
     }
 
+
+    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
     @PostMapping("/confirm/{orderId}")
     public void confirmOrder(@PathVariable Integer orderId) {
         orderService.confirmOrder(orderId);

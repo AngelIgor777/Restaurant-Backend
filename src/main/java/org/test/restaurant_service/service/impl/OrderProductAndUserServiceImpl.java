@@ -268,9 +268,7 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
              String productDiscountCode) {
         return requestDTOs.stream()
                 .map(requestDTO -> {
-                    //todo change the finding product with productService
-                    Product product = productRepository.findById(requestDTO.getProductId())
-                            .orElseThrow(() -> new EntityNotFoundException("Product not found with id " + requestDTO.getProductId()));
+                    Product product = productService.getSimpleById(requestDTO.getProductId());
                     OrderProduct orderProduct = createOrderProduct(order, requestDTO, product, existDiscountCodes, productDiscountCode);
                     countTotalPrice(totalPrice, product, requestDTO.getQuantity());
                     countTotalCookingTime(totalCookingTime, product);

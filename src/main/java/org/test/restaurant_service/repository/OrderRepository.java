@@ -1,6 +1,5 @@
 package org.test.restaurant_service.repository;
 
-import org.aspectj.weaver.ast.Or;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -13,6 +12,8 @@ import java.util.UUID;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Integer> {
+    List<Order> findAllByPaymentMethod(Order.PaymentMethod paymentMethod);
+    List<Order> findAllByStatus(Order.OrderStatus status);
     Optional<Order> findOrderByTable_Number(Integer tableNumber);
 
     List<Order> findAllByCreatedAtBetween(LocalDateTime from, LocalDateTime to);

@@ -100,11 +100,10 @@ public class OrderServiceImpl implements OrderService {
     }
 
 
-    //todo finish it
     @Transactional(readOnly = true)
     @Override
     public List<OrderProductResponseWithPayloadDto> getAllOrdersProductResponseWithPayloadDto() {
-        List<OrderProductResponseWithPayloadDto> list = orderRepository.findAll()
+        List<OrderProductResponseWithPayloadDto> list = orderRepository.findAllByStatus(Order.OrderStatus.PENDING)
                 .stream()
                 .map(order -> {
                     OrderProductResponseWithPayloadDto response = getOrderProductResponseWithPayloadDto(order);

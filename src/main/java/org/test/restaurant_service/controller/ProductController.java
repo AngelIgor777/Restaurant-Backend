@@ -51,7 +51,6 @@ public class ProductController {
     }
 
 
-    //todo save photo to productHistory
     @PatchMapping
     @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
     public ProductResponseDTO update(@RequestParam("id") Integer id,

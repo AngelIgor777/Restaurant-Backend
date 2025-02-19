@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.*;
 import org.test.restaurant_service.dto.request.OrderProductRequestDTO;
 import org.test.restaurant_service.dto.request.OrderProductRequestWithPayloadDto;
 import org.test.restaurant_service.dto.response.OrderProductResponseDTO;
-import org.test.restaurant_service.dto.response.OrderProductResponseWithPayloadDto;
 import org.test.restaurant_service.entity.OrderProduct;
 import org.test.restaurant_service.mapper.OrderProductMapper;
 import org.test.restaurant_service.rabbitmq.producer.RabbitMQJsonProducer;
@@ -14,7 +13,6 @@ import org.test.restaurant_service.service.OrderProductAndUserService;
 import org.test.restaurant_service.service.OrderProductService;
 
 import javax.validation.Valid;
-import javax.validation.executable.ValidateOnExecution;
 import java.util.List;
 
 @RestController
@@ -34,7 +32,6 @@ public class OrderProductController {
     }
 
 
-    //todo overwrite fo rabbitmq
     @PostMapping("/bulk")
     @ResponseStatus(HttpStatus.CREATED)
     public void createBulk(@Valid @RequestBody OrderProductRequestWithPayloadDto requestDtoWithPayloadDto) {
