@@ -22,13 +22,11 @@ public class DiscountServiceImpl implements DiscountService {
     @Override
     @Transactional
     public Discount createDiscount(Discount discount) {
-        // Save the discount and return it immediately
         Discount savedDiscount = discountRepository.save(discount);
 
-        // Run message sending asynchronously
         CompletableFuture.runAsync(() -> sendingUsersService.sendDiscountMessages(savedDiscount));
 
-        return savedDiscount;  // Return immediately
+        return savedDiscount;
     }
 
 

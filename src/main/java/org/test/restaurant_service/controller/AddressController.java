@@ -22,27 +22,18 @@ public class AddressController {
     private final AddressMapper addressMapper;
     private final UserAddressService userAddressService;
 
-    /**
-     * Get an address by ID
-     */
     @GetMapping("/{id}")
     public ResponseEntity<Address> getAddressById(@PathVariable Integer id) {
         Address address = addressService.findById(id);
         return ResponseEntity.ok(address);
     }
 
-    /**
-     * Get all addresses
-     */
     @GetMapping
     public ResponseEntity<List<Address>> getAllAddresses() {
         List<Address> addresses = addressService.findAll();
         return ResponseEntity.ok(addresses);
     }
 
-    /**
-     * Get addresses by city
-     */
     @GetMapping("/city/{city}")
     public ResponseEntity<List<Address>> getAddressesByCity(@PathVariable String city) {
         List<Address> addresses = addressService.findByCity(city);
@@ -53,7 +44,6 @@ public class AddressController {
     public ResponseEntity<AddressResponseDTO> updateAddress(@PathVariable Integer id, @RequestBody AddressRequestDTO addressRequestDTO) {
         Address existingAddress = addressService.findById(id);
 
-        // MapStruct will update only non-null fields
         addressMapper.updateAddressFromDto(addressRequestDTO, existingAddress);
 
         Address updatedAddress = addressService.save(existingAddress);
@@ -62,9 +52,6 @@ public class AddressController {
         return ResponseEntity.ok(responseDTO);
     }
 
-    /**
-     * Get addresses by user ID
-     */
     @GetMapping("/user/{userUUID}")
     public ResponseEntity<AddressResponseDTO> getAddressesByUserId(@PathVariable UUID userUUID) {
 
@@ -82,7 +69,6 @@ public class AddressController {
 
         AddressResponseDTO responseDto = addressMapper.toResponseDto(savedAddress);
 
-        //require because uuid not mapped automatically
         responseDto.setUserUUID(savedAddress.getUser().getUuid());
         return ResponseEntity.ok(responseDto);
     }

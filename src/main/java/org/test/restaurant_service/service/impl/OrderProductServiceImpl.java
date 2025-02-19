@@ -52,7 +52,6 @@ public class OrderProductServiceImpl implements OrderProductService {
         List<OrderProduct> orderProducts = getOrderProducts(requestDTOs, order, totalPrice, totalCookingTime, productResponseDTOList);
         order.setTotalPrice(totalPrice.get());
 
-        // Сохраняем все заказанные продукты
         orderRepository.save(order);
         createAll(orderProducts);
 
@@ -60,7 +59,6 @@ public class OrderProductServiceImpl implements OrderProductService {
         OrderResponseDTO orderResponse = orderMapper.toResponseDTO(order);
         orderResponse.setProducts(productResponseDTOList);
         orderResponse.setTotalCookingTime(totalCookingTime.get());
-//        sendOrdersFromWebsocket();
         return orderResponse;
     }
 

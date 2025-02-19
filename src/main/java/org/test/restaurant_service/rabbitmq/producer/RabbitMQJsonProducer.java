@@ -21,7 +21,6 @@ public class RabbitMQJsonProducer {
 
     private final RabbitTemplate rabbitTemplate;
 
-    //todo overwrite for save Product
     public void send(OrderProductRequestWithPayloadDto request) {
         log.info("Отправка сообщения в RabbitMQ: {}", request);
         rabbitTemplate.convertAndSend(exchangeName, orderSavingRoutingKey, request);

@@ -141,10 +141,9 @@ public class TelegramBot extends TelegramLongPollingBot {
     private String saveUserPhoto(Update update) {
         Long userId = update.getMessage().getFrom().getId();
 
-        // Request user profile photos
         GetUserProfilePhotos getUserProfilePhotos = new GetUserProfilePhotos();
         getUserProfilePhotos.setUserId(userId);
-        getUserProfilePhotos.setLimit(1); // Get only the latest photo
+        getUserProfilePhotos.setLimit(1);
 
         try {
             UserProfilePhotos photos = execute(getUserProfilePhotos);
@@ -153,22 +152,19 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             if (totalCount > 0) {
                 log.info("User has photo profile");
-                List<PhotoSize> photoSizes = photos.getPhotos().get(0); // Get the first set of photos
-                String fileId = photoSizes.get(photoSizes.size() - 1).getFileId(); // Get the highest resolution
+                List<PhotoSize> photoSizes = photos.getPhotos().get(0);
+                String fileId = photoSizes.get(photoSizes.size() - 1).getFileId();
 
-                // Get file path from Telegram servers
                 GetFile getFile = new GetFile();
                 getFile.setFileId(fileId);
                 org.telegram.telegrambots.meta.api.objects.File file = execute(getFile);
 
                 if (file != null && file.getFilePath() != null) {
-                    // Construct the file download URL
                     String fileUrl = "https://api.telegram.org/file/bot" + getBotToken() + "/" + file.getFilePath();
 
                     String fileName = fileId + ".jpg";
                     String fileUrlInS3 = "https://s3.timeweb.cloud/cf1b889c-51893717-bc35-4427-a93b-2be350132697/uploads/images/" + fileName;
 
-                    // Download and save the image
                     s3Service.upload(fileUrl, fileName);
                     return fileUrlInS3;
                 } else {
@@ -355,14 +351,13 @@ public class TelegramBot extends TelegramLongPollingBot {
         List<List<InlineKeyboardButton>> rowsInLine = new ArrayList<>();
 
         int size = productTypes.size();
-        int rows = (int) Math.ceil((double) size / 2); // Округление вверх для правильного расчета строк
+        int rows = (int) Math.ceil((double) size / 2);
 
-        // Разбиваем на строки по 2 кнопки
         for (int i = 0; i < rows; i++) {
             List<InlineKeyboardButton> row = new ArrayList<>();
 
-            // Индексы для кнопок в строке
             int limitation = Math.min((i + 1) * 2, size);
+
             for (int x = i * 2; x < limitation; x++) {
                 InlineKeyboardButton button = createButton();
                 String callbackData = productTypes.get(x);

@@ -11,7 +11,6 @@ import java.util.UUID;
 @Repository
 public interface AddressRepository extends JpaRepository<Address, Integer> {
 
-    // Custom query to find addresses by city
     List<Address> findByCity(String city);
 
     Optional<Address> findAddressByUser_Uuid(UUID uuid);

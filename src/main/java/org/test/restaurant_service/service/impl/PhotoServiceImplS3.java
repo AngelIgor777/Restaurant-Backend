@@ -35,7 +35,6 @@ public class PhotoServiceImplS3 extends PhotoServiceImpl {
         for (String fileName : fileNames) {
             deleteImage(fileName);
 
-            // Удаление записи из базы данных
             Optional<Photo> photo = photoRepository.findByUrl(fileName);
             photo.ifPresent(photoRepository::delete);
         }

@@ -33,7 +33,6 @@ public class S3ServiceImpl implements S3Service {
 
     private final AmazonS3 amazonS3;
 
-    // Supported image MIME types
     private static final String IMAGE_MIME_TYPE_PREFIX = "image/";
 
     @Override
@@ -52,10 +51,8 @@ public class S3ServiceImpl implements S3Service {
         }
 
         try {
-            // Compress and resize image
             byte[] optimizedImage = optimizeImage(file.getBytes());
 
-            // Upload to S3
             save(filePath, contentType, optimizedImage);
 
             return CompletableFuture.completedFuture(fileName);
@@ -81,16 +78,12 @@ public class S3ServiceImpl implements S3Service {
                 return null;
             }
 
-            // Read file as bytes
             byte[] fileBytes = inputStream.readAllBytes();
 
-            // Optimize image if needed
             byte[] optimizedImage = optimizeImage(fileBytes);
 
-            // Upload to S3
             save(filePath, contentType, optimizedImage);
 
-            log.info("File uploaded successfully to S3: {}", filePath);
             return CompletableFuture.completedFuture(fileName);
 
         } catch (IOException e) {
@@ -122,10 +115,8 @@ public class S3ServiceImpl implements S3Service {
     private byte[] optimizeImage(byte[] imageBytes) throws IOException {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
-        // Convert to BufferedImage
         BufferedImage image = ImageIO.read(new ByteArrayInputStream(imageBytes));
 
-        // Resize image (e.g., max width: 800px)
         int maxWidth = 800;
         int newHeight = (image.getHeight() * maxWidth) / image.getWidth();
 
@@ -144,10 +135,8 @@ public class S3ServiceImpl implements S3Service {
         String filePath = fileS3Path.substring(fileS3Path.indexOf("uploads/"));
 
         try {
-            // Create a delete request for the file
             DeleteObjectRequest deleteObjectRequest = new DeleteObjectRequest(KeyUtil.getBucketName(), filePath);
 
-            // Perform the delete operation
             amazonS3.deleteObject(deleteObjectRequest);
             return true;
         } catch (Exception e) {
@@ -156,19 +145,13 @@ public class S3ServiceImpl implements S3Service {
         }
     }
 
-    /**
-     * Determines the MIME type based on file extension
-     *
-     * @param filename The name of the file
-     * @return The MIME type for image files, or null if not supported
-     */
+
     private String determineContentType(String filename) {
         if (filename.endsWith(".jpg") || filename.endsWith(".jpeg")) {
             return IMAGE_MIME_TYPE_PREFIX + "jpeg";
         } else if (filename.endsWith(".png")) {
             return IMAGE_MIME_TYPE_PREFIX + "png";
         }
-        // Add more formats as needed
-        return null; // Unsupported type
+        return null;
     }
 }

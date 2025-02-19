@@ -31,9 +31,9 @@ public class SendingUsersServiceImpl implements SendingUsersService {
 
     @Override
     public void sendDiscountMessages(ProductDiscount savedDiscount) {
-        ExecutorService executorService = Executors.newFixedThreadPool(10);  // Thread pool with 10 workers
+        ExecutorService executorService = Executors.newFixedThreadPool(10);
         int page = 0;
-        int size = 50;  // Send 50 messages at a time
+        int size = 50;
         Page<User> userPage;
 
         do {
@@ -54,7 +54,6 @@ public class SendingUsersServiceImpl implements SendingUsersService {
                     });
                 }
 
-                // Pause for 10 seconds before sending the next batch
                 try {
                     TimeUnit.SECONDS.sleep(10);
                 } catch (InterruptedException e) {
@@ -64,7 +63,6 @@ public class SendingUsersServiceImpl implements SendingUsersService {
             page++;
         } while (userPage.hasNext());
 
-        // Shutdown executor service
         executorService.shutdown();
         try {
             if (!executorService.awaitTermination(60, TimeUnit.SECONDS)) {

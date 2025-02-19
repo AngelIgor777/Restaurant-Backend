@@ -39,20 +39,17 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     @Override
     public StatisticsResultResponseDto getStatistics(LocalDateTime from, LocalDateTime to) {
-        // Fetch orders for the specified period
         List<Order> orders = orderService.getAllOrdersByPeriod(from, to);
 
         if (orders.isEmpty()) {
             throw new BadRequestException("No orders found");
         }
 
-        // Initialize result DTOs
         StatisticsResultResponseDto statisticsResult = StatisticsResultResponseDto.create();
         statisticsResult.setFrom(from);
         statisticsResult.setTo(to);
         StatisticsResultResponseDto.TotalRevenueBasedOrdersDto revenueOrdersDto = StatisticsResultResponseDto.TotalRevenueBasedOrdersDto.create();
 
-        // Compute aggregate values
         BigDecimal totalRevenue = calculateTotalRevenue(orders);
         int totalOrders = orders.size();
         long totalDays = calculateDaysBetween(from, to);
@@ -63,12 +60,10 @@ public class StatisticsServiceImpl implements StatisticsService {
 
         ConcurrentHashMap<ProductResponseDTO, Integer> productSales = calculateProductSales(orders, ordersInRestaurant, ordersOutRestaurant);
 
-        // Build Product Sales DTOs
         List<StatisticsResultResponseDto.ProductSalesResponseDto> productSalesResponseDtos = productSales.entrySet().stream()
                 .map(entry -> buildProductSalesResponseDto(entry.getKey(), entry.getValue()))
                 .collect(Collectors.toList());
 
-        // Set results in DTOs
         revenueOrdersDto.setTotalOrders(totalOrders);
         revenueOrdersDto.setTotalRevenue(totalRevenue);
         revenueOrdersDto.setAvgRevenuePerOrder(totalRevenue.divide(BigDecimal.valueOf(totalOrders), BigDecimal.ROUND_HALF_UP));

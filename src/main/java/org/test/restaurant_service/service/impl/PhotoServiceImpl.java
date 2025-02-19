@@ -47,7 +47,6 @@ public class PhotoServiceImpl implements PhotoService {
             if (file.isEmpty()) {
                 throw new BadRequestException("FILE IS EMPTY");
             }
-
             File directory = new File(IMAGE_DIRECTORY);
             if (!directory.exists()) {
                 directory.mkdirs();
@@ -89,7 +88,6 @@ public class PhotoServiceImpl implements PhotoService {
         for (String fileName : fileNames) {
             deleteImage(fileName);
 
-            // Удаление записи из базы данных
             Optional<Photo> photo = photoRepository.findByUrl(fileName);
             photo.ifPresent(photoRepository::delete);
         }
