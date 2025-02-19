@@ -43,6 +43,8 @@ spring:
     baseline-on-migrate: ${SPRING_FLYWAY_BASELINE_ON_MIGRATE}
     schemas: ${SPRING_FLYWAY_SCHEMAS}
     clean-disabled: false
+
+    out-of-order: true
   servlet:
     multipart:
       max-file-size: 20MB
@@ -53,11 +55,11 @@ rabbitmq:
   queues:
     json:
       queue1:
-        name: json_user_registration_queue
-        routingKey: json_user_registration_routing_key
+        name: order_saving_queue
+        routingKey: order_saving_routing_key
       queue2:
-        name: json_product_save_queue
-        routingKey: json_product_save_routing_key
+        name: product_history_saving_queue
+        routingKey: product_history_saving_routing_key
   exchanges:
     exchange:
       name: java_exchange

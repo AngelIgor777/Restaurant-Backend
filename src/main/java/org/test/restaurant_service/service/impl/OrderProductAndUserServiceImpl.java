@@ -64,7 +64,6 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
     }
 
 
-    //TODO finish it
     //1 check the user is register
     //2 check the request from restaurant/outside
     //3 check the discount codes
@@ -91,6 +90,11 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
         Order order = Order.builder()
                 .paymentMethod(paymentMethod)
                 .build();
+
+        if (requestDtoWithPayloadDto.getPhoneNumber() != null) {
+            order.setPhoneNumber(requestDtoWithPayloadDto.getPhoneNumber());
+            orderProductResponseWithPayloadDto.setPhoneNumber(order.getPhoneNumber());
+        }
 
 
         checkTheUserIsRegistered(requestDtoWithPayloadDto, order, orderProductResponseWithPayloadDto);

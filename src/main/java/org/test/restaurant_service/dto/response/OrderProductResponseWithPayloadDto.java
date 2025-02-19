@@ -21,4 +21,5 @@ public class OrderProductResponseWithPayloadDto {
     private AddressResponseDTO addressResponseDTO;
     private TableResponseDTO tableResponseDTO;
     private UUID userUUID;
+    private String phoneNumber;
 }

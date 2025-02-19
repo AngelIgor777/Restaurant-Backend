@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import org.test.restaurant_service.entity.Order;
+
 import javax.validation.constraints.*;
 import java.util.List;
 import java.util.UUID;
@@ -34,6 +35,8 @@ public class OrderProductRequestWithPayloadDto {
 
     private String productDiscountCode;
 
+    private String phoneNumber;
+
     private String globalDiscountCode;
 
     private boolean userRegistered;
@@ -41,5 +44,5 @@ public class OrderProductRequestWithPayloadDto {
     private UUID userUUID;
 
     private AddressRequestDTO addressRequestDTO;
-    
+
 }

@@ -9,10 +9,12 @@ import org.test.restaurant_service.dto.response.OrderProductResponseDTO;
 import org.test.restaurant_service.dto.response.OrderProductResponseWithPayloadDto;
 import org.test.restaurant_service.entity.OrderProduct;
 import org.test.restaurant_service.mapper.OrderProductMapper;
+import org.test.restaurant_service.rabbitmq.producer.RabbitMQJsonProducer;
 import org.test.restaurant_service.service.OrderProductAndUserService;
 import org.test.restaurant_service.service.OrderProductService;
 
 import javax.validation.Valid;
+import javax.validation.executable.ValidateOnExecution;
 import java.util.List;
 
 @RestController
@@ -23,6 +25,7 @@ public class OrderProductController {
     private final OrderProductService orderProductService;
     private final OrderProductAndUserService orderProductAndUserService;
     private final OrderProductMapper orderProductMapper;
+    private final RabbitMQJsonProducer producer;
 
     @GetMapping("/order/{orderId}")
     public List<OrderProductResponseDTO> getOrderProductsByOrderId(@PathVariable Integer orderId) {
@@ -30,11 +33,12 @@ public class OrderProductController {
         return orderProductsByOrderId.stream().map(orderProductMapper::toResponseDTO).toList();
     }
 
+
+    //todo overwrite fo rabbitmq
     @PostMapping("/bulk")
     @ResponseStatus(HttpStatus.CREATED)
-    public OrderProductResponseWithPayloadDto createBulk(@Valid @RequestBody OrderProductRequestWithPayloadDto requestDtoWithPayloadDto) {
-        return orderProductAndUserService.createBulk(requestDtoWithPayloadDto);
-    }
+    public void createBulk(@Valid @RequestBody OrderProductRequestWithPayloadDto requestDtoWithPayloadDto) {
+        producer.send(requestDtoWithPayloadDto);    }
 
     @PatchMapping("/{id}")
     public OrderProductResponseDTO update(@PathVariable Integer id,

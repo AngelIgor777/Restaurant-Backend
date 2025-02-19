@@ -158,6 +158,9 @@ public class OrderServiceImpl implements OrderService {
 
     private OrderProductResponseWithPayloadDto getOrderProductResponseWithPayloadDto(Order order) {
         OrderProductResponseWithPayloadDto response = new OrderProductResponseWithPayloadDto();
+        if (order.hasPhoneNumber()) {
+            response.setPhoneNumber(order.getPhoneNumber());
+        }
         OrderResponseDTO orderResponseDTO = orderMapper.toResponseDTO(order);
         AtomicReference<LocalTime> totalCookingTime = new AtomicReference<>(LocalTime.MIN);
 

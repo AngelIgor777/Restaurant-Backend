@@ -41,6 +41,8 @@ public class Order {
     @Builder.Default
     private OrderStatus status = OrderStatus.PENDING;
 
+    private String phoneNumber;
+
     @Column(name = "payment_method")
     @Enumerated(EnumType.STRING)
     @Builder.Default
@@ -62,6 +64,10 @@ public class Order {
         if (o == null || getClass() != o.getClass()) return false;
         Order order = (Order) o;
         return Objects.equals(id, order.id) && Objects.equals(status, order.status);
+    }
+
+    public boolean hasPhoneNumber() {
+        return phoneNumber != null && !phoneNumber.isEmpty();
     }
 
     public boolean hasUser() {
