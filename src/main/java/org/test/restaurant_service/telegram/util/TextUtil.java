@@ -13,6 +13,7 @@ import org.test.restaurant_service.service.ProductService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -158,8 +159,11 @@ class TextUtil {
         userInfoText.append("<i><b>Имя</b></i>: ").append(telegramUserEntity.getFirstname()).append("\n");
         userInfoText.append("<i><b>Никнейм</b></i>: ").append(telegramUserEntity.getUsername()).append("\n");
         userInfoText.append("<i><b>Сделано заказов</b></i>: ").append(orderService.getCountOrdersByUserChatId(telegramUserEntity.getChatId())).append("\n");
-        userInfoText.append("<i><b>Дата регистрации в боте</b></i>: ").append(telegramUserEntity.getCreatedAt().toString()).append("\n");
-        userInfoText.append("<i><b>Номер чата</b></i>: ").append(telegramUserEntity.getChatId()).append("\n");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+        LocalDateTime createdAt = telegramUserEntity.getCreatedAt();
+        userInfoText.append("<i><b>Дата регистрации в боте</b></i>: ")
+                .append(createdAt.format(formatter))
+                .append("\n");        userInfoText.append("<i><b>Номер чата</b></i>: ").append(telegramUserEntity.getChatId()).append("\n");
 
         return userInfoText.toString();
     }

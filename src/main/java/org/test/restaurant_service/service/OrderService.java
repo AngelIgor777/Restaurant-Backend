@@ -38,4 +38,6 @@ public interface OrderService {
     List<OrderProductResponseWithPayloadDto> getAllUserOrdersProductResponseWithPayloadDto(UUID userUUID, Pageable pageable);
 
     Integer getCountOrdersByUserChatId(Long chatId);
+
+    void deleteAllByStatusAndCreatedAtBetween(Order.OrderStatus status, LocalDateTime from, LocalDateTime to);
 }

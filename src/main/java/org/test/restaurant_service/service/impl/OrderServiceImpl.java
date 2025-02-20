@@ -155,6 +155,11 @@ public class OrderServiceImpl implements OrderService {
         return orderRepository.countAllByUser_TelegramUserEntity_ChatId(chatId);
     }
 
+    @Override
+    public void deleteAllByStatusAndCreatedAtBetween(Order.OrderStatus status, LocalDateTime from, LocalDateTime to) {
+        orderRepository.deleteAllByStatusAndCreatedAtBetween(status, from, to);
+    }
+
     private OrderProductResponseWithPayloadDto getOrderProductResponseWithPayloadDto(Order order) {
         OrderProductResponseWithPayloadDto response = new OrderProductResponseWithPayloadDto();
         if (order.hasPhoneNumber()) {

@@ -1,21 +1,20 @@
 package org.test.restaurant_service;
 
 import io.github.cdimascio.dotenv.Dotenv;
-import lombok.RequiredArgsConstructor;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.scheduling.annotation.EnableAsync;
-import org.test.restaurant_service.telegram.util.scheduling.ScheduledTask;
 import org.test.restaurant_service.util.KeyUtil;
 
-@SpringBootApplication
+
+@SpringBootApplication(exclude = { RedisRepositoriesAutoConfiguration.class })
 @EnableCaching
 @EnableAsync
 public class RestaurantServiceApplication {
 
 	public static void main(String[] args) {
-		// Инициализация property из .env
 		Dotenv dotenv = Dotenv.configure().load();
 
 		KeyUtil.setProperties(dotenv);

@@ -1,6 +1,5 @@
 package org.test.restaurant_service.mapper.helper;
 
-import lombok.RequiredArgsConstructor;
 import org.mapstruct.Named;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;

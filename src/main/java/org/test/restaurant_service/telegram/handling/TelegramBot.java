@@ -42,22 +42,17 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final TelegramUserService telegramUserService;
     private final ProductTypeService productTypeService;
     private final ProductService productService;
-    private final RabbitMQJsonProducer rabbitMQJsonProducer;
     private final TextUtil textUtil;
     private final BotConfig botConfig;
-    private final PhotoServiceImpl photoService;
     private final UserService userService;
     private final S3Service s3Service;
 
-    public TelegramBot(TelegramUserServiceImpl telegramUserService, ProductTypeServiceImpl productTypeService, @Qualifier("productServiceImpl") ProductServiceImpl productService, RabbitMQJsonProducer rabbitMQJsonProducer, BotConfig botConfig, PhotoServiceImpl photoServiceImpl, TextUtil textUtil, UserServiceImpl userServiceImpl,@Qualifier("photoServiceImplS3") PhotoServiceImpl photoService, UserService userService, S3Service s3Service) {
+    public TelegramBot(TelegramUserServiceImpl telegramUserService, ProductTypeServiceImpl productTypeService, @Qualifier("productServiceImpl") ProductServiceImpl productService, BotConfig botConfig, TextUtil textUtil, UserService userService, S3Service s3Service) {
         this.telegramUserService = telegramUserService;
         this.productTypeService = productTypeService;
         this.productService = productService;
-        this.rabbitMQJsonProducer = rabbitMQJsonProducer;
-
         this.botConfig = botConfig;
         this.textUtil = textUtil;
-        this.photoService = photoService;
         this.userService = userService;
         this.s3Service = s3Service;
         ArrayList<BotCommand> botCommands = getCommands();

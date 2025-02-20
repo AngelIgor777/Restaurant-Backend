@@ -2,6 +2,7 @@ package org.test.restaurant_service.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.test.restaurant_service.dto.request.ProductTypeTranslationRequestDTO;
@@ -22,13 +23,13 @@ public class ProductTypeTranslationController {
     public ResponseEntity<ProductTypeTranslationResponseDTO> getProductTypeTranslation(
             @PathVariable Integer productTypeId,
             @RequestParam String lang) {
-
         return productTypeTranslationService.getTranslation(productTypeId, lang)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping
+    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
     public ResponseEntity<ProductTypeTranslationResponseDTO> createTranslation(
             @Valid @RequestBody ProductTypeTranslationRequestDTO requestDTO) {
         ProductTypeTranslationResponseDTO createdTranslation = productTypeTranslationService.createTranslation(requestDTO);
@@ -36,6 +37,7 @@ public class ProductTypeTranslationController {
     }
 
     @PatchMapping("/{id}")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
     public ResponseEntity<ProductTypeTranslationResponseDTO> updateTranslation(
             @PathVariable Integer id,
             @Valid @RequestBody ProductTypeTranslationRequestDTO requestDTO) {
@@ -44,6 +46,7 @@ public class ProductTypeTranslationController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
     public ResponseEntity<Void> deleteTranslation(@PathVariable Integer id) {
         productTypeTranslationService.deleteTranslation(id);
         return ResponseEntity.noContent().build();

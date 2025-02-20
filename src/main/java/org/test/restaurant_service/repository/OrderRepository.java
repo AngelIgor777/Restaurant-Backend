@@ -25,4 +25,6 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     Integer countAllByUser_Uuid(UUID userUUID);
 
     Integer countAllByUser_TelegramUserEntity_ChatId(Long chatIdp);
+
+    void deleteAllByStatusAndCreatedAtBetween(Order.OrderStatus status, LocalDateTime from, LocalDateTime to);
 }
