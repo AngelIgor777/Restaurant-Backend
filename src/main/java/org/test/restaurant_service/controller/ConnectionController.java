@@ -38,9 +38,9 @@ public class ConnectionController {
 
     @Async
     public void sendToAdmins(String name, String email, String event, String phoneNumber, String message) {
-        String textForConnection = textUtil.getTextForConnection(name, email, event, phoneNumber, message);
         List<User> allAdminsAndModerators = userService.getAllAdminsAndModerators();
         for (User user : allAdminsAndModerators) {
+            String textForConnection = textUtil.getTextForConnection(name, email, event, phoneNumber, message, user.getTelegramUserEntity().getLanguage().getCode());
             telegramBot.sendMessageWithHTML(user.getTelegramUserEntity().getChatId(), textForConnection);
         }
     }

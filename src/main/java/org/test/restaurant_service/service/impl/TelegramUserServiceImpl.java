@@ -92,6 +92,11 @@ public class TelegramUserServiceImpl implements TelegramUserService {
     @Override
     public TelegramUserEntity get(Update update) {
         Long chatId = update.getMessage().getChatId();
+        return getByChatId(chatId);
+    }
+
+    @Override
+    public TelegramUserEntity getByChatId(Long chatId) {
         return telegramUserRepository.findTelegramUserEntityByChatId(chatId)
                 .orElseThrow(() -> new EntityNotFoundException("Telegram-User with " + chatId + " not found"));
     }

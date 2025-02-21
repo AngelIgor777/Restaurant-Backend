@@ -34,7 +34,7 @@ public class OtpServiceImpl implements OtpService {
         otpCode.setOtpCode(otp);
         otpCode.setExpiresAt(expiresAt);
         otpRepository.save(otpCode);
-        String otpMessage = textUtil.getTextForSendingOtpCode(otp);
+        String otpMessage = textUtil.getTextForSendingOtpCode(otp,user.getTelegramUserEntity().getLanguage().getCode());
         telegramBot.sendMessageWithMarkdown(user.getTelegramUserEntity().getChatId(), otpMessage);
     }
 

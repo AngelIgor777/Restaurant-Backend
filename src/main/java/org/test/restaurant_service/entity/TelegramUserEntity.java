@@ -35,6 +35,10 @@ public class TelegramUserEntity implements Serializable {
     @Column(nullable = false)
     private String firstname;
 
+    @ManyToOne
+    @JoinColumn(name = "language_id", nullable = false)
+    private Language language;
+
     @Builder.Default
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();

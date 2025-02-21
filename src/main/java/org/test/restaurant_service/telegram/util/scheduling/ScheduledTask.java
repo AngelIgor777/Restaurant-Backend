@@ -44,8 +44,6 @@ public class ScheduledTask {
     }
 
 
-
-
     public void startTask() {
         stopTask();
         if (isSchedulerEnabled) {
@@ -78,7 +76,7 @@ public class ScheduledTask {
             List<User> currentBatchUsers = userPage.getContent();
             if (!currentBatchUsers.isEmpty()) {
                 for (User user : currentBatchUsers) {
-                    String textTopWeekProducts = textUtil.getTopWeekProducts(user.getUuid());
+                    String textTopWeekProducts = textUtil.getTopWeekProducts(user.getUuid(), user.getTelegramUserEntity().getLanguage().getCode());
 
                     telegramBot.sendMessageWithMarkdown(user.getTelegramUserEntity().getChatId(), textTopWeekProducts);
 

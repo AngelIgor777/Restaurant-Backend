@@ -22,4 +22,6 @@ public interface TelegramUserService {
 
     TelegramUserEntity get(Update update);
 
+    TelegramUserEntity getByChatId(Long chatId);
+
 }

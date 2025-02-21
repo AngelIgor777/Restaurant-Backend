@@ -20,6 +20,11 @@ public interface ProductMapper {
     @Mapping(target = "quantity", ignore = true)
     ProductResponseDTO toResponseDTO(Product product);
 
+    @Mapping(source = "type.name", target = "typeName")
+    @Mapping(target = "quantity", ignore = true)
+    @Mapping(target = "photos", ignore = true)
+    ProductResponseDTO toResponseForTg(Product product);
+
     @Mapping(target = "type", ignore = true)
     @Mapping(target = "product", ignore = true)
     @Mapping(target = "id", ignore = true)

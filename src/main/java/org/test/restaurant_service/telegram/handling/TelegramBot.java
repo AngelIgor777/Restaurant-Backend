@@ -21,9 +21,16 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
+import org.test.restaurant_service.dto.response.ProductTranslationResponseDTO;
 import org.test.restaurant_service.dto.response.ProductTypeResponseDTO;
+import org.test.restaurant_service.dto.response.ProductTypeTranslationResponseDTO;
+import org.test.restaurant_service.entity.ProductTranslation;
+import org.test.restaurant_service.entity.ProductTypeTranslation;
 import org.test.restaurant_service.entity.User;
-import org.test.restaurant_service.rabbitmq.producer.RabbitMQJsonProducer;
+import org.test.restaurant_service.mapper.ProductMapper;
+import org.test.restaurant_service.mapper.ProductTranslationMapperImpl;
+import org.test.restaurant_service.mapper.ProductTypeTranslationMapper;
+import org.test.restaurant_service.mapper.ProductTypeTranslationMapperImpl;
 import org.test.restaurant_service.service.*;
 import org.test.restaurant_service.service.impl.*;
 import org.test.restaurant_service.telegram.config.BotConfig;
@@ -46,8 +53,13 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final BotConfig botConfig;
     private final UserService userService;
     private final S3Service s3Service;
+    private final LanguageService languageService;
+    private final ProductTranslationService productTranslationService;
+    private final ProductTypeTranslationService productTypeTranslationService;
+    private final ProductMapper productMapper;
+    private final ProductTypeTranslationMapper productTypeTranslationMapper;
 
-    public TelegramBot(TelegramUserServiceImpl telegramUserService, ProductTypeServiceImpl productTypeService, @Qualifier("productServiceImpl") ProductServiceImpl productService, BotConfig botConfig, TextUtil textUtil, UserService userService, S3Service s3Service) {
+    public TelegramBot(TelegramUserServiceImpl telegramUserService, ProductTypeServiceImpl productTypeService, @Qualifier("productServiceImpl") ProductServiceImpl productService, BotConfig botConfig, TextUtil textUtil, UserService userService, S3Service s3Service, LanguageService languageService, ProductTranslationService productTranslationService, ProductTypeTranslationService productTypeTranslationService, ProductMapper productMapper, ProductTypeTranslationMapperImpl productTypeTranslationMapper) {
         this.telegramUserService = telegramUserService;
         this.productTypeService = productTypeService;
         this.productService = productService;
@@ -55,27 +67,51 @@ public class TelegramBot extends TelegramLongPollingBot {
         this.textUtil = textUtil;
         this.userService = userService;
         this.s3Service = s3Service;
-        ArrayList<BotCommand> botCommands = getCommands();
+        this.languageService = languageService;
+        this.productTranslationService = productTranslationService;
+        this.productTypeTranslationService = productTypeTranslationService;
+        this.productMapper = productMapper;
+        ArrayList<BotCommand> botCommands = getCommands("ru");
         try {
             this.execute(new SetMyCommands(botCommands, new BotCommandScopeDefault(), null));
         } catch (TelegramApiException e) {
             log.error(e.getMessage());
         }
+        this.productTypeTranslationMapper = productTypeTranslationMapper;
     }
 
     private List<String> callbackProductTypesData = new CopyOnWriteArrayList<>();
     private List<String> callbackProductsData = new CopyOnWriteArrayList<>();
 
 
-    private static ArrayList<BotCommand> getCommands() {
+    private ArrayList<BotCommand> getCommands(String langCode) {
         ArrayList<BotCommand> botCommands = new ArrayList<>();
-        botCommands.add(new BotCommand("/start", "Запуск бота"));
-        botCommands.add(new BotCommand("/help", "Список доступных команд"));
-        botCommands.add(new BotCommand("/info", "Информация о боте"));
-        botCommands.add(new BotCommand("/menu", "Показать меню"));
-        botCommands.add(new BotCommand("/about", "Показать мою информацию"));
+        if ("ro".equals(langCode)) {
+            botCommands.add(new BotCommand("/start", "Porniți botul"));
+            botCommands.add(new BotCommand("/help", "Lista comenzilor disponibile"));
+            botCommands.add(new BotCommand("/info", "Informații despre bot"));
+            botCommands.add(new BotCommand("/menu", "Afișați meniul"));
+            botCommands.add(new BotCommand("/about", "Afișați informațiile mele"));
+            botCommands.add(new BotCommand("/lang", "Schimbați limba"));
+        } else {
+            botCommands.add(new BotCommand("/start", "Запуск бота"));
+            botCommands.add(new BotCommand("/help", "Список доступных команд"));
+            botCommands.add(new BotCommand("/info", "Информация о боте"));
+            botCommands.add(new BotCommand("/menu", "Показать меню"));
+            botCommands.add(new BotCommand("/about", "Показать мою информацию"));
+            botCommands.add(new BotCommand("/lang", "Изменить язык"));
+        }
         return botCommands;
     }
+
+    private void updateBotCommands(String langCode) {
+        try {
+            this.execute(new SetMyCommands(getCommands(langCode), new BotCommandScopeDefault(), null));
+        } catch (TelegramApiException e) {
+            log.error("Failed to update bot commands: " + e.getMessage());
+        }
+    }
+
 
     @Override
     public String getBotUsername() {
@@ -97,26 +133,32 @@ public class TelegramBot extends TelegramLongPollingBot {
             switch (text) {
                 case "/start":
                     registerFull(update);
+                    user = userService.findByChatId(chatId);
+                    updateBotCommands(user.getTelegramUserEntity().getLanguage().getCode());
                     break;
                 case "/help":
                     sendHelpMessage(update);
                     break;
                 case "/info":
-                    sendMessage(update, textUtil.getInfoText());
+                    user = userService.findByChatId(chatId);
+                    sendMessage(update, textUtil.getInfoText(user.getTelegramUserEntity().getLanguage().getCode()));
                     break;
                 case "/menu":
                     menu(update);
                     break;
                 case "/website":
                     user = userService.findByChatId(chatId);
-                    sendMessageWithMarkdown(chatId, textUtil.getWebSiteText(user.getUuid()));
+                    sendMessageWithMarkdown(chatId, textUtil.getWebSiteText(user.getUuid(), user.getTelegramUserEntity().getLanguage().getCode()));
                     break;
                 case "/about":
                     sendUserInfo(update);
                     break;
+                case "/lang":
+                    sendLanguageSelection(update.getMessage().getChatId());
+                    break;
                 default:
                     user = userService.findByChatId(chatId);
-                    sendMessageWithMarkdown(chatId, textUtil.getDefaultMessage(user.getUuid()));
+                    sendMessageWithMarkdown(chatId, textUtil.getDefaultMessage(user.getUuid(), user.getTelegramUserEntity().getLanguage().getCode()));
                     break;
             }
         } else if (update.hasCallbackQuery()) {
@@ -125,6 +167,23 @@ public class TelegramBot extends TelegramLongPollingBot {
         } else if (update.getMessage().hasSticker()) {
             stickerHandler(update);
         }
+    }
+
+
+    private void sendLanguageSelection(Long chatId) {
+        SendMessage message = new SendMessage();
+        message.setChatId(String.valueOf(chatId));
+        message.setText("Choose your language / Alege limba:");
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> buttons = new ArrayList<>();
+
+        buttons.add(List.of(createLangButton("Русский", "ru")));
+        buttons.add(List.of(createLangButton("Română", "ro")));
+
+        markup.setKeyboard(buttons);
+        message.setReplyMarkup(markup);
+        executeMessage(message);
     }
 
     private void sendUserInfo(Update update) {
@@ -152,7 +211,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                 GetFile getFile = new GetFile();
                 getFile.setFileId(fileId);
-                org.telegram.telegrambots.meta.api.objects.File file = execute(getFile);
+                File file = execute(getFile);
 
                 if (file != null && file.getFilePath() != null) {
                     String fileUrl = "https://api.telegram.org/file/bot" + getBotToken() + "/" + file.getFilePath();
@@ -178,6 +237,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void handleCallbackQuery(Update update) {
         CallbackQuery callbackQuery = update.getCallbackQuery();
         String data = callbackQuery.getData();
+        Long chatId = update.getCallbackQuery().getMessage().getChatId();
 
         boolean anyMatchProductTypes = callbackProductTypesData.stream()
                 .anyMatch(callbackItem -> callbackItem.equals(data));
@@ -193,11 +253,34 @@ public class TelegramBot extends TelegramLongPollingBot {
         } else if (data.equals(CallBackButton.BACK_TO_MENU.toString())) {
             backToMenu(update);
         }
+        if (data.startsWith("LANG_")) {
+            String langCode = data.substring(5);
+            languageService.setLanguage(chatId, langCode);
+            String confirmationMessage = "ro".equals(langCode) ? "Limba a fost setată ✅" : "Язык установлен ✅";
+            sendMessageWithHTML(chatId, confirmationMessage);
+            updateBotCommands(langCode);
+            sendHelpMessage(chatId);
+        }
     }
 
     public void setToProduct(Update update, String product) {
-        ProductResponseDTO productResponse = productService.getByName(product);
-        StringBuilder productText = textUtil.getProductText(productResponse);
+        Long chatId = update.getCallbackQuery().getMessage().getChatId();
+        User user = userService.findByChatId(chatId);
+        String langCode = user.getTelegramUserEntity().getLanguage().getCode();
+
+        ProductResponseDTO productResponse;
+        StringBuilder productText = new StringBuilder();
+        ProductTypeTranslationResponseDTO productTypeTranslationResponseDTO = null;
+        if (langCode.equals("ro")) {
+            ProductTranslation productTranslation = productTranslationService.getByTranslationName(product);
+            productResponse = productMapper.toResponseForTg(productTranslation.getProduct());
+            ProductTypeTranslation translation = productTypeTranslationService.getTranslation(productResponse.getTypeName(), "ro");
+            productTypeTranslationResponseDTO = productTypeTranslationMapper.toTranslationDTO(translation);
+            productText = textUtil.getProductTranslationRoText(productResponse, productTranslation, productTypeTranslationResponseDTO);
+        } else {
+            productResponse = productService.getByName(product);
+            productText = textUtil.getProductText(productResponse);
+        }
         EditMessageText editMessage = setEditMessageTextProperties(update);
         editMessage.setParseMode("HTML");
 
@@ -209,8 +292,13 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         InlineKeyboardButton inlineKeyboardButton = new InlineKeyboardButton();
 
-        inlineKeyboardButton.setText("Назад ✨");
-        inlineKeyboardButton.setCallbackData(productResponse.getTypeName());
+        if (langCode.equals("ru")) {
+            inlineKeyboardButton.setText("Назад ✨");
+            inlineKeyboardButton.setCallbackData(productResponse.getTypeName());
+        } else {
+            inlineKeyboardButton.setText("Înapoi ✨");
+            inlineKeyboardButton.setCallbackData(productTypeTranslationResponseDTO.getName());
+        }
 
         inlineKeyboardButtons.add(inlineKeyboardButton);
         rowsInLine.add(inlineKeyboardButtons);
@@ -233,9 +321,11 @@ public class TelegramBot extends TelegramLongPollingBot {
 
 
     private void backToMenu(Update update) {
+        Long chatId = update.getCallbackQuery().getMessage().getChatId();
+        User user = userService.findByChatId(chatId);
 
         EditMessageText editMessage = setEditMessageTextProperties(update);
-        InlineKeyboardMarkup menuInlineMarkup = getMenuInlineMarkup();
+        InlineKeyboardMarkup menuInlineMarkup = getMenuInlineMarkup(user.getTelegramUserEntity().getLanguage().getCode());
         editMessage.setText(menuText.toString());
         editMessage.setReplyMarkup(menuInlineMarkup);
         executeMessage(editMessage);
@@ -243,18 +333,44 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void handleProductTypeCallback(CallbackQuery callbackQuery, String productType) {
-        List<ProductResponseDTO> products = productService.getByTypeName(productType);
-
         Message message = callbackQuery.getMessage();
         Integer messageId = message.getMessageId();
         Long chatId = message.getChatId();
+        User user = userService.findByChatId(chatId);
+        String langCode = user.getTelegramUserEntity().getLanguage().getCode();
 
-        String responseText = textUtil.getProductTypeTextByType(productType);
+        String responseText = textUtil.getProductTypeTextByType(productType, user.getTelegramUserEntity().getLanguage().getCode());
 
-        editMessageProductsByType(responseText, chatId, messageId, products);
+
+        if (langCode.equals("ro")) {
+            String productNameRu = productTypeTranslationService.getByRoTranslation(productType, "ro").getProductType().getName();
+
+            List<ProductResponseDTO> products = productService.getByTypeName(productNameRu);
+
+            List<String> list = products
+                    .stream()
+                    .map(productResponseDTO -> {
+                        ProductTranslationResponseDTO productTranslationResponseDTO = productTranslationService.getTranslation(productResponseDTO.getId(), "ro");
+                        String name = productTranslationResponseDTO.getName();
+                        return name;
+                    })
+                    .toList();
+
+            editMessageProductsByType(responseText, chatId, messageId, list, langCode);
+
+        } else {
+            List<ProductResponseDTO> products = productService.getByTypeName(productType);
+            List<String> strings = products
+                    .stream()
+                    .map(ProductResponseDTO::getName)
+                    .toList();
+            editMessageProductsByType(responseText, chatId, messageId, strings, langCode);
+        }
+
+
     }
 
-    private void editMessageProductsByType(String text, long chatId, long messageId, List<ProductResponseDTO> products) {
+    private void editMessageProductsByType(String text, long chatId, long messageId, List<String> products, String langCode) {
         EditMessageText message = getEditMessageText(String.valueOf(chatId), text, (int) messageId);
         InlineKeyboardMarkup markupInLine = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rowsInLine = new ArrayList<>();
@@ -269,7 +385,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             int limitation = Math.min((i + 2) * 2, size);
             for (int x = i * 3; x < limitation; x++) {
                 InlineKeyboardButton button = createButton();
-                String callbackData = products.get(x).getName();
+                String callbackData = products.get(x);
                 button.setText(callbackData);
                 button.setCallbackData(callbackData);
                 callbackProductsData.add(callbackData);
@@ -279,7 +395,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         markupInLine.setKeyboard(rowsInLine);
         message.setReplyMarkup(markupInLine);
-        addBackToMenuButton(rowsInLine);
+        addBackToMenuButton(rowsInLine, langCode);
 
         try {
             execute(message);
@@ -297,11 +413,15 @@ public class TelegramBot extends TelegramLongPollingBot {
         return message;
     }
 
-    private void addBackToMenuButton(List<List<InlineKeyboardButton>> rowsInLine) {
+    private void addBackToMenuButton(List<List<InlineKeyboardButton>> rowsInLine, String langCode) {
         List<InlineKeyboardButton> row = new ArrayList<>();
 
         InlineKeyboardButton button = createButton();
-        button.setText("Назад ✨");
+        if (langCode.equals("ru")) {
+            button.setText("Назад ✨");
+        } else {
+            button.setText("Înapoi ✨");
+        }
         button.setCallbackData(CallBackButton.BACK_TO_MENU.toString());
         row.add(button);
         rowsInLine.add(row);
@@ -310,24 +430,40 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private final StringBuilder menuText = new StringBuilder();
 
-    private List<String> setMenuText() {
-        List<String> productTypes = productTypeService.getAll().stream()
-                .map(ProductTypeResponseDTO::getName).toList();
+    private void menu(Update update) {
+        Long chatId = update.getMessage().getChatId();
+        User user = userService.findByChatId(chatId);
 
-        textUtil.addAllProductsToMenu(menuText, productTypes);
+        String landCode = user.getTelegramUserEntity().getLanguage().getCode();
+        setMenuText(landCode);
+        SendMessage message = new SendMessage(update.getMessage().getChatId().toString(), menuText.toString());
+        message.setParseMode("HTML");
+        createMenu(message, landCode);
+    }
+
+    private List<String> setMenuText(String langCode) {
+        List<ProductTypeResponseDTO> all = productTypeService.getAll();
+        List<String> productTypes = new ArrayList<>();
+
+        if (langCode.equals("ro")) {
+            for (ProductTypeResponseDTO productTypeResponseDTO : all) {
+                ProductTypeTranslationResponseDTO ro = productTypeTranslationService.getTranslation(productTypeResponseDTO.getId(), "ro");
+                productTypes.add(ro.getName());
+            }
+        } else {
+            all.stream()
+                    .forEach(ProductTypeResponseDTO -> {
+                        String name = ProductTypeResponseDTO.getName();
+                        productTypes.add(name);
+                    });
+        }
+
+        textUtil.addAllProductsToMenu(menuText, productTypes, langCode);
         return productTypes;
     }
 
-
-    private void menu(Update update) {
-        setMenuText();
-        SendMessage message = new SendMessage(update.getMessage().getChatId().toString(), menuText.toString());
-        message.setParseMode("HTML");
-        createMenu(message);
-    }
-
-    private void createMenu(SendMessage message) {
-        InlineKeyboardMarkup menuInlineMarkup = getMenuInlineMarkup();
+    private void createMenu(SendMessage message, String langCode) {
+        InlineKeyboardMarkup menuInlineMarkup = getMenuInlineMarkup(langCode);
         message.setReplyMarkup(menuInlineMarkup);
         executeMessage(message);
         deleteMenuText();
@@ -338,9 +474,9 @@ public class TelegramBot extends TelegramLongPollingBot {
         menuText.delete(0, menuText.length());
     }
 
-    private InlineKeyboardMarkup getMenuInlineMarkup() {
+    private InlineKeyboardMarkup getMenuInlineMarkup(String langCode) {
 
-        List<String> productTypes = setMenuText();
+        List<String> productTypes = setMenuText(langCode);
 
         InlineKeyboardMarkup markupInLine = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rowsInLine = new ArrayList<>();
@@ -397,8 +533,18 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void sendHelpMessage(Update update) {
+        User user = userService.findByChatId(update.getMessage().getChatId());
+        String codeLang = user.getTelegramUserEntity().getLanguage().getCode();
 
-        sendMessage(update, textUtil.getHelpText());
+        sendMessage(update, textUtil.getHelpText(codeLang));
+    }
+
+    private void sendHelpMessage(Long chatId) {
+
+        User user = userService.findByChatId(chatId);
+        String codeLang = user.getTelegramUserEntity().getLanguage().getCode();
+
+        sendMessage(chatId, textUtil.getHelpText(codeLang));
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -412,16 +558,25 @@ public class TelegramBot extends TelegramLongPollingBot {
         if (!telegramUserService.existByChatId(chatId)) {
             String userPhotoUrl = saveUserPhoto(update);
             User createdUser = telegramUserService.registerUser(update, userPhotoUrl);
-            String message = textUtil.getMessageAfterRegister(createdUser.getUuid());
+            sendLanguageSelection(update.getMessage().getChatId());
 
+            String message = textUtil.getMessageAfterRegister(createdUser.getUuid(), createdUser.getTelegramUserEntity().getLanguage().getCode());
 
-            sendSticker(chatId, "CAACAgIAAxkBAAOMZ2wCg2GLi8plYN0NGFsVl2NfnMYAAgsBAAL3AsgPxfQ7mJWqcds2BA");
-            sendMessageWithMarkdown(chatId, message);
+//            sendSticker(chatId, "CAACAgIAAxkBAAOMZ2wCg2GLi8plYN0NGFsVl2NfnMYAAgsBAAL3AsgPxfQ7mJWqcds2BA");
+//            sendMessageWithMarkdown(chatId, message);
         } else {
-            UUID userUUID = userService.findByChatId(chatId).getUuid();
-            errorText = textUtil.getErrorText(userUUID);
+            User user = userService.findByChatId(chatId);
+            UUID userUUID = user.getUuid();
+            errorText = textUtil.getErrorText(userUUID, user.getTelegramUserEntity().getLanguage().getCode());
             sendMessageWithMarkdown(chatId, errorText);
         }
+    }
+
+    private InlineKeyboardButton createLangButton(String text, String code) {
+        InlineKeyboardButton button = new InlineKeyboardButton();
+        button.setText(text);
+        button.setCallbackData("LANG_" + code);
+        return button;
     }
 
 
@@ -458,11 +613,27 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-
     public void sendMessage(Update update, String text) {
         SendMessage message = new SendMessage();
         message.setParseMode("HTML");
         message.setChatId(update.getMessage().getChatId().toString());
+        message.setText(text);
+
+        ReplyKeyboardMarkup keyboardMarkup = getReplyKeyboard();
+
+        message.setReplyMarkup(keyboardMarkup);
+        try {
+            execute(message);
+        } catch (TelegramApiException e) {
+            log.error("Ошибка при отправке сообщения: {}", e.getMessage());
+        }
+
+    }
+
+    public void sendMessage(Long chatId, String text) {
+        SendMessage message = new SendMessage();
+        message.setParseMode("HTML");
+        message.setChatId(chatId.toString());
         message.setText(text);
 
         ReplyKeyboardMarkup keyboardMarkup = getReplyKeyboard();

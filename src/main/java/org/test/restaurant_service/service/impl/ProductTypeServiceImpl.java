@@ -24,6 +24,7 @@ public class ProductTypeServiceImpl implements ProductTypeService {
     public ProductTypeResponseDTO create(ProductTypeRequestDTO requestDTO) {
         ProductType productType = mapper.toEntity(requestDTO);
         productType = productTypeRepository.save(productType);
+
         return mapper.toResponseDTO(productType);
     }
 

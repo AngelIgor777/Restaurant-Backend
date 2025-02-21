@@ -80,7 +80,6 @@ public class ProductServiceImpl implements ProductService {
     }
 
 
-    //in the future override for many photos
     @CacheEvict(value = "products", allEntries = true)
     @Override
     public Product update(Product updatedProduct, Integer id, List<Photo> photos) {

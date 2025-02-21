@@ -8,6 +8,9 @@ import java.util.Optional;
 
 public interface ProductTranslationRepository extends JpaRepository<ProductTranslation, Integer> {
     Optional<ProductTranslation> findByProductIdAndLanguageCode(Integer productId, String languageCode);
+    Optional<ProductTranslation> findProductTranslationByProduct_IdAndLanguageCode(Integer productId, String languageCode);
 
     List<ProductTranslation> findAllByLanguageCode(String languageCode);
+
+    Optional<ProductTranslation> findProductTranslationByName(String productTranslationName);
 }

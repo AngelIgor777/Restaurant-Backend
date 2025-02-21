@@ -43,7 +43,7 @@ public class SendingUsersServiceImpl implements SendingUsersService {
 
             if (!currentBatchUsers.isEmpty()) {
                 for (User user : currentBatchUsers) {
-                    String textForDiscount = textUtil.getTextForProductDiscount(savedDiscount, user.getUuid());
+                    String textForDiscount = textUtil.getTextForProductDiscount(savedDiscount, user.getUuid(), user.getTelegramUserEntity().getLanguage().getCode());
 
                     executorService.submit(() -> {
                         try {
@@ -87,7 +87,7 @@ public class SendingUsersServiceImpl implements SendingUsersService {
 
             if (!currentBatchUsers.isEmpty()) {
                 for (User user : currentBatchUsers) {
-                    String textForGlobalDiscount = textUtil.getTextForGlobalDiscount(savedDiscount, user.getUuid());
+                    String textForGlobalDiscount = textUtil.getTextForGlobalDiscount(savedDiscount, user.getUuid(), user.getTelegramUserEntity().getLanguage().getCode());
 
                     executorService.submit(() -> {
                         try {

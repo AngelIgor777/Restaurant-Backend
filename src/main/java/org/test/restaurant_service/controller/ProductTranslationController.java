@@ -20,10 +20,10 @@ public class ProductTranslationController {
     private final ProductTranslationService translationService;
 
     @GetMapping("/{productId}")
-    public ResponseEntity<ProductTranslationResponseDTO> getTranslation(
+    public ProductTranslationResponseDTO getTranslation(
             @PathVariable Integer productId, @RequestParam String lang) {
-        Optional<ProductTranslationResponseDTO> translation = translationService.getTranslation(productId, lang);
-        return translation.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+        ProductTranslationResponseDTO translation = translationService.getTranslation(productId, lang);
+        return translation;
     }
 
     @PostMapping
