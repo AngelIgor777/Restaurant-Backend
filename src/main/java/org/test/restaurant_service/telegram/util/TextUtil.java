@@ -390,6 +390,7 @@ class TextUtil {
         String userLink = String.format("[parktown.md](http://195.133.27.38/#menu/%s)", userUUID);
 
         Product product = productDiscount.getProduct();
+        String name = product.getName();
         BigDecimal priceWithDiscount = product.getPrice()
                 .multiply(BigDecimal.ONE.subtract(discountPercentage.divide(BigDecimal.valueOf(100))))
                 .setScale(2, RoundingMode.HALF_UP);
@@ -435,7 +436,7 @@ class TextUtil {
         for (ProductResponseDTO product : top10WeekProducts) {
             stringBuilder.append(index).append(". ")
                     .append("🍽 ").append(product.getName()).append(" - ")
-                    .append(product.getPrice()).append("₽")
+                    .append(product.getPrice()).append(" lie")
                     .append("\n⏳ ")
                     .append(language.equals("ro") ? "Timp de preparare: " : "Время приготовления: ")
                     .append(product.getCookingTime() != null ? product.getCookingTime() : (language.equals("ro") ? "verificați la chelner" : "уточните у официанта"))

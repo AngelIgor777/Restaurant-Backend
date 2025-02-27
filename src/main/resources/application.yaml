@@ -43,8 +43,8 @@ spring:
     baseline-on-migrate: ${SPRING_FLYWAY_BASELINE_ON_MIGRATE}
     schemas: ${SPRING_FLYWAY_SCHEMAS}
     clean-disabled: false
-
     out-of-order: true
+
   servlet:
     multipart:
       max-file-size: 20MB

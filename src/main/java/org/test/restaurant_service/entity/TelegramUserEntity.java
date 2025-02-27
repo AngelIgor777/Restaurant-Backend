@@ -27,7 +27,7 @@ public class TelegramUserEntity implements Serializable {
     @Column(name = "chat_id", unique = true, nullable = false)
     private Long chatId;
 
-    @Column(nullable = false)
+    @Column
     private String username;
 
     private String photoUrl;
