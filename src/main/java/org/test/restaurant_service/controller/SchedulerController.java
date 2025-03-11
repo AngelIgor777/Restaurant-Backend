@@ -1,30 +1,36 @@
 package org.test.restaurant_service.controller;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.test.restaurant_service.dto.response.CronLocalTimeResponseDto;
 import org.test.restaurant_service.telegram.util.scheduling.ScheduledTask;
+
+import java.time.LocalTime;
 
 @RestController
 @RequestMapping("/api/v1/scheduler")
+@RequiredArgsConstructor
 public class SchedulerController {
 
     private final ScheduledTask scheduledTask;
 
-    @Autowired
-    public SchedulerController(ScheduledTask scheduledTask) {
-        this.scheduledTask = scheduledTask;
-    }
-
     @PostMapping("/update-cron")
     @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
-    public String updateCron(@RequestParam String cronExpression) {
-        try {
-            scheduledTask.updateCronExpression(cronExpression);
-            return "Scheduler cron updated to: " + cronExpression;
-        } catch (Exception e) {
-            return "Failed to update cron: " + e.getMessage();
-        }
+    public void updateCron(@RequestParam String cronExpression) {
+        scheduledTask.updateCronExpression(cronExpression);
+
+    }
+
+    @GetMapping
+    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    public CronLocalTimeResponseDto getCron() {
+        String cronExpression = scheduledTask.getCronExpression();
+        CronLocalTimeResponseDto cronLocalTimeResponseDto = new CronLocalTimeResponseDto();
+        cronLocalTimeResponseDto.setCron(cronExpression);
+        cronLocalTimeResponseDto.setLocalTime(LocalTime.now());
+        return cronLocalTimeResponseDto;
     }
 
     @PostMapping("/start")

@@ -1,5 +1,6 @@
 package org.test.restaurant_service.telegram.util.scheduling;
 
+import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +21,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 @Component
+
 public class ScheduledTask {
 
     private static final Logger log = LoggerFactory.getLogger(ScheduledTask.class);
@@ -34,6 +36,7 @@ public class ScheduledTask {
     private boolean isSchedulerEnabled;
 
     @Value("${scheduler.cron}")
+    @Getter
     private String cronExpression;
 
     public ScheduledTask(TaskScheduler taskScheduler, TextUtil textUtil, TelegramBot telegramBot, UserService userService) {
@@ -42,7 +45,6 @@ public class ScheduledTask {
         this.telegramBot = telegramBot;
         this.userService = userService;
     }
-
 
     public void startTask() {
         stopTask();
