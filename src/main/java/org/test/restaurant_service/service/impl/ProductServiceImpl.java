@@ -148,6 +148,7 @@ public class ProductServiceImpl implements ProductService {
         return get(id);
     }
 
+    @Transactional(readOnly = true)
     @Cacheable(value = "products", key = "#typeId == null ? 'all' : #typeId")
     @Override
     public Page<ProductResponseDTO> getAll(Integer typeId, Pageable pageable) {
@@ -176,6 +177,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ProductResponseDTO> getTop10WeekProducts(Pageable pageable) {
         return productRepository.getTop10ProductsWeek(pageable)
                 .stream()

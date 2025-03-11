@@ -435,8 +435,8 @@ class TextUtil {
         int index = 1;
         for (ProductResponseDTO product : top10WeekProducts) {
             stringBuilder.append(index).append(". ")
-                    .append("🍽 ").append(product.getName()).append(" - ")
-                    .append(product.getPrice()).append(" lie")
+                    .append("🍽 ").append(product.getName()).append("\n")
+                    .append("🔥 ").append(product.getPrice()).append("🔥 lei")
                     .append("\n⏳ ")
                     .append(language.equals("ro") ? "Timp de preparare: " : "Время приготовления: ")
                     .append(product.getCookingTime() != null ? product.getCookingTime() : (language.equals("ro") ? "verificați la chelner" : "уточните у официанта"))
