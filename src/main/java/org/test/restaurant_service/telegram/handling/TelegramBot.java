@@ -378,38 +378,47 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void editMessageProductsByType(String text, long chatId, long messageId, List<String> products, String langCode) {
         EditMessageText message = getEditMessageText(String.valueOf(chatId), text, (int) messageId);
+
         InlineKeyboardMarkup markupInLine = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rowsInLine = createProductButtons(products);
+
+        addBackToMenuButton(rowsInLine, langCode);
+        markupInLine.setKeyboard(rowsInLine);
+        message.setReplyMarkup(markupInLine);
+
+        sendEditedMessage(message);
+    }
+
+    private List<List<InlineKeyboardButton>> createProductButtons(List<String> products) {
         List<List<InlineKeyboardButton>> rowsInLine = new ArrayList<>();
-
         int size = products.size();
-        int rows = (int) Math.ceil((double) size / 2);
-        // Разбиваем на строки по 3 кнопки
-        for (int i = 0; i < rows; i++) {
-            List<InlineKeyboardButton> row = new ArrayList<>();
+        int buttonsPerRow = 3;
 
-            // Индексы для кнопок в строке
-            int limitation = Math.min((i + 2) * 2, size);
-            for (int x = i * 3; x < limitation; x++) {
+        callbackProductsData.clear();
+
+        for (int i = 0; i < size; i += buttonsPerRow) {
+            List<InlineKeyboardButton> row = new ArrayList<>();
+            for (int j = i; j < Math.min(i + buttonsPerRow, size); j++) {
                 InlineKeyboardButton button = createButton();
-                String callbackData = products.get(x);
+                String callbackData = products.get(j);
                 button.setText(callbackData);
                 button.setCallbackData(callbackData);
                 callbackProductsData.add(callbackData);
                 row.add(button);
-                log.debug("Add button {}", callbackData);
-                log.debug("callbackProductsData content: {}", callbackProductsData);
-            }
 
+                log.debug("Add button {}", callbackData);
+            }
             rowsInLine.add(row);
         }
-        markupInLine.setKeyboard(rowsInLine);
-        message.setReplyMarkup(markupInLine);
-        addBackToMenuButton(rowsInLine, langCode);
+        log.debug("callbackProductsData content: {}", callbackProductsData);
+        return rowsInLine;
+    }
 
+    private void sendEditedMessage(EditMessageText message) {
         try {
             execute(message);
         } catch (TelegramApiException e) {
-            log.error(e.getMessage());
+            log.error("Error sending edited message: {}", e.getMessage());
         }
     }
 

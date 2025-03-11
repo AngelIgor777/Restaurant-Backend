@@ -438,8 +438,6 @@ class TextUtil {
                     .append("🍽 ").append(product.getName()).append("\n")
                     .append("🔥 ").append(product.getPrice()).append("🔥 lei")
                     .append("\n⏳ ")
-                    .append(language.equals("ro") ? "Timp de preparare: " : "Время приготовления: ")
-                    .append(product.getCookingTime() != null ? product.getCookingTime() : (language.equals("ro") ? "verificați la chelner" : "уточните у официанта"))
                     .append("\n✨ ").append(getHotSlogan(language))
                     .append("\n\n");
             index++;
