@@ -17,7 +17,6 @@ import org.test.restaurant_service.util.KeyUtil;
 @Getter
 public class AmazonS3Config {
 
-
     @Bean
     public AmazonS3 amazonS3() {
         BasicAWSCredentials awsCredentials = new BasicAWSCredentials(KeyUtil.getAccessKey(), KeyUtil.getSecretAccessKey());

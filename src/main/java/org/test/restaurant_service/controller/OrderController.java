@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.*;
 import org.test.restaurant_service.dto.response.OrderProductResponseWithPayloadDto;
 import org.test.restaurant_service.service.OrderService;
 
-import javax.ws.rs.HttpMethod;
 import java.util.List;
 import java.util.UUID;
 
@@ -40,7 +39,6 @@ public class OrderController {
         orderService.completeOrder(orderId);
     }
 
-
     @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
     @PostMapping("/confirm/{orderId}")
     public void confirmOrder(@PathVariable Integer orderId) {
@@ -51,5 +49,11 @@ public class OrderController {
     public List<OrderProductResponseWithPayloadDto> getUserOrders(@RequestParam UUID userUUID, Pageable pageable) {
 
         return orderService.getAllUserOrdersProductResponseWithPayloadDto(userUUID, pageable);
+    }
+
+    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Integer id) {
+        orderService.delete(id);
     }
 }

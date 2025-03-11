@@ -8,6 +8,8 @@ import org.test.restaurant_service.entity.Discount;
 import org.test.restaurant_service.repository.DiscountRepository;
 import org.test.restaurant_service.service.DiscountService;
 import org.test.restaurant_service.service.SendingUsersService;
+import org.test.restaurant_service.telegram.util.TextUtil;
+
 import javax.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.concurrent.*;
@@ -18,11 +20,13 @@ public class DiscountServiceImpl implements DiscountService {
 
     private final DiscountRepository discountRepository;
     private final SendingUsersService sendingUsersService;
+    private final TextUtil textUtil;
 
     @Override
     @Transactional
     public Discount createDiscount(Discount discount) {
         Discount savedDiscount = discountRepository.save(discount);
+
 
         CompletableFuture.runAsync(() -> sendingUsersService.sendDiscountMessages(savedDiscount));
 

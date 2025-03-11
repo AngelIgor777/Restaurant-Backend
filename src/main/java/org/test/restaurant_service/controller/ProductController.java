@@ -15,6 +15,8 @@ import org.test.restaurant_service.service.ProductAndPhotoService;
 import org.test.restaurant_service.service.ProductAndProductHistoryService;
 import org.test.restaurant_service.service.ProductService;
 
+import javax.validation.Valid;
+import javax.validation.constraints.Max;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -25,13 +27,11 @@ public class ProductController {
     private final ProductService productService;
     private final ProductAndPhotoService productAndPhotoService;
     private final ProductAndProductHistoryService productAndProductHistoryService;
-    private final ProductMapper productMapper;
 
-    public ProductController(@Qualifier("productServiceWithS3Impl") ProductService productService, @Qualifier("productAndAndPhotoServiceWithSaveInS3Impl") ProductAndPhotoService productAndPhotoService, ProductAndProductHistoryService productAndProductHistoryService, ProductMapper productMapper) {
+    public ProductController(@Qualifier("productServiceWithS3Impl") ProductService productService, @Qualifier("productAndAndPhotoServiceWithSaveInS3Impl") ProductAndPhotoService productAndPhotoService, ProductAndProductHistoryService productAndProductHistoryService) {
         this.productService = productService;
         this.productAndPhotoService = productAndPhotoService;
         this.productAndProductHistoryService = productAndProductHistoryService;
-        this.productMapper = productMapper;
     }
 
     @PostMapping
@@ -64,7 +64,7 @@ public class ProductController {
         Product product = productService.parseRequest(name, description, typeId, price, cookingTime);
 
         Product update = productAndProductHistoryService.update(product, id, file);
-        return productMapper.toResponseDTO(update);
+        return ProductMapper.INSTANCE.toResponseDTO(update);
     }
 
     @DeleteMapping("/{id}")
@@ -87,5 +87,14 @@ public class ProductController {
     @GetMapping("/top-weekly")
     public List<ProductResponseDTO> getTop10WeekProducts(Pageable pageable) {
         return productService.getTop10WeekProducts(pageable);
+    }
+
+    @GetMapping("/search")
+    public Page<ProductResponseDTO> searchProducts(@RequestParam String query,
+                                                   @RequestParam(defaultValue = "0") int page,
+                                                   @RequestParam(defaultValue = "10") @Valid @Max(30) int size) {
+        Page<Product> products = productService.searchProducts(query, page, size);
+
+        return products.map(ProductMapper.INSTANCE::toResponseDTO);
     }
 }

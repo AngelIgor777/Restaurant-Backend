@@ -3,6 +3,7 @@ package org.test.restaurant_service.mapper;
 
 import org.mapstruct.*;
 
+import org.mapstruct.factory.Mappers;
 import org.test.restaurant_service.dto.request.ProductRequestDTO;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
 import org.test.restaurant_service.entity.Product;
@@ -11,10 +12,14 @@ import org.test.restaurant_service.entity.ProductHistory;
 @Mapper(componentModel = "spring", uses = ProductTypeMapper.class)
 public interface ProductMapper {
 
+    ProductMapper INSTANCE = Mappers.getMapper(ProductMapper.class);
+
     @Mapping(source = "typeId", target = "type.id")
     @Mapping(target = "id", ignore = true) // Игнорирование id при обновлении
     @Mapping(target = "photos", ignore = true)
-    Product toEntity(ProductRequestDTO requestDTO);
+    Product
+
+    toEntity(ProductRequestDTO requestDTO);
 
     @Mapping(source = "type.name", target = "typeName")
     @Mapping(target = "quantity", ignore = true)

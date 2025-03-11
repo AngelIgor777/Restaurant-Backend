@@ -37,4 +37,6 @@ public interface ProductService {
     List<ProductResponseDTO> getTop10WeekProducts(Pageable pageable);
 
     boolean existByName(String name);
+
+    Page<Product> searchProducts(String searchTerm, int page, int size);
 }

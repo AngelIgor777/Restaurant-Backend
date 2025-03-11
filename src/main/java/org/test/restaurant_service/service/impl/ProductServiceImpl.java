@@ -7,7 +7,6 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.test.restaurant_service.dto.request.ProductRequestDTO;
@@ -187,5 +186,9 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public boolean existByName(String name) {
         return productRepository.existsByName(name);
+    }
+
+    public Page<Product> searchProducts(String searchTerm, int page, int size) {
+        return productRepository.searchProducts(searchTerm, PageRequest.of(page, size));
     }
 }

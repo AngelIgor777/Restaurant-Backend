@@ -28,7 +28,6 @@ import org.test.restaurant_service.entity.ProductTranslation;
 import org.test.restaurant_service.entity.ProductTypeTranslation;
 import org.test.restaurant_service.entity.User;
 import org.test.restaurant_service.mapper.ProductMapper;
-import org.test.restaurant_service.mapper.ProductTranslationMapperImpl;
 import org.test.restaurant_service.mapper.ProductTypeTranslationMapper;
 import org.test.restaurant_service.mapper.ProductTypeTranslationMapperImpl;
 import org.test.restaurant_service.service.*;
@@ -36,9 +35,7 @@ import org.test.restaurant_service.service.impl.*;
 import org.test.restaurant_service.telegram.config.BotConfig;
 import org.test.restaurant_service.telegram.util.TextUtil;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 @Slf4j
@@ -80,8 +77,8 @@ public class TelegramBot extends TelegramLongPollingBot {
         this.productTypeTranslationMapper = productTypeTranslationMapper;
     }
 
-    private List<String> callbackProductTypesData = new CopyOnWriteArrayList<>();
-    private List<String> callbackProductsData = new CopyOnWriteArrayList<>();
+    private Set<String> callbackProductTypesData = new HashSet<>();
+    private Set<String> callbackProductsData = new HashSet<>();
 
 
     private ArrayList<BotCommand> getCommands(String langCode) {
@@ -125,42 +122,13 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
+        log.debug("Update: {}", update);
         if (update.hasMessage() && update.getMessage().hasText()) {
             String text = update.getMessage().getText();
 
             Long chatId = update.getMessage().getChatId();
             User user;
-            switch (text) {
-                case "/start":
-                    registerFull(update);
-                    user = userService.findByChatId(chatId);
-                    updateBotCommands(user.getTelegramUserEntity().getLanguage().getCode());
-                    break;
-                case "/help":
-                    sendHelpMessage(update);
-                    break;
-                case "/info":
-                    user = userService.findByChatId(chatId);
-                    sendMessage(update, textUtil.getInfoText(user.getTelegramUserEntity().getLanguage().getCode()));
-                    break;
-                case "/menu":
-                    menu(update);
-                    break;
-                case "/website":
-                    user = userService.findByChatId(chatId);
-                    sendMessageWithMarkdown(chatId, textUtil.getWebSiteText(user.getUuid(), user.getTelegramUserEntity().getLanguage().getCode()));
-                    break;
-                case "/about":
-                    sendUserInfo(update);
-                    break;
-                case "/lang":
-                    sendLanguageSelection(update.getMessage().getChatId());
-                    break;
-                default:
-                    user = userService.findByChatId(chatId);
-                    sendMessageWithMarkdown(chatId, textUtil.getDefaultMessage(user.getUuid(), user.getTelegramUserEntity().getLanguage().getCode()));
-                    break;
-            }
+            handleTextCommand(update, text, chatId);
         } else if (update.hasCallbackQuery()) {
             handleCallbackQuery(update);
 
@@ -169,11 +137,46 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
+    private void handleTextCommand(Update update, String text, Long chatId) {
+        User user;
+        switch (text) {
+            case "/start":
+                registerFull(update);
+                user = userService.findByChatId(chatId);
+                updateBotCommands(user.getTelegramUserEntity().getLanguage().getCode());
+                break;
+            case "/help":
+                sendHelpMessage(update);
+                break;
+            case "/info":
+                user = userService.findByChatId(chatId);
+                sendMessage(update, textUtil.getInfoText(user.getTelegramUserEntity().getLanguage().getCode()));
+                break;
+            case "/menu":
+                menu(update);
+                break;
+            case "/website":
+                user = userService.findByChatId(chatId);
+                sendMessageWithMarkdown(chatId, textUtil.getWebSiteText(user.getUuid(), user.getTelegramUserEntity().getLanguage().getCode()));
+                break;
+            case "/about":
+                sendUserInfo(update);
+                break;
+            case "/lang":
+                sendLanguageSelection(update.getMessage().getChatId());
+                break;
+            default:
+                user = userService.findByChatId(chatId);
+                sendMessageWithMarkdown(chatId, textUtil.getDefaultMessage(user.getUuid(), user.getTelegramUserEntity().getLanguage().getCode()));
+                break;
+        }
+    }
+
 
     private void sendLanguageSelection(Long chatId) {
         SendMessage message = new SendMessage();
         message.setChatId(String.valueOf(chatId));
-        message.setText("Choose your language / Alege limba:");
+        message.setText("Выберите язык / Alege limba:");
 
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> buttons = new ArrayList<>();
@@ -238,7 +241,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         CallbackQuery callbackQuery = update.getCallbackQuery();
         String data = callbackQuery.getData();
         Long chatId = update.getCallbackQuery().getMessage().getChatId();
-
+        log.debug("Recieved callbackQuery: {}", data);
         boolean anyMatchProductTypes = callbackProductTypesData.stream()
                 .anyMatch(callbackItem -> callbackItem.equals(data));
         boolean anyMatchProducts = callbackProductsData.stream()
@@ -249,18 +252,21 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         if (anyMatchProducts) {
             setToProduct(update, data);
-
         } else if (data.equals(CallBackButton.BACK_TO_MENU.toString())) {
             backToMenu(update);
         }
         if (data.startsWith("LANG_")) {
-            String langCode = data.substring(5);
-            languageService.setLanguage(chatId, langCode);
-            String confirmationMessage = "ro".equals(langCode) ? "Limba a fost setată ✅" : "Язык установлен ✅";
-            sendMessageWithHTML(chatId, confirmationMessage);
-            updateBotCommands(langCode);
-            sendHelpMessage(chatId);
+            handleLanguageCallback(data, chatId);
         }
+    }
+
+    private void handleLanguageCallback(String data, Long chatId) {
+        String langCode = data.substring(5);
+        languageService.setLanguage(chatId, langCode);
+        String confirmationMessage = "ro".equals(langCode) ? "Limba a fost setată ✅" : "Язык установлен ✅";
+        sendMessageWithHTML(chatId, confirmationMessage);
+        updateBotCommands(langCode);
+        sendHelpMessage(chatId);
     }
 
     public void setToProduct(Update update, String product) {
@@ -390,7 +396,10 @@ public class TelegramBot extends TelegramLongPollingBot {
                 button.setCallbackData(callbackData);
                 callbackProductsData.add(callbackData);
                 row.add(button);
+                log.debug("Add button {}", callbackData);
+                log.debug("callbackProductsData content: {}", callbackProductsData);
             }
+
             rowsInLine.add(row);
         }
         markupInLine.setKeyboard(rowsInLine);
@@ -434,11 +443,11 @@ public class TelegramBot extends TelegramLongPollingBot {
         Long chatId = update.getMessage().getChatId();
         User user = userService.findByChatId(chatId);
 
-        String landCode = user.getTelegramUserEntity().getLanguage().getCode();
-        setMenuText(landCode);
+        String langCode = user.getTelegramUserEntity().getLanguage().getCode();
+        setMenuText(langCode);
         SendMessage message = new SendMessage(update.getMessage().getChatId().toString(), menuText.toString());
         message.setParseMode("HTML");
-        createMenu(message, landCode);
+        createMenu(message, langCode);
     }
 
     private List<String> setMenuText(String langCode) {
@@ -452,8 +461,8 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
         } else {
             all.stream()
-                    .forEach(ProductTypeResponseDTO -> {
-                        String name = ProductTypeResponseDTO.getName();
+                    .forEach(productTypeResponseDTO -> {
+                        String name = productTypeResponseDTO.getName();
                         productTypes.add(name);
                     });
         }
@@ -496,6 +505,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                 button.setCallbackData(callbackData);
                 callbackProductTypesData.add(callbackData);
                 row.add(button);
+                log.debug("Add button: {} with callbackData: {}", callbackData, callbackData);
+                log.debug("callbackProductTypesData data: {}", callbackProductTypesData);
             }
             rowsInLine.add(row);
         }
@@ -549,12 +560,8 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     @Transactional(rollbackFor = Exception.class)
     public void registerFull(Update update) {
-
         Long chatId = update.getMessage().getChatId();
-
         String errorText;
-
-
         if (!telegramUserService.existByChatId(chatId)) {
             String userPhotoUrl = saveUserPhoto(update);
             User createdUser = telegramUserService.registerUser(update, userPhotoUrl);
@@ -562,8 +569,8 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             String message = textUtil.getMessageAfterRegister(createdUser.getUuid(), createdUser.getTelegramUserEntity().getLanguage().getCode());
 
-//            sendSticker(chatId, "CAACAgIAAxkBAAOMZ2wCg2GLi8plYN0NGFsVl2NfnMYAAgsBAAL3AsgPxfQ7mJWqcds2BA");
-//            sendMessageWithMarkdown(chatId, message);
+            sendSticker(chatId, "CAACAgIAAxkBAAOMZ2wCg2GLi8plYN0NGFsVl2NfnMYAAgsBAAL3AsgPxfQ7mJWqcds2BA");
+            sendMessageWithMarkdown(chatId, message);
         } else {
             User user = userService.findByChatId(chatId);
             UUID userUUID = user.getUuid();

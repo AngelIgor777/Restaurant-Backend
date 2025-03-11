@@ -221,9 +221,9 @@ class TextUtil {
 
         switch (language) {
             case "ro" -> menuText.append("\n💌 Vă mulțumim că ne alegeți! Gustul dvs. este grija noastră! 💌\n")
-                    .append("🎉 <i>Introduceți numărul categoriei sau alegeți din meniul de mai jos!</i> 🎉\n");
+                    .append("🎉 <i>Introduceți numărul categoriei sau alegeți de mai jos!</i> 🎉\n");
             case "ru" -> menuText.append("\n💌 Спасибо, что выбираете нас! Ваш вкус — наша забота! 💌\n")
-                    .append("🎉 <i>Введите номер категории или выберите из меню ниже!</i> 🎉\n");
+                    .append("🎉 <i>Введите номер категории или выберите ниже!</i> 🎉\n");
         }
     }
 
