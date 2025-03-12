@@ -148,13 +148,14 @@ class TextUtil {
         return productText;
     }
 
-    public StringBuilder getProductTranslationRoText(ProductResponseDTO productResponse, ProductTranslation productTranslation, ProductTypeTranslationResponseDTO productTypeTranslationResponseDTO) {
+    public StringBuilder getProductTranslationRoText(ProductTranslation productTranslation, ProductTypeTranslationResponseDTO productTypeTranslationResponseDTO) {
+        LocalTime cookingTime = productTranslation.getProduct().getCookingTime();
+        BigDecimal price = productTranslation.getProduct().getPrice();
         StringBuilder productText = new StringBuilder();
-        LocalTime cookingTime = productResponse.getCookingTime();
         productText.append("🍴 <b>Fel de mâncare:</b> ").append(productTranslation.getName()).append("\n");
         productText.append("✨ <i>Descriere:</i> ").append(productTranslation.getDescription()).append("\n");
         productText.append("📂 <i>Categorie:</i> ").append(productTypeTranslationResponseDTO.getName()).append("\n");
-        productText.append("💰 <b>Preț:</b> ").append(productResponse.getPrice()).append(" lei\n");
+        productText.append("💰 <b>Preț:</b> ").append(price).append(" lei\n");
         if (cookingTime != null) {
             productText.append("⏱️ <b>Timp de preparare:</b> ")
                     .append(cookingTime.getMinute()).append(" minute\n");

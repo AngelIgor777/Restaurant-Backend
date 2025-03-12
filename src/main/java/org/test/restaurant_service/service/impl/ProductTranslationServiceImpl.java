@@ -9,13 +9,11 @@ import org.test.restaurant_service.dto.request.ProductTranslationRequestDTO;
 import org.test.restaurant_service.dto.response.ProductTranslationResponseDTO;
 import org.test.restaurant_service.entity.ProductTranslation;
 import org.test.restaurant_service.mapper.ProductTranslationMapper;
-import org.test.restaurant_service.repository.ProductRepository;
 import org.test.restaurant_service.repository.ProductTranslationRepository;
 import org.test.restaurant_service.service.ProductTranslationService;
 
 import javax.persistence.EntityNotFoundException;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,7 +22,6 @@ public class ProductTranslationServiceImpl implements ProductTranslationService 
 
     private final ProductTranslationRepository translationRepository;
     private final ProductTranslationMapper translationMapper;
-    private final ProductRepository productRepository;
     private final ProductTranslationRepository productTranslationRepository;
 
     @Override
@@ -37,10 +34,15 @@ public class ProductTranslationServiceImpl implements ProductTranslationService 
     }
 
     @Override
-    public ProductTranslation getByTranslationName(String translationName) {
+    public ProductTranslation getTranslationByProductName(String translationName) {
         return productTranslationRepository.findProductTranslationByName(translationName)
                 .orElseThrow(() -> new EntityNotFoundException("Product translation not found"));
+    }
 
+    @Override
+    public ProductTranslation getTranslationByProductId(Integer productId) {
+        return productTranslationRepository.findProductTranslationByProduct_Id(productId)
+                .orElseThrow(() -> new EntityNotFoundException("Product translation not found"));
     }
 
     @Override

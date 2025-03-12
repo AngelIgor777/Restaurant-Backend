@@ -20,10 +20,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMar
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import org.test.restaurant_service.dto.response.ProductResponseDTO;
-import org.test.restaurant_service.dto.response.ProductTranslationResponseDTO;
-import org.test.restaurant_service.dto.response.ProductTypeResponseDTO;
-import org.test.restaurant_service.dto.response.ProductTypeTranslationResponseDTO;
+import org.test.restaurant_service.dto.response.*;
 import org.test.restaurant_service.entity.ProductTranslation;
 import org.test.restaurant_service.entity.ProductTypeTranslation;
 import org.test.restaurant_service.entity.User;
@@ -36,7 +33,6 @@ import org.test.restaurant_service.telegram.config.BotConfig;
 import org.test.restaurant_service.telegram.util.TextUtil;
 
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 @Slf4j
 @Component
@@ -269,22 +265,21 @@ public class TelegramBot extends TelegramLongPollingBot {
         sendHelpMessage(chatId);
     }
 
-    public void setToProduct(Update update, String product) {
+    //todo for make request by product id in callback data
+    public void setToProduct(Update update, String productId) {
         Long chatId = update.getCallbackQuery().getMessage().getChatId();
         User user = userService.findByChatId(chatId);
         String langCode = user.getTelegramUserEntity().getLanguage().getCode();
 
-        ProductResponseDTO productResponse;
-        StringBuilder productText = new StringBuilder();
+        ProductResponseDTO productResponse = ProductMapper.INSTANCE.toResponseForTg(productService.getSimpleById(Integer.parseInt(productId)));
+        StringBuilder productText;
         ProductTypeTranslationResponseDTO productTypeTranslationResponseDTO = null;
         if (langCode.equals("ro")) {
-            ProductTranslation productTranslation = productTranslationService.getByTranslationName(product);
-            productResponse = productMapper.toResponseForTg(productTranslation.getProduct());
+            ProductTranslation productTranslation = productTranslationService.getTranslationByProductId(Integer.parseInt(productId));
             ProductTypeTranslation translation = productTypeTranslationService.getTranslation(productResponse.getTypeName(), "ro");
             productTypeTranslationResponseDTO = productTypeTranslationMapper.toTranslationDTO(translation);
-            productText = textUtil.getProductTranslationRoText(productResponse, productTranslation, productTypeTranslationResponseDTO);
+            productText = textUtil.getProductTranslationRoText(productTranslation, productTypeTranslationResponseDTO);
         } else {
-            productResponse = productService.getByName(product);
             productText = textUtil.getProductText(productResponse);
         }
         EditMessageText editMessage = setEditMessageTextProperties(update);
@@ -353,12 +348,14 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             List<ProductResponseDTO> products = productService.getByTypeName(productNameRu);
 
-            List<String> list = products
+            List<ProductTelegramResponseDto> list = products
                     .stream()
                     .map(productResponseDTO -> {
                         ProductTranslationResponseDTO productTranslationResponseDTO = productTranslationService.getTranslation(productResponseDTO.getId(), "ro");
-                        String name = productTranslationResponseDTO.getName();
-                        return name;
+                        ProductTelegramResponseDto productTelegramResponseDto = new ProductTelegramResponseDto();
+                        productTelegramResponseDto.setProductId(productTranslationResponseDTO.getProductId());
+                        productTelegramResponseDto.setProductName(productTranslationResponseDTO.getName());
+                        return productTelegramResponseDto;
                     })
                     .toList();
 
@@ -366,21 +363,25 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         } else {
             List<ProductResponseDTO> products = productService.getByTypeName(productType);
-            List<String> strings = products
+            List<ProductTelegramResponseDto> strings = products
                     .stream()
-                    .map(ProductResponseDTO::getName)
+                    .map(productResponseDTO -> {
+                        ProductTelegramResponseDto productTelegramResponseDto = new ProductTelegramResponseDto();
+                        productTelegramResponseDto.setProductId(productResponseDTO.getId());
+                        productTelegramResponseDto.setProductName(productResponseDTO.getName());
+                        return productTelegramResponseDto;
+                    })
                     .toList();
             editMessageProductsByType(responseText, chatId, messageId, strings, langCode);
         }
 
-
     }
 
-    private void editMessageProductsByType(String text, long chatId, long messageId, List<String> products, String langCode) {
+    private void editMessageProductsByType(String text, long chatId, long messageId, List<ProductTelegramResponseDto> productTelegramResponseDtoList, String langCode) {
         EditMessageText message = getEditMessageText(String.valueOf(chatId), text, (int) messageId);
 
         InlineKeyboardMarkup markupInLine = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rowsInLine = createProductButtons(products);
+        List<List<InlineKeyboardButton>> rowsInLine = createProductButtons(productTelegramResponseDtoList);
 
         addBackToMenuButton(rowsInLine, langCode);
         markupInLine.setKeyboard(rowsInLine);
@@ -389,9 +390,9 @@ public class TelegramBot extends TelegramLongPollingBot {
         sendEditedMessage(message);
     }
 
-    private List<List<InlineKeyboardButton>> createProductButtons(List<String> products) {
+    private List<List<InlineKeyboardButton>> createProductButtons(List<ProductTelegramResponseDto> productTelegramResponseDtoList) {
         List<List<InlineKeyboardButton>> rowsInLine = new ArrayList<>();
-        int size = products.size();
+        int size = productTelegramResponseDtoList.size();
         int buttonsPerRow = 3;
 
         callbackProductsData.clear();
@@ -400,13 +401,15 @@ public class TelegramBot extends TelegramLongPollingBot {
             List<InlineKeyboardButton> row = new ArrayList<>();
             for (int j = i; j < Math.min(i + buttonsPerRow, size); j++) {
                 InlineKeyboardButton button = createButton();
-                String callbackData = products.get(j);
-                button.setText(callbackData);
+                ProductTelegramResponseDto productTelegramResponseDto = productTelegramResponseDtoList.get(j);
+                String productName = productTelegramResponseDto.getProductName();
+                button.setText(productName);
+                String callbackData = String.valueOf(productTelegramResponseDto.getProductId());
                 button.setCallbackData(callbackData);
                 callbackProductsData.add(callbackData);
                 row.add(button);
 
-                log.debug("Add button {}", callbackData);
+                log.debug("Add button '{}' with callbackData '{}'", productName, callbackData);
             }
             rowsInLine.add(row);
         }
