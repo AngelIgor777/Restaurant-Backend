@@ -271,7 +271,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         User user = userService.findByChatId(chatId);
         String langCode = user.getTelegramUserEntity().getLanguage().getCode();
 
-        ProductResponseDTO productResponse = ProductMapper.INSTANCE.toResponseForTg(productService.getSimpleById(Integer.parseInt(productId)));
+        ProductResponseDTO productResponse = ProductMapper.INSTANCE.toResponseIgnorePhotos(productService.getSimpleById(Integer.parseInt(productId)));
         StringBuilder productText;
         ProductTypeTranslationResponseDTO productTypeTranslationResponseDTO = null;
         if (langCode.equals("ro")) {

@@ -438,7 +438,6 @@ class TextUtil {
             stringBuilder.append(index).append(". ")
                     .append("🍽 ").append(product.getName()).append("\n")
                     .append("🔥 ").append(product.getPrice()).append("🔥 lei")
-                    .append("\n⏳ ")
                     .append("\n✨ ").append(getHotSlogan(language))
                     .append("\n\n");
             index++;
