@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import org.test.restaurant_service.dto.request.OrderProductRequestDTO;
 import org.test.restaurant_service.dto.request.OrderProductRequestWithPayloadDto;
 import org.test.restaurant_service.dto.response.OrderProductResponseDTO;
+import org.test.restaurant_service.dto.response.OtpResponseDto;
 import org.test.restaurant_service.entity.OrderProduct;
 import org.test.restaurant_service.mapper.OrderProductMapper;
 import org.test.restaurant_service.rabbitmq.producer.RabbitMQJsonProducer;
@@ -34,8 +35,9 @@ public class OrderProductController {
 
     @PostMapping("/bulk")
     @ResponseStatus(HttpStatus.CREATED)
-    public void createBulk(@Valid @RequestBody OrderProductRequestWithPayloadDto requestDtoWithPayloadDto) {
-        producer.send(requestDtoWithPayloadDto);    }
+    public OtpResponseDto createBulk(@Valid @RequestBody OrderProductRequestWithPayloadDto requestDtoWithPayloadDto) {
+        return producer.send(requestDtoWithPayloadDto);
+    }
 
     @PatchMapping("/{id}")
     public OrderProductResponseDTO update(@PathVariable Integer id,

@@ -72,38 +72,40 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
     //5 return all data info
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public OrderProductResponseWithPayloadDto createBulk(OrderProductRequestWithPayloadDto requestDtoWithPayloadDto) {
+    public OrderProductResponseWithPayloadDto createBulk(OrderProductRequestWithPayloadDto orderRequestDtoWithPayloadDto) {
 
-        Order.PaymentMethod paymentMethod = requestDtoWithPayloadDto.getPaymentMethod();
-        boolean orderInRestaurant = requestDtoWithPayloadDto.isOrderInRestaurant();
-        boolean existDiscountCodes = requestDtoWithPayloadDto.isExistDiscountCodes();
-        String productDiscountCode = requestDtoWithPayloadDto.getProductDiscountCode();
-        String globalDiscountCode = requestDtoWithPayloadDto.getGlobalDiscountCode();
+        Order.PaymentMethod paymentMethod = orderRequestDtoWithPayloadDto.getPaymentMethod();
+        boolean orderInRestaurant = orderRequestDtoWithPayloadDto.isOrderInRestaurant();
+        boolean existDiscountCodes = orderRequestDtoWithPayloadDto.isExistDiscountCodes();
+        String productDiscountCode = orderRequestDtoWithPayloadDto.getProductDiscountCode();
+        String globalDiscountCode = orderRequestDtoWithPayloadDto.getGlobalDiscountCode();
 
         OrderProductResponseWithPayloadDto orderProductResponseWithPayloadDto =
                 OrderProductResponseWithPayloadDto.builder()
                         .orderInRestaurant(orderInRestaurant)
+                        .otp(orderRequestDtoWithPayloadDto.getOtp())
                         .existDiscountCodes(existDiscountCodes)
                         .build();
 
 
         Order order = Order.builder()
                 .paymentMethod(paymentMethod)
+                .otp(orderRequestDtoWithPayloadDto.getOtp())
                 .build();
 
-        if (requestDtoWithPayloadDto.getPhoneNumber() != null) {
-            order.setPhoneNumber(requestDtoWithPayloadDto.getPhoneNumber());
+        if (orderRequestDtoWithPayloadDto.getPhoneNumber() != null) {
+            order.setPhoneNumber(orderRequestDtoWithPayloadDto.getPhoneNumber());
             orderProductResponseWithPayloadDto.setPhoneNumber(order.getPhoneNumber());
         }
 
 
-        checkTheUserIsRegistered(requestDtoWithPayloadDto, order, orderProductResponseWithPayloadDto);
+        checkTheUserIsRegistered(orderRequestDtoWithPayloadDto, order, orderProductResponseWithPayloadDto);
 
 
         AtomicReference<BigDecimal> totalPrice = new AtomicReference<>(BigDecimal.valueOf(0));
         AtomicReference<LocalTime> totalCookingTime = new AtomicReference<>(LocalTime.of(0, 0, 0, 0));
         List<ProductResponseDTO> productResponseDTOS = new ArrayList<>();
-        List<OrderProductRequestDTO> orderProductRequestDTO = requestDtoWithPayloadDto.getOrderProductRequestDTO();
+        List<OrderProductRequestDTO> orderProductRequestDTO = orderRequestDtoWithPayloadDto.getOrderProductRequestDTO();
 
         List<OrderProduct> orderProducts = getOrderProductsAndSetProductsForOrderAndCountTotalCookingTimeAndTotalPriceAndAddToProductResponseDTOList(orderProductRequestDTO, order, totalPrice, totalCookingTime, productResponseDTOS, existDiscountCodes, productDiscountCode);
 
@@ -112,7 +114,7 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
         BigDecimal productDiscountAmount = BigDecimal.ZERO;
         order.setTotalPrice(totalPrice.get());
 
-        checkTheOrderIsInRestaurant(order, requestDtoWithPayloadDto, orderProductResponseWithPayloadDto);
+        checkTheOrderIsInRestaurant(order, orderRequestDtoWithPayloadDto, orderProductResponseWithPayloadDto);
 
         OrderDiscount orderDiscount = handleDiscountCodes(existDiscountCodes, globalDiscountCode, productDiscountCode, globalDiscountAmount, productDiscountAmount, totalPrice, order, orderProductResponseWithPayloadDto, productResponseDTOS);
         Order savedOrder = orderService.create(order);

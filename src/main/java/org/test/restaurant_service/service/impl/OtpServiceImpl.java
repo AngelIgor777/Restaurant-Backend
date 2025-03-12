@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.test.restaurant_service.entity.OtpCode;
 import org.test.restaurant_service.entity.User;
 import org.test.restaurant_service.repository.OtpRepository;
+import org.test.restaurant_service.service.OrderService;
 import org.test.restaurant_service.service.OtpService;
 import org.test.restaurant_service.telegram.handling.TelegramBot;
 import org.test.restaurant_service.telegram.util.TextUtil;
@@ -20,6 +21,7 @@ public class OtpServiceImpl implements OtpService {
     private final OtpRepository otpRepository;
     private final TelegramBot telegramBot;
     private final TextUtil textUtil;
+    private final OrderService orderService;
 
     public void generateAndSendOtp(User user) {
         otpRepository.findExistCode(user.getTelegramUserEntity().getChatId())
@@ -34,8 +36,22 @@ public class OtpServiceImpl implements OtpService {
         otpCode.setOtpCode(otp);
         otpCode.setExpiresAt(expiresAt);
         otpRepository.save(otpCode);
-        String otpMessage = textUtil.getTextForSendingOtpCode(otp,user.getTelegramUserEntity().getLanguage().getCode());
+        String otpMessage = textUtil.getTextForSendingOtpCode(otp, user.getTelegramUserEntity().getLanguage().getCode());
         telegramBot.sendMessageWithMarkdown(user.getTelegramUserEntity().getChatId(), otpMessage);
+    }
+
+    @Override
+    public String generateOtpForOrder() {
+        String otp = generateOtp();
+
+        while (orderService.existsByOtp(otp)) {
+            otp = generateOtp();
+        }
+        return otp;
+    }
+
+    private static String generateOtp() {
+        return String.valueOf(10 + new Random().nextInt(90));
     }
 
     public boolean verifyOtp(Long chatId, String otp) {

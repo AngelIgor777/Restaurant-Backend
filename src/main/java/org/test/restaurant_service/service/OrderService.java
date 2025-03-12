@@ -12,7 +12,7 @@ import java.util.UUID;
 
 public interface OrderService {
     OrderResponseDTO create(OrderRequestDTO requestDTO);
-
+    boolean existsByOtp(String otp);
     Order create(Order order);
 
     List<Order> createAll(List<Order> orders);

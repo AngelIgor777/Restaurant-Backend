@@ -58,6 +58,9 @@ public class Order {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column
+    private String otp;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

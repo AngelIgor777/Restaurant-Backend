@@ -2,6 +2,7 @@ package org.test.restaurant_service.dto.response;
 
 import lombok.Builder;
 import lombok.Data;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -17,5 +18,6 @@ public class OrderResponseDTO {
     private LocalTime totalCookingTime;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String otp;
     private List<ProductResponseDTO> products;
 }

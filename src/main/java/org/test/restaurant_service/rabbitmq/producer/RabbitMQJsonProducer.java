@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.test.restaurant_service.dto.request.OrderProductRequestWithPayloadDto;
 import org.test.restaurant_service.dto.request.UserRegistrationDTO;
+import org.test.restaurant_service.dto.response.OtpResponseDto;
+import org.test.restaurant_service.service.OtpService;
 
 @Slf4j
 @Service
@@ -18,12 +20,16 @@ public class RabbitMQJsonProducer {
 
     @Value("${rabbitmq.queues.json.queue1.routingKey}")
     private String orderSavingRoutingKey;
+    private final OtpService otpService;
 
     private final RabbitTemplate rabbitTemplate;
 
-    public void send(OrderProductRequestWithPayloadDto request) {
-        log.info("Отправка сообщения в RabbitMQ: {}", request);
+    public OtpResponseDto send(OrderProductRequestWithPayloadDto request) {
+        String otp = otpService.generateOtpForOrder();
+        request.setOtp(otp);
+        log.debug("Отправка сообщения в RabbitMQ: {}", request);
         rabbitTemplate.convertAndSend(exchangeName, orderSavingRoutingKey, request);
+        return new OtpResponseDto(otp);
     }
 
 }

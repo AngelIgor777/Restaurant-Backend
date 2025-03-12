@@ -13,6 +13,7 @@ import org.test.restaurant_service.mapper.ProductMapperImpl;
 import org.test.restaurant_service.mapper.TableMapperImpl;
 import org.test.restaurant_service.repository.OrderDiscountRepository;
 import org.test.restaurant_service.repository.OrderRepository;
+import org.test.restaurant_service.repository.OtpRepository;
 import org.test.restaurant_service.repository.TableRepository;
 import org.test.restaurant_service.service.OrderDiscountService;
 import org.test.restaurant_service.service.OrderProductService;
@@ -41,6 +42,7 @@ public class OrderServiceImpl implements OrderService {
     private final ProductServiceImpl productServiceImpl;
     private final ProductMapperImpl productMapperImpl;
     private final TableMapperImpl tableMapperImpl;
+    private final OtpRepository otpRepository;
 
     @Override
     public OrderResponseDTO create(OrderRequestDTO requestDTO) {
@@ -50,6 +52,11 @@ public class OrderServiceImpl implements OrderService {
         order.setTable(table);
         order = orderRepository.save(order);
         return orderMapper.toResponseDTO(order);
+    }
+
+    @Override
+    public boolean existsByOtp(String otp) {
+        return orderRepository.existsByOtp(otp);
     }
 
     @Override
@@ -129,13 +136,13 @@ public class OrderServiceImpl implements OrderService {
         Order orderById = getOrderById(orderId);
         orderById.setStatus(Order.OrderStatus.COMPLETED);
         orderRepository.save(orderById);
-
     }
 
     @Override
     public void confirmOrder(Integer orderId) {
         Order orderById = getOrderById(orderId);
         orderById.setStatus(Order.OrderStatus.CONFIRMED);
+        orderById.setOtp(null);
         orderRepository.save(orderById);
     }
 
@@ -162,6 +169,7 @@ public class OrderServiceImpl implements OrderService {
 
     private OrderProductResponseWithPayloadDto getOrderProductResponseWithPayloadDto(Order order) {
         OrderProductResponseWithPayloadDto response = new OrderProductResponseWithPayloadDto();
+        response.setOtp(order.getOtp());
         if (order.hasPhoneNumber()) {
             response.setPhoneNumber(order.getPhoneNumber());
         }

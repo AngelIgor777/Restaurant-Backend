@@ -45,4 +45,6 @@ public class OrderProductRequestWithPayloadDto {
 
     private AddressRequestDTO addressRequestDTO;
 
+    private String otp;
+
 }
