@@ -182,7 +182,7 @@ public class OrderServiceImpl implements OrderService {
                     Product product = orderProduct.getProduct();
                     totalCookingTime.updateAndGet(time -> time.plusMinutes((long) product.getCookingTime().getMinute() * orderProduct.getQuantity()));
 
-                    ProductResponseDTO productResponseDTO = productMapperImpl.toResponseDTO(product);
+                    ProductResponseDTO productResponseDTO = productMapperImpl.toResponseIgnorePhotos(product);
                     productResponseDTO.setQuantity(orderProduct.getQuantity());
                     return productResponseDTO;
                 }).toList();

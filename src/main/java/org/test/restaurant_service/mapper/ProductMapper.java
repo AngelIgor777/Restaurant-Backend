@@ -25,10 +25,12 @@ public interface ProductMapper {
     @Mapping(target = "quantity", ignore = true)
     ProductResponseDTO toResponseDTO(Product product);
 
+
+    //use for resolve lazy init of Product
     @Mapping(source = "type.name", target = "typeName")
     @Mapping(target = "quantity", ignore = true)
     @Mapping(target = "photos", ignore = true)
-    ProductResponseDTO toResponseForTg(Product product);
+    ProductResponseDTO toResponseIgnorePhotos(Product product);
 
     @Mapping(target = "type", ignore = true)
     @Mapping(target = "product", ignore = true)

@@ -190,6 +190,7 @@ public class ProductServiceImpl implements ProductService {
         return productRepository.existsByName(name);
     }
 
+    @Transactional(readOnly = true)
     public Page<Product> searchProducts(String searchTerm, int page, int size) {
         return productRepository.searchProducts(searchTerm, PageRequest.of(page, size));
     }

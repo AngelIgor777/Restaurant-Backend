@@ -95,6 +95,6 @@ public class ProductController {
                                                    @RequestParam(defaultValue = "10") @Valid @Max(30) int size) {
         Page<Product> products = productService.searchProducts(query, page, size);
 
-        return products.map(ProductMapper.INSTANCE::toResponseDTO);
+        return products.map(ProductMapper.INSTANCE::toResponseIgnorePhotos);
     }
 }
