@@ -91,7 +91,7 @@ public class StatisticsServiceImpl implements StatisticsService {
             }
 
             orderProductService.getOrderProductsByOrderId(order.getId()).forEach(orderProduct -> {
-                ProductResponseDTO productDTO = productMapper.toResponseDTO(orderProduct.getProduct());
+                ProductResponseDTO productDTO = productMapper.toResponseIgnorePhotos(orderProduct.getProduct());
                 productSales.merge(productDTO, orderProduct.getQuantity(), Integer::sum);
             });
         });

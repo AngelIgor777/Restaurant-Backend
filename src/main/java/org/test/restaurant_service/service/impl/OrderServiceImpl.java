@@ -128,7 +128,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public List<Order> getAllOrdersByPeriod(LocalDateTime from, LocalDateTime to) {
-        return orderRepository.findAllByCreatedAtBetweenAndStatus(from, to, Order.OrderStatus.COMPLETED);
+        return orderRepository.findAllByCreatedAtBetweenAndStatus(from, to, Order.OrderStatus.CONFIRMED);
     }
 
     @Override
