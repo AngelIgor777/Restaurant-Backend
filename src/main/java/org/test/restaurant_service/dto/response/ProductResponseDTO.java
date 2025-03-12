@@ -17,6 +17,7 @@ public class ProductResponseDTO {
     protected BigDecimal price;
     protected LocalTime cookingTime;
     protected Integer quantity;
+    protected String photoUrl;
     @JsonIgnore
     protected List<Photo> photos;
 }

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
 import org.test.restaurant_service.dto.response.StatisticsResultResponseDto;
 import org.test.restaurant_service.entity.Order;
+import org.test.restaurant_service.mapper.ProductMapper;
 import org.test.restaurant_service.mapper.ProductMapperImpl;
 import org.test.restaurant_service.service.OrderProductService;
 import org.test.restaurant_service.service.OrderService;
@@ -28,13 +29,11 @@ public class StatisticsServiceImpl implements StatisticsService {
     private final ProductService productService;
     private final OrderService orderService;
     private final OrderProductService orderProductService;
-    private final ProductMapperImpl productMapper;
 
-    public StatisticsServiceImpl(@Qualifier("productServiceImpl") ProductService productService, OrderService orderService, OrderProductService orderProductService, ProductMapperImpl productMapper) {
+    public StatisticsServiceImpl(@Qualifier("productServiceImpl") ProductService productService, OrderService orderService, OrderProductService orderProductService) {
         this.productService = productService;
         this.orderService = orderService;
         this.orderProductService = orderProductService;
-        this.productMapper = productMapper;
     }
 
     @Override
@@ -91,7 +90,7 @@ public class StatisticsServiceImpl implements StatisticsService {
             }
 
             orderProductService.getOrderProductsByOrderId(order.getId()).forEach(orderProduct -> {
-                ProductResponseDTO productDTO = productMapper.toResponseIgnorePhotos(orderProduct.getProduct());
+                ProductResponseDTO productDTO = ProductMapper.INSTANCE.toResponseForStats(orderProduct.getProduct());
                 productSales.merge(productDTO, orderProduct.getQuantity(), Integer::sum);
             });
         });

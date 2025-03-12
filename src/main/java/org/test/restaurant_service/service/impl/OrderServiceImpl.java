@@ -1,6 +1,7 @@
 package org.test.restaurant_service.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +19,7 @@ import org.test.restaurant_service.repository.TableRepository;
 import org.test.restaurant_service.service.OrderDiscountService;
 import org.test.restaurant_service.service.OrderProductService;
 import org.test.restaurant_service.service.OrderService;
+import org.test.restaurant_service.service.PhotoService;
 
 import javax.persistence.EntityNotFoundException;
 import java.time.LocalDateTime;
@@ -28,7 +30,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
@@ -42,7 +43,22 @@ public class OrderServiceImpl implements OrderService {
     private final ProductServiceImpl productServiceImpl;
     private final ProductMapperImpl productMapperImpl;
     private final TableMapperImpl tableMapperImpl;
-    private final OtpRepository otpRepository;
+    private final PhotoService photoService;
+
+    public OrderServiceImpl(OrderRepository orderRepository, TableRepository tableRepository, OrderMapper orderMapper, OrderDiscountService orderDiscountService, OrderProductService orderProductService, OrderDiscountRepository orderDiscountRepository, OrderDiscountServiceImpl orderDiscountServiceImpl, AddressMapperImpl addressMapperImpl, ProductServiceImpl productServiceImpl, ProductMapperImpl productMapperImpl, TableMapperImpl tableMapperImpl,@Qualifier("photoServiceImplS3") PhotoService photoService) {
+        this.orderRepository = orderRepository;
+        this.tableRepository = tableRepository;
+        this.orderMapper = orderMapper;
+        this.orderDiscountService = orderDiscountService;
+        this.orderProductService = orderProductService;
+        this.orderDiscountRepository = orderDiscountRepository;
+        this.orderDiscountServiceImpl = orderDiscountServiceImpl;
+        this.addressMapperImpl = addressMapperImpl;
+        this.productServiceImpl = productServiceImpl;
+        this.productMapperImpl = productMapperImpl;
+        this.tableMapperImpl = tableMapperImpl;
+        this.photoService = photoService;
+    }
 
     @Override
     public OrderResponseDTO create(OrderRequestDTO requestDTO) {
@@ -181,8 +197,12 @@ public class OrderServiceImpl implements OrderService {
                 .map(orderProduct -> {
                     Product product = orderProduct.getProduct();
                     totalCookingTime.updateAndGet(time -> time.plusMinutes((long) product.getCookingTime().getMinute() * orderProduct.getQuantity()));
-
                     ProductResponseDTO productResponseDTO = productMapperImpl.toResponseIgnorePhotos(product);
+                    List<PhotoResponseDTO> photos = photoService.getPhotosByProductId(product.getId());
+                    if (photos.get(0) != null) {
+                        productResponseDTO.setPhotoUrl(photos.get(0).getUrl());
+                    }
+
                     productResponseDTO.setQuantity(orderProduct.getQuantity());
                     return productResponseDTO;
                 }).toList();

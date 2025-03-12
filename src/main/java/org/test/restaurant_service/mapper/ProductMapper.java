@@ -32,6 +32,14 @@ public interface ProductMapper {
     @Mapping(target = "photos", ignore = true)
     ProductResponseDTO toResponseIgnorePhotos(Product product);
 
+    @Mapping(source = "type.name", target = "typeName")
+    @Mapping(target = "quantity", ignore = true)
+    @Mapping(target = "photos", ignore = true)
+    @Mapping(target = "description", ignore = true)
+    @Mapping(target = "cookingTime", ignore = true)
+    ProductResponseDTO toResponseForStats(Product product);
+
+
     @Mapping(target = "type", ignore = true)
     @Mapping(target = "product", ignore = true)
     @Mapping(target = "id", ignore = true)
