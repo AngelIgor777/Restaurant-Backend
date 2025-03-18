@@ -3,7 +3,7 @@ package org.test.restaurant_service.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.test.restaurant_service.controller.websocket.WebSocketController;
+import org.test.restaurant_service.controller.websocket.OrderWebSocketController;
 import org.test.restaurant_service.dto.request.OrderProductRequestDTO;
 import org.test.restaurant_service.dto.response.OrderProductResponseDTO;
 import org.test.restaurant_service.dto.response.OrderProductResponseWithPayloadDto;
@@ -33,7 +33,7 @@ public class OrderProductServiceImpl implements OrderProductService {
     private final OrderProductMapper orderProductMapper;
     private final TableRepository tableRepository;
     private final OrderMapper orderMapper;
-    private final WebSocketController webSocketController;
+    private final OrderWebSocketController orderWebSocketController;
     private final ProductMapper productMapper;
     private final UserRepository userRepository;
 
@@ -110,7 +110,7 @@ public class OrderProductServiceImpl implements OrderProductService {
     }
 
     public void sendOrdersFromWebsocket(OrderProductResponseWithPayloadDto payloadDto) {
-        webSocketController.sendOrdersFromWebsocket(payloadDto);
+        orderWebSocketController.sendOrdersFromWebsocket(payloadDto);
     }
 
     @Override

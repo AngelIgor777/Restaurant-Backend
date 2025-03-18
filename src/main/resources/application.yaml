@@ -110,4 +110,9 @@ admin:
 
 logging:
   level:
-    org.test.restaurant_service.telegram: debug
+    org:
+      test:
+        restaurant_service:
+          telegram: debug
+          service:
+            impl: debug

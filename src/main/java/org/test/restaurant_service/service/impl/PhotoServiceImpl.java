@@ -158,6 +158,18 @@ public class PhotoServiceImpl implements PhotoService {
     }
 
     @Override
+    public String getOnePhotoUrl(Integer productId) {
+        Optional<PhotoResponseDTO> any = getPhotosByProductId(productId)
+                .stream().findAny();
+        if (any.isPresent()) {
+            return any.get().getUrl();
+        } else {
+            log.warn("Not exists photo for product with id {}", productId);
+        }
+        return "";
+    }
+
+    @Override
     public PhotoResponseDTO update(Integer id, PhotoRequestDTO requestDTO) {
         Photo photo = photoRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Photo not found with id " + id));

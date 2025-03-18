@@ -2,6 +2,7 @@ package org.test.restaurant_service.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.mapstruct.Named;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -194,4 +195,5 @@ public class ProductServiceImpl implements ProductService {
     public Page<Product> searchProducts(String searchTerm, int page, int size) {
         return productRepository.searchProducts(searchTerm, PageRequest.of(page, size));
     }
+
 }

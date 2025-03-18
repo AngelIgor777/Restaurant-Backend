@@ -14,6 +14,8 @@ public interface PhotoService {
 
     List<PhotoResponseDTO> getPhotosByProductId(Integer productId);
 
+    String getOnePhotoUrl(Integer productId);
+
     PhotoResponseDTO update(Integer id, PhotoRequestDTO requestDTO);
 
     void delete(Integer id);

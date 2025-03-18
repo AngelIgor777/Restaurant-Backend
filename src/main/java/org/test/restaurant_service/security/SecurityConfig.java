@@ -41,6 +41,7 @@ public class SecurityConfig {
                         "/api/v1/scheduler/**",
                         "/api/v1/orders/**",
                         "/ws-orders/**",
+                        "/topic/orders/**",
                         "/api/v1/users/**",
                         "/api/v1/addresses/**",
                         "/api/v1/productHistory/**",
@@ -51,6 +52,7 @@ public class SecurityConfig {
                         "/api/v1/connection/**",
                         "/api/v1/tg/**",
                         "/actuator/**",
+                        "/api/v1/shared-buckets/**",
                         "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html"
                 ).permitAll()
                 .anyRequest().authenticated()
