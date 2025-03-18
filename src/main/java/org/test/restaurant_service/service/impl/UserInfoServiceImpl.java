@@ -12,6 +12,7 @@ import org.test.restaurant_service.mapper.AddressMapper;
 import org.test.restaurant_service.service.UserInfoService;
 import org.test.restaurant_service.service.UserService;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service

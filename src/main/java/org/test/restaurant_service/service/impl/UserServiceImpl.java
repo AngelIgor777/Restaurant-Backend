@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.test.restaurant_service.dto.response.UserInfoResponse;
 import org.test.restaurant_service.entity.RoleName;
 import org.test.restaurant_service.entity.User;
 import org.test.restaurant_service.repository.UserRepository;
@@ -40,10 +41,15 @@ public class UserServiceImpl implements UserService {
     @Override
     public Page<User> getAll(Pageable pageable) {
         return userRepository.findAll(pageable);
-     }
+    }
 
     @Override
     public List<User> getAllAdminsAndModerators() {
         return userRepository.findUsersByRoles(List.of(RoleName.ROLE_ADMIN, RoleName.ROLE_MODERATOR));
+    }
+
+    @Override
+    public Page<User> search(String query, Pageable pageable) {
+        return userRepository.search(query, pageable);
     }
 }

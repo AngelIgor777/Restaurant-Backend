@@ -14,7 +14,6 @@ import org.test.restaurant_service.mapper.ProductMapperImpl;
 import org.test.restaurant_service.mapper.TableMapperImpl;
 import org.test.restaurant_service.repository.OrderDiscountRepository;
 import org.test.restaurant_service.repository.OrderRepository;
-import org.test.restaurant_service.repository.OtpRepository;
 import org.test.restaurant_service.repository.TableRepository;
 import org.test.restaurant_service.service.OrderDiscountService;
 import org.test.restaurant_service.service.OrderProductService;
@@ -45,7 +44,7 @@ public class OrderServiceImpl implements OrderService {
     private final TableMapperImpl tableMapperImpl;
     private final PhotoService photoService;
 
-    public OrderServiceImpl(OrderRepository orderRepository, TableRepository tableRepository, OrderMapper orderMapper, OrderDiscountService orderDiscountService, OrderProductService orderProductService, OrderDiscountRepository orderDiscountRepository, OrderDiscountServiceImpl orderDiscountServiceImpl, AddressMapperImpl addressMapperImpl, ProductServiceImpl productServiceImpl, ProductMapperImpl productMapperImpl, TableMapperImpl tableMapperImpl,@Qualifier("photoServiceImplS3") PhotoService photoService) {
+    public OrderServiceImpl(OrderRepository orderRepository, TableRepository tableRepository, OrderMapper orderMapper, OrderDiscountService orderDiscountService, OrderProductService orderProductService, OrderDiscountRepository orderDiscountRepository, OrderDiscountServiceImpl orderDiscountServiceImpl, AddressMapperImpl addressMapperImpl, ProductServiceImpl productServiceImpl, ProductMapperImpl productMapperImpl, TableMapperImpl tableMapperImpl, @Qualifier("photoServiceImplS3") PhotoService photoService) {
         this.orderRepository = orderRepository;
         this.tableRepository = tableRepository;
         this.orderMapper = orderMapper;
@@ -179,6 +178,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deleteAllByStatusAndCreatedAtBetween(Order.OrderStatus status, LocalDateTime from, LocalDateTime to) {
         orderRepository.deleteAllByStatusAndCreatedAtBetween(status, from, to);
     }
