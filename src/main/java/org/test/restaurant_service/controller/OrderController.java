@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import org.test.restaurant_service.dto.response.OrderProductResponseWithPayloadDto;
 import org.test.restaurant_service.service.OrderService;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -47,8 +48,9 @@ public class OrderController {
 
     @GetMapping("/user")
     public List<OrderProductResponseWithPayloadDto> getUserOrders(@RequestParam UUID userUUID, Pageable pageable) {
-
-        return orderService.getAllUserOrdersProductResponseWithPayloadDto(userUUID, pageable);
+        List<OrderProductResponseWithPayloadDto> allUserOrdersProductResponseWithPayloadDto = orderService.getAllUserOrdersProductResponseWithPayloadDto(userUUID, pageable);
+        Collections.reverse(allUserOrdersProductResponseWithPayloadDto);
+        return allUserOrdersProductResponseWithPayloadDto;
     }
 
     @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")

@@ -22,7 +22,7 @@ public class RabbitMQConsumer {
     @RabbitListener(queues = "#{rabbitMQConfig.getOrderSavingQueue()}", ackMode = "MANUAL")
     public void consumeUserRegistration(Message message, Channel channel) {
         try {
-            OrderProductRequestWithPayloadDto orderProductRequestWithPayloadDto = deserializeUserRegistrationDTOMessage(message);
+            OrderProductRequestWithPayloadDto orderProductRequestWithPayloadDto = deserializeMessage(message);
 
             log.info("Consumed User message: {}", orderProductRequestWithPayloadDto);
 
@@ -39,7 +39,7 @@ public class RabbitMQConsumer {
         }
     }
 
-    private OrderProductRequestWithPayloadDto deserializeUserRegistrationDTOMessage(Message message) {
+    private OrderProductRequestWithPayloadDto deserializeMessage(Message message) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             return objectMapper.readValue(message.getBody(), OrderProductRequestWithPayloadDto.class);

@@ -2,6 +2,7 @@ package org.test.restaurant_service.service.impl;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
 import org.test.restaurant_service.entity.Photo;
 import org.test.restaurant_service.entity.Product;
@@ -25,7 +26,7 @@ public class ProductHistoryRevertServiceImpl implements ProductHistoryRevertServ
         this.productMapper = productMapper;
     }
 
-
+    @Transactional(rollbackFor = Exception.class)
     public ProductResponseDTO revertProductToPickedProductHistory(Integer productId, Integer historyId) {
         ProductHistory productHistory = productHistoryService.getProductHistoryById(historyId);
         if (!productHistory.getProduct().getId().equals(productId)) {

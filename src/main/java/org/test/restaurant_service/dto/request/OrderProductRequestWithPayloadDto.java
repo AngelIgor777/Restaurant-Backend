@@ -35,9 +35,9 @@ public class OrderProductRequestWithPayloadDto {
 
     private String productDiscountCode;
 
-    private String phoneNumber;
-
     private String globalDiscountCode;
+
+    private String phoneNumber;
 
     private boolean userRegistered;
 

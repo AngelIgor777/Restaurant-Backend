@@ -42,9 +42,8 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
     private final TableMapper tableMapper;
     private final OrderDiscountService orderDiscountService;
     private final UserAddressService userAddressService;
-    private final GenericResponseService responseBuilder;
 
-    public OrderProductAndUserServiceImpl(OrderService orderService, OrderProductServiceImpl orderProductService, UserService userService, ProductDiscountService productDiscountService, DiscountService discountService, ProductRepository productRepository, OrderProductMapper orderProductMapper, ProductMapper productMapper, @Qualifier("productServiceImpl") ProductService productService, AddressService addressService, OrderMapper orderMapper, AddressMapper addressMapper, TableMapper tableMapper, OrderDiscountService orderDiscountService, UserAddressService userAddressService, GenericResponseService responseBuilder) {
+    public OrderProductAndUserServiceImpl(OrderService orderService, OrderProductServiceImpl orderProductService, UserService userService, ProductDiscountService productDiscountService, DiscountService discountService, ProductRepository productRepository, OrderProductMapper orderProductMapper, ProductMapper productMapper, @Qualifier("productServiceImpl") ProductService productService, AddressService addressService, OrderMapper orderMapper, AddressMapper addressMapper, TableMapper tableMapper, OrderDiscountService orderDiscountService, UserAddressService userAddressService) {
         this.orderService = orderService;
         this.orderProductService = orderProductService;
         this.userService = userService;
@@ -60,7 +59,6 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
         this.tableMapper = tableMapper;
         this.orderDiscountService = orderDiscountService;
         this.userAddressService = userAddressService;
-        this.responseBuilder = responseBuilder;
     }
 
 
@@ -86,7 +84,6 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
                         .otp(orderRequestDtoWithPayloadDto.getOtp())
                         .existDiscountCodes(existDiscountCodes)
                         .build();
-
 
         Order order = Order.builder()
                 .paymentMethod(paymentMethod)
@@ -150,7 +147,6 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
                                               Order order,
                                               OrderProductResponseWithPayloadDto orderProductResponseWithPayloadDto,
                                               List<ProductResponseDTO> productResponseDTOS) {
-        totalPrice.get();
         BigDecimal finalTotalPrice;
         OrderDiscount orderDiscount = null;
         if (existDiscountCodes) {
@@ -290,7 +286,7 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
         OrderProduct orderProduct = orderProductMapper.toEntity(requestDTO);
         orderProduct.setOrder(order);
         orderProduct.setProduct(product);
-        if (existDiscountCodes) {
+        if (existDiscountCodes && productDiscountCode != null && !productDiscountCode.isEmpty()) {
             ProductDiscount productDiscountByCode = productDiscountService.getProductDiscountByCode(productDiscountCode);
             if (productDiscountByCode.getProduct().equals(product) &&
                     productDiscountByCode.getValidTo().isAfter(productDiscountByCode.getValidFrom())
