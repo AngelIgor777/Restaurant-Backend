@@ -1,6 +1,7 @@
 package org.test.restaurant_service.entity;
 
 import lombok.*;
+
 import javax.persistence.*;
 import javax.persistence.Table;
 import java.time.LocalDateTime;
@@ -25,7 +26,7 @@ public class OrderDiscount {
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "order_id", nullable = false, foreignKey = @ForeignKey(name = "fk_order_discount_order"))
     private Order order;
 
