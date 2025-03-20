@@ -164,13 +164,14 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public List<OrderProductResponseWithPayloadDto> getAllUserOrdersProductResponseWithPayloadDto(UUID userUUID, Pageable pageable) {
-        List<Order> ordersByUserUuid = orderRepository.findByUser_UuidOrderByCreatedAtAsc(userUUID, pageable);
+        List<Order> ordersByUserUuid = orderRepository.findByUser_UuidOrderByCreatedAtDesc(userUUID, pageable);
         List<OrderProductResponseWithPayloadDto> list = new java.util.ArrayList<>(ordersByUserUuid.stream()
                 .map(order -> {
                     OrderProductResponseWithPayloadDto response = getOrderProductResponseWithPayloadDto(order);
                     return response;
                 })
                 .toList());
+
         return list;
     }
 

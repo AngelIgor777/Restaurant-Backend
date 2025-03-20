@@ -24,7 +24,7 @@ public class RabbitMQConsumer {
         try {
             OrderProductRequestWithPayloadDto orderProductRequestWithPayloadDto = deserializeMessage(message);
 
-            log.info("Consumed User message: {}", orderProductRequestWithPayloadDto);
+            log.debug("Consumed message: {}", orderProductRequestWithPayloadDto);
 
             orderProductAndUserService.createBulk(orderProductRequestWithPayloadDto);
             channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
