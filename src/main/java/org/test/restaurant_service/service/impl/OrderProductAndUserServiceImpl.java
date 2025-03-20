@@ -1,6 +1,5 @@
 package org.test.restaurant_service.service.impl;
 
-import org.springdoc.core.GenericResponseService;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,7 +12,6 @@ import org.test.restaurant_service.mapper.*;
 import org.test.restaurant_service.repository.ProductRepository;
 import org.test.restaurant_service.service.*;
 
-import javax.persistence.EntityNotFoundException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;

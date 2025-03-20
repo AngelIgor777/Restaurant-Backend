@@ -23,6 +23,7 @@ import org.test.restaurant_service.service.PhotoService;
 import javax.persistence.EntityNotFoundException;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
@@ -164,12 +165,16 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public List<OrderProductResponseWithPayloadDto> getAllUserOrdersProductResponseWithPayloadDto(UUID userUUID, Pageable pageable) {
         List<Order> ordersByUserUuid = orderRepository.findOrdersByUser_Uuid(userUUID, pageable);
-        return ordersByUserUuid.stream()
+        List<OrderProductResponseWithPayloadDto> list = new java.util.ArrayList<>(ordersByUserUuid.stream()
                 .map(order -> {
                     OrderProductResponseWithPayloadDto response = getOrderProductResponseWithPayloadDto(order);
                     return response;
                 })
-                .toList();
+                .toList());
+        if (!list.isEmpty()) {
+            Collections.reverse(list);
+        }
+        return list;
     }
 
     @Override
