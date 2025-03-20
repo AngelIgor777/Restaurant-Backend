@@ -171,7 +171,6 @@ public class OrderServiceImpl implements OrderService {
                     return response;
                 })
                 .toList());
-
         return list;
     }
 
