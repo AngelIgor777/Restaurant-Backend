@@ -22,7 +22,7 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
 
     List<Order> findAllByCreatedAtBetweenAndStatus(LocalDateTime from, LocalDateTime to, Order.OrderStatus status);
 
-    List<Order> findOrdersByUser_Uuid(UUID userUUID, Pageable pageable);
+    List<Order> findByUser_UuidOrderByCreatedAtAsc(UUID userUUID, Pageable pageable);
 
     Integer countAllByUser_Uuid(UUID userUUID);
 
