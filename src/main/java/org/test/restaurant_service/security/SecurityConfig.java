@@ -58,8 +58,7 @@ public class SecurityConfig {
                 ).permitAll()
                 .anyRequest().authenticated()
                 .and()
-                .addFilterBefore(authFilter(), UsernamePasswordAuthenticationFilter.class).
-                addFilterBefore(new RedisIpRateLimitFilter(redisTemplate), BasicAuthenticationFilter.class);
+                .addFilterBefore(authFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
