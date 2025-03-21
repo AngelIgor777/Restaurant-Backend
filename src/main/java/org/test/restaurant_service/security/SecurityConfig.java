@@ -4,6 +4,7 @@ package org.test.restaurant_service.security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
@@ -12,7 +13,9 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.test.restaurant_service.security.filters.JwtAuthenticationFilter;
+import org.test.restaurant_service.security.filters.RedisIpRateLimitFilter;
 import org.test.restaurant_service.security.service.CustomUserDetailsService;
 import org.test.restaurant_service.service.UserService;
 
@@ -25,7 +28,7 @@ public class SecurityConfig {
 
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, StringRedisTemplate redisTemplate) throws Exception {
         http
                 .cors().and()
                 .csrf().disable()
@@ -55,7 +58,8 @@ public class SecurityConfig {
                 ).permitAll()
                 .anyRequest().authenticated()
                 .and()
-                .addFilterBefore(authFilter(), UsernamePasswordAuthenticationFilter.class); // Проверка JWT
+                .addFilterBefore(authFilter(), UsernamePasswordAuthenticationFilter.class).
+                addFilterBefore(new RedisIpRateLimitFilter(redisTemplate), BasicAuthenticationFilter.class);
 
         return http.build();
     }
