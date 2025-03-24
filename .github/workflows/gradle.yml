@@ -37,12 +37,12 @@ jobs:
           echo "AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }}" >> src/main/resources/.env
           echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> src/main/resources/.env
           echo "AWS_BUCKET_NAME=${{ secrets.AWS_BUCKET_NAME }}" >> src/main/resources/.env
-          echo "REDIS_PORT=${{ secrets.REDIS_PORT }}" >> src/main/resources/.env
           echo "RABBITMQ_HOST=${{ secrets.RABBITMQ_HOST }}" >> src/main/resources/.env
           echo "ADMIN_CODE1=${{ secrets.ADMIN_CODE1 }}" >> src/main/resources/.env
           echo "ADMIN_CODE2=${{ secrets.ADMIN_CODE2 }}" >> src/main/resources/.env
           echo "RABBITMQ_QUEUES_JSON_QUEUE1_ROUTINGKEY=${{ secrets.RABBITMQ_QUEUES_JSON_QUEUE1_ROUTINGKEY }}" >> src/main/resources/.env
           echo "RABBITMQ_QUEUES_JSON_QUEUE2_ROUTINGKEY=${{ secrets.RABBITMQ_QUEUES_JSON_QUEUE2_ROUTINGKEY }}" >> src/main/resources/.env
+          echo "REDIS_HOST=${{ secrets.REDIS_HOST }}" >> src/main/resources/.env
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
