@@ -23,6 +23,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.test.restaurant_service.dto.response.*;
 import org.test.restaurant_service.entity.ProductTranslation;
 import org.test.restaurant_service.entity.ProductTypeTranslation;
+import org.test.restaurant_service.entity.TelegramUserEntity;
 import org.test.restaurant_service.entity.User;
 import org.test.restaurant_service.mapper.ProductMapper;
 import org.test.restaurant_service.mapper.ProductTypeTranslationMapper;
@@ -101,10 +102,9 @@ public class TelegramBot extends TelegramLongPollingBot {
         try {
             this.execute(new SetMyCommands(getCommands(langCode), new BotCommandScopeDefault(), null));
         } catch (TelegramApiException e) {
-            log.error("Failed to update bot commands: " + e.getMessage());
+            log.error("Failed to update bot commands: {}", e.getMessage());
         }
     }
-
 
     @Override
     public String getBotUsername() {
@@ -121,10 +121,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         log.debug("Update: {}", update);
         if (update.hasMessage() && update.getMessage().hasText()) {
             String text = update.getMessage().getText();
-
-            Long chatId = update.getMessage().getChatId();
-            User user;
-            handleTextCommand(update, text, chatId);
+            handleTextCommand(update, text);
         } else if (update.hasCallbackQuery()) {
             handleCallbackQuery(update);
 
@@ -133,13 +130,14 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    private void handleTextCommand(Update update, String text, Long chatId) {
+
+    //todo add method which check the user select lang or not
+    private void handleTextCommand(Update update, String text) {
+        Long chatId = update.getMessage().getChatId();
         User user;
         switch (text) {
             case "/start":
                 registerFull(update);
-                user = userService.findByChatId(chatId);
-                updateBotCommands(user.getTelegramUserEntity().getLanguage().getCode());
                 break;
             case "/help":
                 sendHelpMessage(update);
@@ -168,11 +166,20 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
+    public boolean ensureUserSelectLanguage(Long chatId) {
+        boolean langIsSelected = telegramUserService.getByChatId(chatId).langIsSelected();
+        if (!langIsSelected) {
+            sendLanguageSelection(chatId);
+            return false;
+        }
+        return true;
+    }
+
 
     private void sendLanguageSelection(Long chatId) {
         SendMessage message = new SendMessage();
         message.setChatId(String.valueOf(chatId));
-        message.setText("Выберите язык / Alege limba:");
+        message.setText("Чтобы продолжить - выберите язык / Pentru a continua, selectați o limbă:");
 
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> buttons = new ArrayList<>();
@@ -256,16 +263,21 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    private void handleLanguageCallback(String data, Long chatId) {
+    @Transactional(rollbackFor = Exception.class)
+    public void handleLanguageCallback(String data, Long chatId) {
+        User user = userService.findByChatId(chatId);
         String langCode = data.substring(5);
         languageService.setLanguage(chatId, langCode);
         String confirmationMessage = "ro".equals(langCode) ? "Limba a fost setată ✅" : "Язык установлен ✅";
         sendMessageWithHTML(chatId, confirmationMessage);
         updateBotCommands(langCode);
         sendHelpMessage(chatId);
+
+        String message = textUtil.getMessageAfterRegister(user.getUuid(), langCode);
+        sendSticker(chatId, "CAACAgIAAxkBAAOMZ2wCg2GLi8plYN0NGFsVl2NfnMYAAgsBAAL3AsgPxfQ7mJWqcds2BA");
+        sendMessageWithMarkdown(chatId, message);
     }
 
-    //todo for make request by product id in callback data
     public void setToProduct(Update update, String productId) {
         Long chatId = update.getCallbackQuery().getMessage().getChatId();
         User user = userService.findByChatId(chatId);
@@ -555,18 +567,16 @@ public class TelegramBot extends TelegramLongPollingBot {
         log.info("Получен File ID стикера: {}", fileId);
     }
 
-    private void sendHelpMessage(Update update) {
-        User user = userService.findByChatId(update.getMessage().getChatId());
-        String codeLang = user.getTelegramUserEntity().getLanguage().getCode();
-
-        sendMessage(update, textUtil.getHelpText(codeLang));
-    }
-
     private void sendHelpMessage(Long chatId) {
-
         User user = userService.findByChatId(chatId);
         String codeLang = user.getTelegramUserEntity().getLanguage().getCode();
+        sendMessage(chatId, textUtil.getHelpText(codeLang));
+    }
 
+    private void sendHelpMessage(Update update) {
+        Long chatId = update.getMessage().getChatId();
+        User user = userService.findByChatId(chatId);
+        String codeLang = user.getTelegramUserEntity().getLanguage().getCode();
         sendMessage(chatId, textUtil.getHelpText(codeLang));
     }
 
@@ -576,19 +586,16 @@ public class TelegramBot extends TelegramLongPollingBot {
         String errorText;
         if (!telegramUserService.existByChatId(chatId)) {
             String userPhotoUrl = saveUserPhoto(update);
-            User createdUser = telegramUserService.registerUser(update, userPhotoUrl);
+            telegramUserService.registerUser(update, userPhotoUrl);
             sendLanguageSelection(update.getMessage().getChatId());
 
-            String message = textUtil.getMessageAfterRegister(createdUser.getUuid(), createdUser.getTelegramUserEntity().getLanguage().getCode());
-
-            sendSticker(chatId, "CAACAgIAAxkBAAOMZ2wCg2GLi8plYN0NGFsVl2NfnMYAAgsBAAL3AsgPxfQ7mJWqcds2BA");
-            sendMessageWithMarkdown(chatId, message);
         } else {
             User user = userService.findByChatId(chatId);
             UUID userUUID = user.getUuid();
             errorText = textUtil.getErrorText(userUUID, user.getTelegramUserEntity().getLanguage().getCode());
             sendMessageWithMarkdown(chatId, errorText);
         }
+
     }
 
     private InlineKeyboardButton createLangButton(String text, String code) {
@@ -646,7 +653,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         } catch (TelegramApiException e) {
             log.error("Ошибка при отправке сообщения: {}", e.getMessage());
         }
-
     }
 
     public void sendMessage(Long chatId, String text) {

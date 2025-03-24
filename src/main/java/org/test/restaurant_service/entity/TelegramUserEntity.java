@@ -42,4 +42,9 @@ public class TelegramUserEntity implements Serializable {
     @Builder.Default
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
+
+
+    public boolean langIsSelected() {
+        return language != null;
+    }
 }

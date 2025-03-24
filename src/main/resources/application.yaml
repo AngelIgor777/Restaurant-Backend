@@ -3,7 +3,6 @@ spring:
     type: redis
   redis:
     host: ${REDIS_HOST}
-
     port: ${REDIS_PORT}
   application:
     name: Restaurant_Service

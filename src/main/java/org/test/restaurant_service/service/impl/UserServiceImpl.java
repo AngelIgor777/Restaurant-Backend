@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.test.restaurant_service.dto.response.UserInfoResponse;
 import org.test.restaurant_service.entity.RoleName;
 import org.test.restaurant_service.entity.User;
 import org.test.restaurant_service.repository.UserRepository;
