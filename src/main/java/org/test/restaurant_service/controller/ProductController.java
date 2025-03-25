@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.test.restaurant_service.dto.response.ProductAndPhotosResponseDTO;
@@ -90,11 +91,11 @@ public class ProductController {
     }
 
     @GetMapping("/search")
+    @Transactional(readOnly = true)
     public Page<ProductResponseDTO> searchProducts(@RequestParam String query,
                                                    @RequestParam(defaultValue = "0") int page,
                                                    @RequestParam(defaultValue = "10") @Valid @Max(30) int size) {
         Page<Product> products = productService.searchProducts(query, page, size);
-
         return products.map(ProductMapper.INSTANCE::toResponseDTO);
     }
 }
