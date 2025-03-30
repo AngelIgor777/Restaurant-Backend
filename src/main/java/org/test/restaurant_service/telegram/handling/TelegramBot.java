@@ -23,7 +23,6 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.test.restaurant_service.dto.response.*;
 import org.test.restaurant_service.entity.ProductTranslation;
 import org.test.restaurant_service.entity.ProductTypeTranslation;
-import org.test.restaurant_service.entity.TelegramUserEntity;
 import org.test.restaurant_service.entity.User;
 import org.test.restaurant_service.mapper.ProductMapper;
 import org.test.restaurant_service.mapper.ProductTypeTranslationMapper;
@@ -50,10 +49,9 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final LanguageService languageService;
     private final ProductTranslationService productTranslationService;
     private final ProductTypeTranslationService productTypeTranslationService;
-    private final ProductMapper productMapper;
     private final ProductTypeTranslationMapper productTypeTranslationMapper;
 
-    public TelegramBot(TelegramUserServiceImpl telegramUserService, ProductTypeServiceImpl productTypeService, @Qualifier("productServiceImpl") ProductServiceImpl productService, BotConfig botConfig, TextUtil textUtil, UserService userService, S3Service s3Service, LanguageService languageService, ProductTranslationService productTranslationService, ProductTypeTranslationService productTypeTranslationService, ProductMapper productMapper, ProductTypeTranslationMapperImpl productTypeTranslationMapper) {
+    public TelegramBot(TelegramUserServiceImpl telegramUserService, ProductTypeServiceImpl productTypeService, @Qualifier("productServiceImpl") ProductServiceImpl productService, BotConfig botConfig, TextUtil textUtil, UserService userService, S3Service s3Service, LanguageService languageService, ProductTranslationService productTranslationService, ProductTypeTranslationService productTypeTranslationService, ProductTypeTranslationMapperImpl productTypeTranslationMapper) {
         this.telegramUserService = telegramUserService;
         this.productTypeService = productTypeService;
         this.productService = productService;
@@ -64,7 +62,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         this.languageService = languageService;
         this.productTranslationService = productTranslationService;
         this.productTypeTranslationService = productTypeTranslationService;
-        this.productMapper = productMapper;
         ArrayList<BotCommand> botCommands = getCommands("ru");
         try {
             this.execute(new SetMyCommands(botCommands, new BotCommandScopeDefault(), null));
@@ -124,7 +121,6 @@ public class TelegramBot extends TelegramLongPollingBot {
             handleTextCommand(update, text);
         } else if (update.hasCallbackQuery()) {
             handleCallbackQuery(update);
-
         } else if (update.getMessage().hasSticker()) {
             stickerHandler(update);
         }
@@ -166,13 +162,28 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    public boolean ensureUserSelectLanguage(Long chatId) {
-        boolean langIsSelected = telegramUserService.getByChatId(chatId).langIsSelected();
-        if (!langIsSelected) {
-            sendLanguageSelection(chatId);
-            return false;
+
+    private void handleCallbackQuery(Update update) {
+        CallbackQuery callbackQuery = update.getCallbackQuery();
+        String data = callbackQuery.getData();
+        Long chatId = update.getCallbackQuery().getMessage().getChatId();
+        log.debug("Recieved callbackQuery: {}", data);
+        boolean anyMatchProductTypes = callbackProductTypesData.stream()
+                .anyMatch(callbackItem -> callbackItem.equals(data));
+        boolean anyMatchProducts = callbackProductsData.stream()
+                .anyMatch(callbackItem -> callbackItem.equals(data));
+
+        if (anyMatchProductTypes) {
+            handleProductTypeCallback(callbackQuery, data);
         }
-        return true;
+        if (anyMatchProducts) {
+            setToProduct(update, data);
+        } else if (data.equals(CallBackButton.BACK_TO_MENU.toString())) {
+            backToMenu(update);
+        }
+        if (data.startsWith("LANG_")) {
+            handleLanguageCallback(data, chatId);
+        }
     }
 
 
@@ -239,30 +250,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         return null;
     }
 
-
-    private void handleCallbackQuery(Update update) {
-        CallbackQuery callbackQuery = update.getCallbackQuery();
-        String data = callbackQuery.getData();
-        Long chatId = update.getCallbackQuery().getMessage().getChatId();
-        log.debug("Recieved callbackQuery: {}", data);
-        boolean anyMatchProductTypes = callbackProductTypesData.stream()
-                .anyMatch(callbackItem -> callbackItem.equals(data));
-        boolean anyMatchProducts = callbackProductsData.stream()
-                .anyMatch(callbackItem -> callbackItem.equals(data));
-
-        if (anyMatchProductTypes) {
-            handleProductTypeCallback(callbackQuery, data);
-        }
-        if (anyMatchProducts) {
-            setToProduct(update, data);
-        } else if (data.equals(CallBackButton.BACK_TO_MENU.toString())) {
-            backToMenu(update);
-        }
-        if (data.startsWith("LANG_")) {
-            handleLanguageCallback(data, chatId);
-        }
-    }
-
     @Transactional(rollbackFor = Exception.class)
     public void handleLanguageCallback(String data, Long chatId) {
         User user = userService.findByChatId(chatId);
@@ -271,10 +258,9 @@ public class TelegramBot extends TelegramLongPollingBot {
         String confirmationMessage = "ro".equals(langCode) ? "Limba a fost setată ✅" : "Язык установлен ✅";
         sendMessageWithHTML(chatId, confirmationMessage);
         updateBotCommands(langCode);
-        sendHelpMessage(chatId);
 
-        String message = textUtil.getMessageAfterRegister(user.getUuid(), langCode);
         sendSticker(chatId, "CAACAgIAAxkBAAOMZ2wCg2GLi8plYN0NGFsVl2NfnMYAAgsBAAL3AsgPxfQ7mJWqcds2BA");
+        String message = textUtil.getMessageAfterRegister(user.getUuid(), langCode);
         sendMessageWithMarkdown(chatId, message);
     }
 

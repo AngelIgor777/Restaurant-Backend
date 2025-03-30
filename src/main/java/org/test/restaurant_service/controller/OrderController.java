@@ -56,7 +56,6 @@ public class OrderController {
     @GetMapping("/user")
     public List<OrderProductResponseWithPayloadDto> getUserOrders(@RequestParam UUID userUUID, Pageable pageable) {
         List<OrderProductResponseWithPayloadDto> allUserOrdersProductResponseWithPayloadDto = orderService.getAllUserOrdersProductResponseWithPayloadDto(userUUID, pageable);
-
         return allUserOrdersProductResponseWithPayloadDto;
     }
 
