@@ -42,4 +42,6 @@ public interface OrderService {
     Integer getCountOrdersByUserChatId(Long chatId);
 
     void deleteAllByStatusAndCreatedAtBetween(Order.OrderStatus status, LocalDateTime from, LocalDateTime to);
+
+    OrderProductResponseWithPayloadDto searchOrderProductResponseWithPayloadDtoByValidationCode(String query);
 }

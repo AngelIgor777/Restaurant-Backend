@@ -186,6 +186,13 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.deleteAllByStatusAndCreatedAtBetween(status, from, to);
     }
 
+    @Override
+    public OrderProductResponseWithPayloadDto searchOrderProductResponseWithPayloadDtoByValidationCode(String query) {
+        Order order = orderRepository.findByOtp(query)
+                .orElseThrow(() -> new EntityNotFoundException("Order not found with OTP " + query));
+        return getOrderProductResponseWithPayloadDto(order);
+    }
+
     private OrderProductResponseWithPayloadDto getOrderProductResponseWithPayloadDto(Order order) {
         OrderProductResponseWithPayloadDto response = new OrderProductResponseWithPayloadDto();
         response.setOtp(order.getOtp());

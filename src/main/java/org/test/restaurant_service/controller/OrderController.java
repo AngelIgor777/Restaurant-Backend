@@ -34,6 +34,13 @@ public class OrderController {
         return ResponseEntity.ok(order);
     }
 
+    @GetMapping("/search")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    public ResponseEntity<OrderProductResponseWithPayloadDto> searchOrderByValidationCode(@RequestParam String query) {
+        OrderProductResponseWithPayloadDto order = orderService.searchOrderProductResponseWithPayloadDtoByValidationCode(query);
+        return ResponseEntity.ok(order);
+    }
+
     @PostMapping("/complete/{orderId}")
     @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
     public void completeOrder(@PathVariable Integer orderId) {

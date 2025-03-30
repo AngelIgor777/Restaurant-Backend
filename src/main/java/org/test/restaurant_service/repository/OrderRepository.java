@@ -14,6 +14,8 @@ import java.util.UUID;
 public interface OrderRepository extends JpaRepository<Order, Integer> {
     List<Order> findAllByPaymentMethod(Order.PaymentMethod paymentMethod);
 
+    Optional<Order> findByOtp(String otp);
+
     List<Order> findAllByStatus(Order.OrderStatus status);
 
     Optional<Order> findOrderByTable_Number(Integer tableNumber);
