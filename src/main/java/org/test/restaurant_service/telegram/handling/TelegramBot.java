@@ -529,7 +529,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         return new InlineKeyboardButton();
     }
 
-
     private void executeMessage(SendMessage message) {
         try {
             execute(message);
@@ -574,7 +573,6 @@ public class TelegramBot extends TelegramLongPollingBot {
             String userPhotoUrl = saveUserPhoto(update);
             telegramUserService.registerUser(update, userPhotoUrl);
             sendLanguageSelection(update.getMessage().getChatId());
-
         } else {
             User user = userService.findByChatId(chatId);
             UUID userUUID = user.getUuid();
@@ -655,7 +653,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         } catch (TelegramApiException e) {
             log.error("Ошибка при отправке сообщения: {}", e.getMessage());
         }
-
     }
 
     private static ReplyKeyboardMarkup getReplyKeyboard() {

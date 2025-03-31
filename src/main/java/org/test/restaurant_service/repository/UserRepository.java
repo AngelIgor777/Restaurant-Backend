@@ -2,12 +2,10 @@ package org.test.restaurant_service.repository;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.test.restaurant_service.entity.Product;
 import org.test.restaurant_service.entity.RoleName;
 import org.test.restaurant_service.entity.User;
 
@@ -32,4 +30,9 @@ public interface UserRepository extends JpaRepository<User, UUID> {
             " OR " +
             "LOWER(tu.username) LIKE LOWER(CONCAT('%', :query, '%'))")
     Page<User> search(String query, Pageable pageable);
+
+    @Query("SELECT u FROM User u " +
+            "JOIN u.roles r " +
+            "WHERE r.roleName IN (:roleNames)")
+    List<User> findAllStaffUsers(@Param("roleNames") List<RoleName> roleNames);
 }

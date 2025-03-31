@@ -7,10 +7,15 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @Data
 public class BotConfig {
-    @Value("${bot.name}")
+    @Value("${telegram.bot.name}")
     String botName;
 
-    @Value("${bot.key}")
+    @Value("${telegram.bot.key}")
     String botKey;
 
+    @Value("${telegram.workBot.name}")
+    String WorkBotName;
+
+    @Value("${telegram.workBot.key}")
+    String WorkBotKey;
 }

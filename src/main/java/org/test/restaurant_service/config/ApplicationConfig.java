@@ -23,12 +23,13 @@ public class ApplicationConfig {
                 .build();
     }
 
+    //todo find correct pool size and queue
     @Bean
     public TaskExecutor taskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(5);
-        executor.setMaxPoolSize(10);
-        executor.setQueueCapacity(25);
+        executor.setCorePoolSize(20);
+        executor.setMaxPoolSize(50);
+        executor.setQueueCapacity(100);
         executor.initialize();
         return executor;
     }
