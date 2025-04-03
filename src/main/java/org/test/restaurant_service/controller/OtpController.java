@@ -3,14 +3,13 @@ package org.test.restaurant_service.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.test.restaurant_service.dto.response.JwtResponse;
 import org.test.restaurant_service.entity.User;
 import org.test.restaurant_service.service.AuthenticationService;
-import org.test.restaurant_service.service.OtpService;
 import org.test.restaurant_service.service.UserService;
+import org.test.restaurant_service.service.impl.OtpAdminService;
 
 
 @RestController
@@ -19,7 +18,7 @@ import org.test.restaurant_service.service.UserService;
 public class OtpController {
 
 
-    private final OtpService otpService;
+    private final OtpAdminService otpAdminService;
     private final UserService userService;
     private final AuthenticationService authenticationService;
 
@@ -29,7 +28,7 @@ public class OtpController {
     public void generateOtp(@RequestParam Long chatId) {
         User user = userService.findByChatId(chatId);
 
-        otpService.generateAndSendOtp(user);
+        otpAdminService.generateAndSendOtp(user);
     }
 
     @PreAuthorize("@securityService.userIsAdminOrModerator(#chatId)")

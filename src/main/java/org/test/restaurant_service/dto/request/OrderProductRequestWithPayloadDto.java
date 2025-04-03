@@ -10,10 +10,6 @@ import javax.validation.constraints.*;
 import java.util.List;
 import java.util.UUID;
 
-
-/**
- * DTO for handling order product requests with payload details.
- */
 @Data
 @Builder
 @AllArgsConstructor

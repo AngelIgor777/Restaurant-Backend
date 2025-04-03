@@ -91,7 +91,7 @@ public class Order {
     }
 
     public enum PaymentMethod {
-        CASH, CARD
+        CASH, CARD, YOURSELF
     }
 
     public enum OrderStatus {

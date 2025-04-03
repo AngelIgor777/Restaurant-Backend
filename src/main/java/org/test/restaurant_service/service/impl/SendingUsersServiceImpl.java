@@ -28,14 +28,12 @@ import java.util.concurrent.*;
 public class SendingUsersServiceImpl implements SendingUsersService {
 
     private static final Logger log = LoggerFactory.getLogger(SendingUsersServiceImpl.class);
-    private static final int THREAD_POOL_SIZE = 10;
     private static final int PAGE_SIZE = 50;
     private static final int DELAY_SECONDS = 10;
 
     private final UserService userService;
     private final TextUtil textUtil;
     private final TelegramBot telegramBot;
-    private final ExecutorService executorService = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
 
     private final TaskExecutor taskExecutor;
 

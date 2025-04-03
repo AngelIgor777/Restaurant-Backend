@@ -19,26 +19,7 @@ import java.util.Random;
 public class OtpServiceImpl implements OtpService {
 
     private final OtpRepository otpRepository;
-    private final TelegramBot telegramBot;
-    private final TextUtil textUtil;
     private final OrderService orderService;
-
-    public void generateAndSendOtp(User user) {
-        otpRepository.findExistCode(user.getTelegramUserEntity().getChatId())
-                .ifPresent(otpRepository::delete);
-        String otp = String.valueOf(100000 + new Random().nextInt(900000));
-
-        LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(5);
-
-        // Create new OTP record
-        OtpCode otpCode = new OtpCode();
-        otpCode.setUser(user);
-        otpCode.setOtpCode(otp);
-        otpCode.setExpiresAt(expiresAt);
-        otpRepository.save(otpCode);
-        String otpMessage = textUtil.getTextForSendingOtpCode(otp, user.getTelegramUserEntity().getLanguage().getCode());
-        telegramBot.sendMessageWithMarkdown(user.getTelegramUserEntity().getChatId(), otpMessage);
-    }
 
     @Override
     public String generateOtpForOrder() {

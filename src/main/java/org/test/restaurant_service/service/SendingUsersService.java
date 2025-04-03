@@ -7,7 +7,4 @@ public interface SendingUsersService {
     void sendDiscountMessages(ProductDiscount savedDiscount);
     void sendDiscountMessages(Discount savedDiscount);
     void sendMessageToAllTelegramUsers(String message);
-
-
-
 }
