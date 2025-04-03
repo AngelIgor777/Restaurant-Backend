@@ -30,7 +30,6 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
     private final UserService userService;
     private final ProductDiscountService productDiscountService;
     private final DiscountService discountService;
-    private final ProductRepository productRepository;
     private final OrderProductMapper orderProductMapper;
     private final ProductMapper productMapper;
     private final ProductService productService;
@@ -41,13 +40,12 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
     private final OrderDiscountService orderDiscountService;
     private final UserAddressService userAddressService;
 
-    public OrderProductAndUserServiceImpl(OrderService orderService, OrderProductServiceImpl orderProductService, UserService userService, ProductDiscountService productDiscountService, DiscountService discountService, ProductRepository productRepository, OrderProductMapper orderProductMapper, ProductMapper productMapper, @Qualifier("productServiceImpl") ProductService productService, AddressService addressService, OrderMapper orderMapper, AddressMapper addressMapper, TableMapper tableMapper, OrderDiscountService orderDiscountService, UserAddressService userAddressService) {
+    public OrderProductAndUserServiceImpl(OrderService orderService, OrderProductServiceImpl orderProductService, UserService userService, ProductDiscountService productDiscountService, DiscountService discountService, OrderProductMapper orderProductMapper, ProductMapper productMapper, @Qualifier("productServiceImpl") ProductService productService, AddressService addressService, OrderMapper orderMapper, AddressMapper addressMapper, TableMapper tableMapper, OrderDiscountService orderDiscountService, UserAddressService userAddressService) {
         this.orderService = orderService;
         this.orderProductService = orderProductService;
         this.userService = userService;
         this.productDiscountService = productDiscountService;
         this.discountService = discountService;
-        this.productRepository = productRepository;
         this.orderProductMapper = orderProductMapper;
         this.productMapper = productMapper;
         this.productService = productService;
@@ -213,15 +211,16 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
         } else {
             if (order.hasUser()) {
                 User user = order.getUser();
-                if (user.hasAddress()) {
+                if (user.hasAddress() && request.getAddressRequestDTO() == null) {
                     Address address = user.getAddress();
                     AddressResponseDTO responseDto = addressMapper.toResponseDto(address);
                     responseDto.setUserUUID(user.getUuid());
                     order.setAddress(address);
                     orderProductResponseWithPayloadDto.setAddressResponseDTO(responseDto);
-                } else {
+                } else if (user.hasAddress() && request.getAddressRequestDTO() != null) {
                     AddressRequestDTO addressRequestDTO = request.getAddressRequestDTO();
-                    Address address = userAddressService.saveAddressToUser(addressRequestDTO, user.getUuid());
+                    Address address = addressMapper.toEntity(addressRequestDTO);
+                    userAddressService.updateAddressToUser(user, address);
                     AddressResponseDTO responseDto = addressMapper.toResponseDto(address);
                     order.setAddress(address);
                     orderProductResponseWithPayloadDto.setAddressResponseDTO(responseDto);

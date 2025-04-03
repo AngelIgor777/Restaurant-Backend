@@ -11,6 +11,7 @@ import org.test.restaurant_service.repository.TableRepository;
 import org.test.restaurant_service.service.TableService;
 
 import javax.persistence.EntityNotFoundException;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +24,18 @@ public class TableServiceImpl implements TableService {
     public Page<TableResponseDTO> getAll(Pageable pageable) {
         return tableRepository.findAll(pageable)
                 .map(tableMapper::toResponseDTO);
+    }
+
+    @Override
+    public List<TableResponseDTO> getAll() {
+        return tableRepository.findAll()
+                .stream().map(tableMapper::toResponseDTO)
+                .toList();
+    }
+
+    @Override
+    public byte countAll() {
+        return (byte) tableRepository.count();
     }
 
     @Override

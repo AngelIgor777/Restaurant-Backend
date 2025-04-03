@@ -27,9 +27,23 @@ public class UserAddressServiceImpl implements UserAddressService {
         return addressService.save(address);
     }
 
+
+    public Address saveAddressToUser(Address address, User user) {
+        address.setUser(user);
+        return addressService.save(address);
+    }
+
     @Override
     public Address saveAddressToUser(AddressRequestDTO addressRequestDTO, UUID userUUID) {
         Address address = addressMapper.toEntity(addressRequestDTO);
         return saveAddressToUser(address, userUUID);
+    }
+
+    @Override
+    public Address updateAddressToUser(User user, Address newAddress) {
+        Address userAddress = user.getAddress();
+        newAddress.setId(userAddress.getId());
+        user.setAddress(newAddress);
+        return saveAddressToUser(newAddress, user);
     }
 }
