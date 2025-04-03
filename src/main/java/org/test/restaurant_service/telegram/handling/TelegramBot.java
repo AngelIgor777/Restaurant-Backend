@@ -12,6 +12,7 @@ import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.send.SendSticker;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
@@ -70,6 +71,9 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private final String TABLE_SUFFIX = "T:";
 
+    private final String PRODUCT_TYPE_SUFFIX = "PT:";
+    private final String PRODUCT_TYPE_WHEN_PRODUCT_SUFFIX = "WP:";
+
     private final String PAYMENT_CARD = "PCD";
     private final String PAYMENT_CASH = "PCH";
 
@@ -102,6 +106,10 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private Set<String> callbackProductTypesData = new HashSet<>();
+
+    private Set<String> callbackProductTypesDataWithDeleting = new HashSet<>();
+
+
     private Set<String> callbackProductsData = new HashSet<>();
 
     private ArrayList<BotCommand> getCommands(String langCode) {
@@ -214,12 +222,17 @@ public class TelegramBot extends TelegramLongPollingBot {
         boolean paymentMethodCallBack = data.startsWith("P"); // payment method start with "P"
         boolean anyMatchProductTypes = callbackProductTypesData.stream()
                 .anyMatch(callbackItem -> callbackItem.equals(data));
+
+        boolean anyMatchProductTypesWithDeleting = callbackProductTypesDataWithDeleting.stream()
+                .anyMatch(callbackItem -> callbackItem.equals(data));
         boolean anyMatchProducts = callbackProductsData.stream()
                 .anyMatch(callbackItem -> callbackItem.equals(data));
         if (anyMatchProductTypes) {
             handleProductTypeCallback(callbackQuery, data);
         } else if (anyMatchProducts) {
             setToProduct(update, data);
+        } else if (anyMatchProductTypesWithDeleting) {
+            handleProductTypeCallbackWithSendingNewMessage(callbackQuery, data);//
         } else if (quickOrderCallback) {
             handleQuickOrderCallback(update);
         } else if (quickOrderTypeCallback) {
@@ -393,10 +406,14 @@ public class TelegramBot extends TelegramLongPollingBot {
         Message message = callbackQuery.getMessage();
         Long chatId = message.getChatId();
         UUID userUUID = userService.findByChatId(chatId).getUuid();
-        Integer messageId = message.getMessageId();
-        String text = "Выберите тип заказа";
-        EditMessageText editMessageText = getEditMessageText(String.valueOf(chatId), text, messageId);
 
+
+        String text = "Выберите тип заказа";
+
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.setChatId(chatId.toString());
+        sendMessage.setText(text);
+        sendMessage.setParseMode("HTML");
 
         OrderProductRequestDTO orderProductRequestDTO = new OrderProductRequestDTO();
         orderProductRequestDTO.setProductId(Integer.valueOf(productId));
@@ -406,17 +423,16 @@ public class TelegramBot extends TelegramLongPollingBot {
         orderDto.setUserUUID(userUUID);
         orderCacheService.saveOrder(chatId, orderDto);
 
-
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> buttons = new ArrayList<>();
 
-//        buttons.add(List.of(createOneLineButton("С собой", ORDER_WITH_YOURSELF)));
-        buttons.add(List.of(createOneLineButton("На столик 🍽 ", ORDER_TO_TABLE)));
+        buttons.add(List.of(createOneLineButton("На столик 🍽", ORDER_TO_TABLE)));
         buttons.add(List.of(createOneLineButton("Домой 🏠", ORDER_HOME)));
 
         markup.setKeyboard(buttons);
-        editMessageText.setReplyMarkup(markup);
-        executeMessage(editMessageText);
+        sendMessage.setReplyMarkup(markup);
+
+        executeMessage(sendMessage);
     }
 
     private void sendLanguageSelection(Long chatId) {
@@ -551,8 +567,9 @@ public class TelegramBot extends TelegramLongPollingBot {
                             InlineKeyboardButton quickOrderButton) {
         if (langCode.equals("ru")) {
             backToTypesButton.setText("Назад ✨");
-            backToTypesButton.setCallbackData(productResponse.getTypeName());
-
+            String productTypeCallbackData = PRODUCT_TYPE_WHEN_PRODUCT_SUFFIX + productResponse.getTypeName();
+            backToTypesButton.setCallbackData(productTypeCallbackData);
+            callbackProductTypesDataWithDeleting.add(productTypeCallbackData);
             quickOrderButton.setText("Быстрый заказ 🔔");
             quickOrderButton.setCallbackData(QUICK_ORDER_SUFFIX + productResponse.getId().toString());
 
@@ -568,9 +585,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         Long chatId = callbackQuery.getMessage().getChatId();
         Integer messageId = callbackQuery.getMessage().getMessageId();
 
-        EditMessageText editMessage = getEditMessageText(String.valueOf(chatId), menuText.toString(), (int) messageId);
-
-        return editMessage;
+        return getEditMessageText(String.valueOf(chatId), menuText.toString(), messageId);
     }
 
 
@@ -586,15 +601,16 @@ public class TelegramBot extends TelegramLongPollingBot {
         deleteMenuText();
     }
 
-    private void handleProductTypeCallback(CallbackQuery callbackQuery, String productType) {
+    private void handleProductTypeCallback(CallbackQuery callbackQuery, String data) {
         Message message = callbackQuery.getMessage();
         Integer messageId = message.getMessageId();
         Long chatId = message.getChatId();
         User user = userService.findByChatId(chatId);
         String langCode = user.getTelegramUserEntity().getLanguage().getCode();
 
-        String responseText = textUtil.getProductTypeTextByType(productType, user.getTelegramUserEntity().getLanguage().getCode());
+        String productType = data.substring(PRODUCT_TYPE_SUFFIX.length());
 
+        String responseText = textUtil.getProductTypeTextByType(productType, user.getTelegramUserEntity().getLanguage().getCode());
 
         if (langCode.equals("ro")) {
             String productNameRu = productTypeTranslationService.getByRoTranslation(productType, "ro").getProductType().getName();
@@ -627,11 +643,53 @@ public class TelegramBot extends TelegramLongPollingBot {
                     .toList();
             editMessageProductsByType(responseText, chatId, messageId, strings, langCode);
         }
-
     }
 
-    private void editMessageProductsByType(String text, long chatId, long messageId, List<
-            ProductTelegramResponseDto> productTelegramResponseDtoList, String langCode) {
+    private void handleProductTypeCallbackWithSendingNewMessage(CallbackQuery callbackQuery, String data) {
+        Message message = callbackQuery.getMessage();
+        Integer messageId = message.getMessageId();
+        Long chatId = message.getChatId();
+        User user = userService.findByChatId(chatId);
+        String langCode = user.getTelegramUserEntity().getLanguage().getCode();
+
+        String productType = data.substring(PRODUCT_TYPE_SUFFIX.length());
+
+        String responseText = textUtil.getProductTypeTextByType(productType, user.getTelegramUserEntity().getLanguage().getCode());
+
+        if (langCode.equals("ro")) {
+            String productNameRu = productTypeTranslationService.getByRoTranslation(productType, "ro").getProductType().getName();
+
+            List<ProductResponseDTO> products = productService.getByTypeName(productNameRu);
+
+            List<ProductTelegramResponseDto> list = products
+                    .stream()
+                    .map(productResponseDTO -> {
+                        ProductTranslationResponseDTO productTranslationResponseDTO = productTranslationService.getTranslation(productResponseDTO.getId(), "ro");
+                        ProductTelegramResponseDto productTelegramResponseDto = new ProductTelegramResponseDto();
+                        productTelegramResponseDto.setProductId(productTranslationResponseDTO.getProductId());
+                        productTelegramResponseDto.setProductName(productTranslationResponseDTO.getName());
+                        return productTelegramResponseDto;
+                    })
+                    .toList();
+
+            editMessageProductsByTypeWithSendingNewMessage(responseText, chatId, messageId, list, langCode);
+
+        } else {
+            List<ProductResponseDTO> products = productService.getByTypeName(productType);
+            List<ProductTelegramResponseDto> strings = products
+                    .stream()
+                    .map(productResponseDTO -> {
+                        ProductTelegramResponseDto productTelegramResponseDto = new ProductTelegramResponseDto();
+                        productTelegramResponseDto.setProductId(productResponseDTO.getId());
+                        productTelegramResponseDto.setProductName(productResponseDTO.getName());
+                        return productTelegramResponseDto;
+                    })
+                    .toList();
+            editMessageProductsByTypeWithSendingNewMessage(responseText, chatId, messageId, strings, langCode);
+        }
+    }
+
+    private void editMessageProductsByType(String text, long chatId, long messageId, List<ProductTelegramResponseDto> productTelegramResponseDtoList, String langCode) {
         EditMessageText message = getEditMessageText(String.valueOf(chatId), text, (int) messageId);
 
         InlineKeyboardMarkup markupInLine = new InlineKeyboardMarkup();
@@ -642,6 +700,20 @@ public class TelegramBot extends TelegramLongPollingBot {
         message.setReplyMarkup(markupInLine);
 
         sendEditedMessage(message);
+    }
+
+    private void editMessageProductsByTypeWithSendingNewMessage(String text, long chatId, long messageId, List<
+            ProductTelegramResponseDto> productTelegramResponseDtoList, String langCode) {
+        SendMessage message = new SendMessage(String.valueOf(chatId), text);
+
+        InlineKeyboardMarkup markupInLine = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rowsInLine = createProductButtons(productTelegramResponseDtoList);
+
+        addBackToMenuButton(rowsInLine, langCode);
+        markupInLine.setKeyboard(rowsInLine);
+        message.setReplyMarkup(markupInLine);
+
+        sendMessageWithHTML(message);
     }
 
     private List<List<InlineKeyboardButton>> createProductButtons
@@ -777,8 +849,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                 InlineKeyboardButton button = createOneLineButton();
                 String callbackData = productTypes.get(x);
                 button.setText("\uD83D\uDD38 " + callbackData);
-                button.setCallbackData(callbackData);
-                callbackProductTypesData.add(callbackData);
+                button.setCallbackData(PRODUCT_TYPE_SUFFIX + callbackData);
+                callbackProductTypesData.add(PRODUCT_TYPE_SUFFIX + callbackData);
                 row.add(button);
                 log.debug("Add button: {} with callbackData: {}", callbackData, callbackData);
                 log.debug("callbackProductTypesData data: {}", callbackProductTypesData);
@@ -796,6 +868,14 @@ public class TelegramBot extends TelegramLongPollingBot {
 
 
     private void executeMessage(SendMessage message) {
+        try {
+            execute(message);
+        } catch (TelegramApiException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    private void executeMessage(DeleteMessage message) {
         try {
             execute(message);
         } catch (TelegramApiException e) {
@@ -901,6 +981,11 @@ public class TelegramBot extends TelegramLongPollingBot {
         ReplyKeyboardMarkup replyKeyboard = getReplyKeyboard();
         sendMessage.setReplyMarkup(replyKeyboard);
         sendMessage.setParseMode("HTML"); // Использование Markdown для форматирования текста
+        executeMessage(sendMessage);
+    }
+
+    public void sendMessageWithHTML(SendMessage sendMessage) {
+        sendMessage.setParseMode("HTML");
         executeMessage(sendMessage);
     }
 
