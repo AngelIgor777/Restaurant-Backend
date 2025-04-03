@@ -10,6 +10,7 @@ import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.GetUserProfilePhotos;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.send.SendSticker;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.*;
@@ -500,9 +501,11 @@ public class TelegramBot extends TelegramLongPollingBot {
         User user = userService.findByChatId(chatId);
         String langCode = user.getTelegramUserEntity().getLanguage().getCode();
 
-        ProductResponseDTO productResponse = ProductMapper.INSTANCE.toResponseIgnorePhotos(productService.getSimpleById(Integer.parseInt(productId)));
+        ProductResponseDTO productResponse = ProductMapper.INSTANCE.toResponseDTO(productService.getSimpleById(Integer.parseInt(productId)));
+        String photoUrl = productResponse.getPhotoUrl();
         StringBuilder productText;
         ProductTypeTranslationResponseDTO productTypeTranslationResponseDTO = null;
+
         if (langCode.equals("ro")) {
             ProductTranslation productTranslation = productTranslationService.getTranslationByProductId(Integer.parseInt(productId));
             ProductTypeTranslation translation = productTypeTranslationService.getTranslation(productResponse.getTypeName(), "ro");
@@ -511,15 +514,19 @@ public class TelegramBot extends TelegramLongPollingBot {
         } else {
             productText = textUtil.getProductText(productResponse);
         }
-        EditMessageText editMessage = setEditMessageTextProperties(update);
-        editMessage.setParseMode("HTML");
 
+        // Creating a SendPhoto message instead of EditMessageText
+        SendPhoto sendPhoto = new SendPhoto();
+        sendPhoto.setChatId(String.valueOf(chatId));
+        sendPhoto.setPhoto(new InputFile(photoUrl));  // Use InputFile to send photo by URL
+        sendPhoto.setCaption(productText.toString());
+        sendPhoto.setParseMode("HTML");
+
+        // Setting inline keyboard
         InlineKeyboardMarkup markupInLine = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rowsInLine = new ArrayList<>();
         List<InlineKeyboardButton> inlineKeyboardButtons = new ArrayList<>();
         List<InlineKeyboardButton> inlineKeyboardButtons2 = new ArrayList<>();
-
-        editMessage.setText(productText.toString());
 
         InlineKeyboardButton inlineBackKeyboardButton = new InlineKeyboardButton();
         InlineKeyboardButton inlineQuickOrderButton = new InlineKeyboardButton();
@@ -532,10 +539,9 @@ public class TelegramBot extends TelegramLongPollingBot {
         inlineKeyboardButtons2.add(inlineQuickOrderButton);
         rowsInLine.add(inlineKeyboardButtons2);
 
+        sendPhoto.setReplyMarkup(markupInLine);
 
-        editMessage.setReplyMarkup(markupInLine);
-
-        executeMessage(editMessage);
+        executeMessage(sendPhoto);
     }
 
     private void addButtons(String langCode,
@@ -790,6 +796,14 @@ public class TelegramBot extends TelegramLongPollingBot {
 
 
     private void executeMessage(SendMessage message) {
+        try {
+            execute(message);
+        } catch (TelegramApiException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    private void executeMessage(SendPhoto message) {
         try {
             execute(message);
         } catch (TelegramApiException e) {
