@@ -109,4 +109,5 @@ admin:
 
 logging:
   level:
-    org.test.restaurant_service.telegram: debug
+    org.test.restaurant_service.service.impl.SendingUsersServiceImpl: debug
+#    org.test.restaurant_service.telegram: debug

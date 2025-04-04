@@ -65,6 +65,7 @@ public class SendingUsersServiceImpl implements SendingUsersService {
     }
 
     private void sendMessageToUsers(MessageFormatter messageFormatter) {
+        int allUserSending = 0;
         int page = 0;
         Page<User> userPage;
         do {
@@ -75,11 +76,13 @@ public class SendingUsersServiceImpl implements SendingUsersService {
             if (!currentBatchUsers.isEmpty()) {
                 for (User user : currentBatchUsers) {
                     taskExecutor.execute(() -> sendTelegramMessage(user, messageFormatter));
+                    allUserSending++;
                 }
                 asyncDelay();
             }
             page++;
         } while (userPage.hasNext());
+        log.debug("Send message to {} users", allUserSending);
     }
 
     private void sendTelegramMessage(User user, MessageFormatter messageFormatter) {
