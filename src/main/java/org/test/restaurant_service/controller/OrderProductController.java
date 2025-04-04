@@ -10,7 +10,6 @@ import org.test.restaurant_service.dto.response.OtpResponseDto;
 import org.test.restaurant_service.entity.OrderProduct;
 import org.test.restaurant_service.mapper.OrderProductMapper;
 import org.test.restaurant_service.rabbitmq.producer.RabbitMQJsonProducer;
-import org.test.restaurant_service.service.OrderProductAndUserService;
 import org.test.restaurant_service.service.OrderProductService;
 
 import javax.validation.Valid;
@@ -22,7 +21,6 @@ import java.util.List;
 public class OrderProductController {
 
     private final OrderProductService orderProductService;
-    private final OrderProductAndUserService orderProductAndUserService;
     private final OrderProductMapper orderProductMapper;
     private final RabbitMQJsonProducer producer;
 
@@ -31,7 +29,6 @@ public class OrderProductController {
         List<OrderProduct> orderProductsByOrderId = orderProductService.getOrderProductsByOrderId(orderId);
         return orderProductsByOrderId.stream().map(orderProductMapper::toResponseDTO).toList();
     }
-
 
     @PostMapping("/bulk")
     @ResponseStatus(HttpStatus.CREATED)

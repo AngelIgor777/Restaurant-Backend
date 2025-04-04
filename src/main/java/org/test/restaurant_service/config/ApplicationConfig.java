@@ -9,6 +9,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
+import java.util.concurrent.ThreadPoolExecutor;
+
 @Configuration
 @RequiredArgsConstructor
 public class ApplicationConfig {
@@ -26,9 +28,12 @@ public class ApplicationConfig {
     @Bean
     public TaskExecutor taskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(5);
-        executor.setMaxPoolSize(10);
-        executor.setQueueCapacity(25);
+        executor.setCorePoolSize(20);   // Больше потоков постоянно
+        executor.setMaxPoolSize(50);   // Под нагрузкой до 100 потоков
+        executor.setQueueCapacity(200); // Очередь на 500 сообщений перед отказами
+        executor.setKeepAliveSeconds(60); // Потоки > corePoolSize живут 60 сек после пика
+        executor.setThreadNamePrefix("MsgSender-"); // Удобнее в логах
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         executor.initialize();
         return executor;
     }

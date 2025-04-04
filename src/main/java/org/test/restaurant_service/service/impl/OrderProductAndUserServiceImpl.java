@@ -9,7 +9,6 @@ import org.test.restaurant_service.dto.request.OrderProductRequestWithPayloadDto
 import org.test.restaurant_service.dto.response.*;
 import org.test.restaurant_service.entity.*;
 import org.test.restaurant_service.mapper.*;
-import org.test.restaurant_service.repository.ProductRepository;
 import org.test.restaurant_service.service.*;
 
 import java.math.BigDecimal;
@@ -56,7 +55,6 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
         this.orderDiscountService = orderDiscountService;
         this.userAddressService = userAddressService;
     }
-
 
     //1 check the user is register
     //2 check the request from restaurant/outside
