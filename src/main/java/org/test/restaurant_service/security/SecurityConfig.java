@@ -42,6 +42,7 @@ public class SecurityConfig {
                         "/api/v1/scheduler/**",
                         "/api/v1/orders/**",
                         "/ws-orders/**",
+                        "/ws-orders-print/**",
                         "/api/v1/users/**",
                         "/api/v1/addresses/**",
                         "/api/v1/productHistory/**",

@@ -109,5 +109,12 @@ admin:
 
 logging:
   level:
-    org.test.restaurant_service.service.impl.SendingUsersServiceImpl: debug
+    org:
+      test:
+        restaurant_service:
+          controller:
+            websocket: debug
+          service:
+            PrinterService: debug
+#    org.test.restaurant_service.service.impl.SendingUsersServiceImpl: debug
 #    org.test.restaurant_service.telegram: debug
