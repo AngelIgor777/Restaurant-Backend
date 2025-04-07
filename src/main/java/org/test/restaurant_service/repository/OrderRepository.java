@@ -33,4 +33,6 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     void deleteAllByStatusAndCreatedAtBetween(Order.OrderStatus status, LocalDateTime from, LocalDateTime to);
 
     boolean existsByOtp(String otp);
+
+    int countAllByCreatedAtBetweenAndStatus(LocalDateTime from, LocalDateTime to, Order.OrderStatus status);
 }

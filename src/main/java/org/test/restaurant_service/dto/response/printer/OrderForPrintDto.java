@@ -1,19 +1,19 @@
-package org.test.restaurant_service.dto.response;
+package org.test.restaurant_service.dto.response.printer;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
 public class OrderForPrintDto {
     private Integer table;
     private String phoneNumber;
+    private Address address;
     List<ProductItem> productItemList;
     private BigDecimal totalPrice;
-    private LocalDateTime createdAt;
+    private String createdAt;
     private String paymentMethod;
 
-    public OrderForPrintDto(Integer table, String phoneNumber, List<ProductItem> productItemList, BigDecimal totalPrice, LocalDateTime createdAt, String paymentMethod) {
+    public OrderForPrintDto(Integer table, String phoneNumber, List<ProductItem> productItemList, BigDecimal totalPrice, String createdAt, String paymentMethod) {
         this.table = table;
         this.phoneNumber = phoneNumber;
         this.productItemList = productItemList;
@@ -27,6 +27,14 @@ public class OrderForPrintDto {
 
     public Integer getTable() {
         return table;
+    }
+
+    public Address getAddress() {
+        return address;
+    }
+
+    public void setAddress(Address address) {
+        this.address = address;
     }
 
     public void setTable(Integer table) {
@@ -57,11 +65,11 @@ public class OrderForPrintDto {
         this.totalPrice = totalPrice;
     }
 
-    public LocalDateTime getCreatedAt() {
+    public String getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
+    public void setCreatedAt(String createdAt) {
         this.createdAt = createdAt;
     }
 

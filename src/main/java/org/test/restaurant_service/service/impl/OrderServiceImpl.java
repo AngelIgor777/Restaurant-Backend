@@ -21,6 +21,7 @@ import org.test.restaurant_service.service.OrderService;
 import org.test.restaurant_service.service.PhotoService;
 
 import javax.persistence.EntityNotFoundException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Collections;
@@ -125,8 +126,8 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional(readOnly = true)
     @Override
-    public List<OrderProductResponseWithPayloadDto> getAllOrdersProductResponseWithPayloadDto() {
-        List<OrderProductResponseWithPayloadDto> list = orderRepository.findAllByStatus(Order.OrderStatus.PENDING)
+    public List<OrderProductResponseWithPayloadDto> getAllOrdersProductResponseWithPayloadDto(Order.OrderStatus status) {
+        List<OrderProductResponseWithPayloadDto> list = orderRepository.findAllByStatus(status)
                 .stream()
                 .map(order -> {
                     OrderProductResponseWithPayloadDto response = getOrderProductResponseWithPayloadDto(order);
@@ -191,6 +192,22 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findByOtp(query)
                 .orElseThrow(() -> new EntityNotFoundException("Order not found with OTP " + query));
         return getOrderProductResponseWithPayloadDto(order);
+    }
+
+    @Override
+    public OrdersStatesCount getOrdersStatesCount() {
+        LocalDate today = LocalDate.now();
+        LocalDateTime startOfWorkDay = today.atTime(LocalTime.of(7, 0));
+
+        LocalDateTime endOfWorkDay = today.atTime(LocalTime.of(23, 59));
+        int pendingCount = orderRepository.countAllByCreatedAtBetweenAndStatus(startOfWorkDay, endOfWorkDay, Order.OrderStatus.PENDING);
+        int confirmedCount = orderRepository.countAllByCreatedAtBetweenAndStatus(startOfWorkDay, endOfWorkDay, Order.OrderStatus.CONFIRMED);
+        int completedCount = orderRepository.countAllByCreatedAtBetweenAndStatus(startOfWorkDay, endOfWorkDay, Order.OrderStatus.COMPLETED);
+        OrdersStatesCount ordersStatesCount = new OrdersStatesCount();
+        ordersStatesCount.setPendingOrders(pendingCount);
+        ordersStatesCount.setConfirmedOrders(confirmedCount);
+        ordersStatesCount.setCompletedOrders(completedCount);
+        return ordersStatesCount;
     }
 
     private OrderProductResponseWithPayloadDto getOrderProductResponseWithPayloadDto(Order order) {

@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.test.restaurant_service.dto.response.OrderProductResponseWithPayloadDto;
-import org.test.restaurant_service.dto.response.OrderForPrintDto;
+import org.test.restaurant_service.dto.response.printer.OrderForPrintDto;
 
 @Controller
 @RequiredArgsConstructor

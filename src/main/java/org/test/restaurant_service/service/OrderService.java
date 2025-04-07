@@ -4,6 +4,7 @@ import org.springframework.data.domain.Pageable;
 import org.test.restaurant_service.dto.request.OrderRequestDTO;
 import org.test.restaurant_service.dto.response.OrderProductResponseWithPayloadDto;
 import org.test.restaurant_service.dto.response.OrderResponseDTO;
+import org.test.restaurant_service.dto.response.OrdersStatesCount;
 import org.test.restaurant_service.entity.Order;
 
 import java.time.LocalDateTime;
@@ -27,7 +28,7 @@ public interface OrderService {
 
     void delete(Integer id);
 
-    List<OrderProductResponseWithPayloadDto> getAllOrdersProductResponseWithPayloadDto();
+    List<OrderProductResponseWithPayloadDto> getAllOrdersProductResponseWithPayloadDto(Order.OrderStatus status);
 
     OrderProductResponseWithPayloadDto getOrderProductResponseWithPayloadDto(Integer id);
 
@@ -44,4 +45,6 @@ public interface OrderService {
     void deleteAllByStatusAndCreatedAtBetween(Order.OrderStatus status, LocalDateTime from, LocalDateTime to);
 
     OrderProductResponseWithPayloadDto searchOrderProductResponseWithPayloadDtoByValidationCode(String query);
+
+    OrdersStatesCount getOrdersStatesCount();
 }

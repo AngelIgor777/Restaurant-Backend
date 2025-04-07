@@ -5,9 +5,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.test.restaurant_service.dto.response.OrderProductResponseWithPayloadDto;
+import org.test.restaurant_service.dto.response.OrdersStatesCount;
+import org.test.restaurant_service.entity.Order;
 import org.test.restaurant_service.service.OrderService;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,8 +24,15 @@ public class OrderController {
 
     @GetMapping
     @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
-    public ResponseEntity<List<OrderProductResponseWithPayloadDto>> getAllOrders() {
-        List<OrderProductResponseWithPayloadDto> orders = orderService.getAllOrdersProductResponseWithPayloadDto();
+    public ResponseEntity<List<OrderProductResponseWithPayloadDto>> getAllPendingOrders(@RequestParam Order.OrderStatus status) {
+        List<OrderProductResponseWithPayloadDto> orders = orderService.getAllOrdersProductResponseWithPayloadDto(status);
+        return ResponseEntity.ok(orders);
+    }
+
+    @GetMapping("/countStats")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    public ResponseEntity<OrdersStatesCount> getOrdersStatesCount() {
+        OrdersStatesCount orders = orderService.getOrdersStatesCount();
         return ResponseEntity.ok(orders);
     }
 

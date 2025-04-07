@@ -1,4 +1,4 @@
-package org.test.restaurant_service.dto.response;
+package org.test.restaurant_service.dto.response.printer;
 
 
 import java.math.BigDecimal;
