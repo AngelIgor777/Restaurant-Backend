@@ -12,5 +12,7 @@ public interface OrderDiscountRepository extends JpaRepository<OrderDiscount, In
 
     List<OrderDiscount> findByDiscountId(Integer discountId);
 
+    boolean existsByOrderId(Integer orderId);
+
     boolean existsByOrderIdAndDiscountId(Integer orderId, Integer discountId);
 }

@@ -64,6 +64,6 @@ public class OrderDiscountServiceImpl implements OrderDiscountService {
 
     @Override
     public boolean existsByOrderId(Integer orderId) {
-        return orderDiscountRepository.existsById(orderId);
+        return orderDiscountRepository.existsByOrderId(orderId);
     }
 }
