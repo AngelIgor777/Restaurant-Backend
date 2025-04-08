@@ -30,7 +30,7 @@ public class ApplicationConfig {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(20);   // Больше потоков постоянно
         executor.setMaxPoolSize(50);   // Под нагрузкой до 100 потоков
-        executor.setQueueCapacity(200); // Очередь на 500 сообщений перед отказами
+        executor.setQueueCapacity(200); // Очередь на 200 сообщений перед отказами
         executor.setKeepAliveSeconds(60); // Потоки > corePoolSize живут 60 сек после пика
         executor.setThreadNamePrefix("MsgSender-"); // Удобнее в логах
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());

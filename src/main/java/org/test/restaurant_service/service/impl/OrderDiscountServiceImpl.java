@@ -6,6 +6,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.test.restaurant_service.entity.OrderDiscount;
 import org.test.restaurant_service.repository.OrderDiscountRepository;
 import org.test.restaurant_service.service.OrderDiscountService;
+
+import javax.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -46,7 +48,8 @@ public class OrderDiscountServiceImpl implements OrderDiscountService {
 
     @Override
     public OrderDiscount findByOrderId(Integer orderId) {
-        return orderDiscountRepository.findByOrderId(orderId);
+        return orderDiscountRepository.findByOrderId(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("OrderDiscount not found with ID: " + orderId));
     }
 
     @Override
@@ -61,6 +64,6 @@ public class OrderDiscountServiceImpl implements OrderDiscountService {
 
     @Override
     public boolean existsByOrderId(Integer orderId) {
-      return   orderDiscountRepository.existsById(orderId);
+        return orderDiscountRepository.existsById(orderId);
     }
 }

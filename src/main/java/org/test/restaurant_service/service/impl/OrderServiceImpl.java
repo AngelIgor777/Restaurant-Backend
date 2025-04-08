@@ -129,10 +129,7 @@ public class OrderServiceImpl implements OrderService {
     public List<OrderProductResponseWithPayloadDto> getAllOrdersProductResponseWithPayloadDto(Order.OrderStatus status) {
         List<OrderProductResponseWithPayloadDto> list = orderRepository.findAllByStatus(status)
                 .stream()
-                .map(order -> {
-                    OrderProductResponseWithPayloadDto response = getOrderProductResponseWithPayloadDto(order);
-                    return response;
-                })
+                .map(this::getOrderProductResponseWithPayloadDto)
                 .toList();
         return list;
     }
@@ -254,6 +251,7 @@ public class OrderServiceImpl implements OrderService {
         }
         if (orderDiscountService.existsByOrderId(order.getId())) {
             OrderDiscount orderDiscount = orderDiscountService.findByOrderId(order.getId());
+
             response.setExistDiscountCodes(true);
             response.setGlobalDiscountCode(orderDiscount.getDiscount().getCode());
         }
