@@ -1,6 +1,7 @@
 package org.test.restaurant_service.service.impl;
 
-import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -24,7 +25,6 @@ import javax.persistence.EntityNotFoundException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
@@ -33,29 +33,24 @@ import java.util.stream.Collectors;
 @Service
 public class OrderServiceImpl implements OrderService {
 
+    private static final Logger log = LoggerFactory.getLogger(OrderServiceImpl.class);
     private final OrderRepository orderRepository;
     private final TableRepository tableRepository;
     private final OrderMapper orderMapper;
     private final OrderDiscountService orderDiscountService;
     private final OrderProductService orderProductService;
-    private final OrderDiscountRepository orderDiscountRepository;
-    private final OrderDiscountServiceImpl orderDiscountServiceImpl;
     private final AddressMapperImpl addressMapperImpl;
-    private final ProductServiceImpl productServiceImpl;
     private final ProductMapperImpl productMapperImpl;
     private final TableMapperImpl tableMapperImpl;
     private final PhotoService photoService;
 
-    public OrderServiceImpl(OrderRepository orderRepository, TableRepository tableRepository, OrderMapper orderMapper, OrderDiscountService orderDiscountService, OrderProductService orderProductService, OrderDiscountRepository orderDiscountRepository, OrderDiscountServiceImpl orderDiscountServiceImpl, AddressMapperImpl addressMapperImpl, ProductServiceImpl productServiceImpl, ProductMapperImpl productMapperImpl, TableMapperImpl tableMapperImpl, @Qualifier("photoServiceImplS3") PhotoService photoService) {
+    public OrderServiceImpl(OrderRepository orderRepository, TableRepository tableRepository, OrderMapper orderMapper, OrderDiscountService orderDiscountService, OrderProductService orderProductService, AddressMapperImpl addressMapperImpl, ProductMapperImpl productMapperImpl, TableMapperImpl tableMapperImpl, @Qualifier("photoServiceImplS3") PhotoService photoService) {
         this.orderRepository = orderRepository;
         this.tableRepository = tableRepository;
         this.orderMapper = orderMapper;
         this.orderDiscountService = orderDiscountService;
         this.orderProductService = orderProductService;
-        this.orderDiscountRepository = orderDiscountRepository;
-        this.orderDiscountServiceImpl = orderDiscountServiceImpl;
         this.addressMapperImpl = addressMapperImpl;
-        this.productServiceImpl = productServiceImpl;
         this.productMapperImpl = productMapperImpl;
         this.tableMapperImpl = tableMapperImpl;
         this.photoService = photoService;
@@ -208,6 +203,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private OrderProductResponseWithPayloadDto getOrderProductResponseWithPayloadDto(Order order) {
+        log.debug("Handle order: {}", order);
         OrderProductResponseWithPayloadDto response = new OrderProductResponseWithPayloadDto();
         response.setOtp(order.getOtp());
         if (order.hasPhoneNumber()) {

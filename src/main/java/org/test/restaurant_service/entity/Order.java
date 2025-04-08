@@ -15,7 +15,7 @@ import java.util.Objects;
 @Builder
 @Getter
 @Setter
-@ToString(exclude = "table")
+@ToString
 @Entity
 @Table(name = "orders", schema = "restaurant_service")
 public class Order {

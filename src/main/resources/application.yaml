@@ -116,5 +116,7 @@ logging:
             websocket: debug
           service:
             PrinterService: debug
+            impl:
+              OrderServiceImpl: debug
 #    org.test.restaurant_service.service.impl.SendingUsersServiceImpl: debug
 #    org.test.restaurant_service.telegram: debug
