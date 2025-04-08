@@ -16,7 +16,7 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
 
     Optional<Order> findByOtp(String otp);
 
-    List<Order> findAllByStatus(Order.OrderStatus status);
+    List<Order> findAllByStatusAndCreatedAtBetween(Order.OrderStatus status, LocalDateTime from, LocalDateTime to);
 
     Optional<Order> findOrderByTable_Number(Integer tableNumber);
 

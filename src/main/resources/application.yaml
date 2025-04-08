@@ -107,16 +107,16 @@ admin:
   code1: ${ADMIN_CODE1}
   code2: ${ADMIN_CODE2}
 
-logging:
-  level:
-    org:
-      test:
-        restaurant_service:
-          controller:
-            websocket: debug
-          service:
-            PrinterService: debug
-            impl:
-              OrderServiceImpl: debug
+#logging:
+#  level:
+#    org:
+#      test:
+#        restaurant_service:
+#          controller:
+#            websocket: debug
+#          service:
+#            PrinterService: debug
+#            impl:
+#              OrderServiceImpl: debug
 #    org.test.restaurant_service.service.impl.SendingUsersServiceImpl: debug
 #    org.test.restaurant_service.telegram: debug

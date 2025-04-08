@@ -13,7 +13,6 @@ import org.test.restaurant_service.mapper.AddressMapperImpl;
 import org.test.restaurant_service.mapper.OrderMapper;
 import org.test.restaurant_service.mapper.ProductMapperImpl;
 import org.test.restaurant_service.mapper.TableMapperImpl;
-import org.test.restaurant_service.repository.OrderDiscountRepository;
 import org.test.restaurant_service.repository.OrderRepository;
 import org.test.restaurant_service.repository.TableRepository;
 import org.test.restaurant_service.service.OrderDiscountService;
@@ -122,7 +121,11 @@ public class OrderServiceImpl implements OrderService {
     @Transactional(readOnly = true)
     @Override
     public List<OrderProductResponseWithPayloadDto> getAllOrdersProductResponseWithPayloadDto(Order.OrderStatus status) {
-        List<OrderProductResponseWithPayloadDto> list = orderRepository.findAllByStatus(status)
+        LocalDate today = LocalDate.now();
+        LocalDateTime startOfWorkDay = today.atTime(LocalTime.of(7, 0));
+
+        LocalDateTime endOfWorkDay = today.atTime(LocalTime.of(23, 59));
+        List<OrderProductResponseWithPayloadDto> list = orderRepository.findAllByStatusAndCreatedAtBetween(status, startOfWorkDay, endOfWorkDay)
                 .stream()
                 .map(this::getOrderProductResponseWithPayloadDto)
                 .toList();
