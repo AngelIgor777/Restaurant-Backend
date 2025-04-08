@@ -18,7 +18,7 @@ public class StatisticsController {
     private final StatisticsService statisticsService;
 
     @GetMapping
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminDisposableKeyOwner(@jwtServiceImpl.extractToken())")
     public ResponseEntity<StatisticsResultResponseDto> getStatistics(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to

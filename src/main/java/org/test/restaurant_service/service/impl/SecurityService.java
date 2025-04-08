@@ -25,8 +25,17 @@ public class SecurityService {
         return user.isAdminOrModerator();
     }
 
+    public boolean userIsAdminDisposableKeyOwner(String disposableKey) {
+        List<String> rolesFromDisposableToken = jwtService.getRolesFromDisposableToken(disposableKey);
+        return isValidRoles(rolesFromDisposableToken);
+    }
+
     public boolean userIsAdminOrModerator(String accessToken) {
         List<String> roles = jwtService.getRoles(accessToken);
+        return isValidRoles(roles);
+    }
+
+    private boolean isValidRoles(List<String> roles) {
         return roles.contains("ROLE_ADMIN") || roles.contains("ROLE_MODERATOR");
     }
 

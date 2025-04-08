@@ -29,6 +29,8 @@ public class KeyUtil {
     @Getter
     private static String adminCode2;
 
+    @Getter
+    private static String disposableAdminKey;
 
 
     public static void setProperties(Dotenv dotenv) {
@@ -60,6 +62,9 @@ public class KeyUtil {
             }
             if (entry.getKey().equals("ADMIN_CODE2")) {
                 adminCode2 = value;
+            }
+            if (entry.getKey().equals("DISPOSABLE_ADMIN_KEY")) {
+                disposableAdminKey = value;
             }
         });
     }

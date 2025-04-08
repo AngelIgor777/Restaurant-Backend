@@ -107,6 +107,8 @@ admin:
   code1: ${ADMIN_CODE1}
   code2: ${ADMIN_CODE2}
 
+disposable:
+  adminKey: ${DISPOSABLE_ADMIN_KEY}
 #logging:
 #  level:
 #    org:

@@ -9,6 +9,8 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.test.restaurant_service.util.JwtAlgorithmUtil;
+
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -39,7 +41,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (token != null) {
             try {
-                DecodedJWT decodedJWT = verifyToken(token);
+                DecodedJWT decodedJWT = tryVerifyAllTokens(token);
                 setUpAuthentication(decodedJWT);
             } catch (JWTVerificationException e) {
                 SecurityContextHolder.clearContext();
@@ -57,8 +59,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return null;
     }
 
-    private DecodedJWT verifyToken(String token) {
-        return JWT.require(org.test.restaurant_service.util.JwtAlgorithm.getAccessAlgorithm())
+    private DecodedJWT verifyAccessToken(String token) {
+        return JWT.require(JwtAlgorithmUtil.getAccessAlgorithm())
+                .build()
+                .verify(token);
+    }
+
+    private DecodedJWT verifyDisposableToken(String token) {
+        return JWT.require(JwtAlgorithmUtil.getAdminDisposableAlgorithm())
                 .build()
                 .verify(token);
     }
@@ -77,5 +85,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             );
             SecurityContextHolder.getContext().setAuthentication(authenticationToken);
         }
+    }
+
+    private DecodedJWT tryVerifyAllTokens(String token) {
+        try {
+            return verifyAccessToken(token);
+        } catch (JWTVerificationException e) {
+        }
+
+        try {
+            return verifyDisposableToken(token);
+        } catch (JWTVerificationException e) {
+        }
+
+        throw new JWTVerificationException("Invalid token");
     }
 }
