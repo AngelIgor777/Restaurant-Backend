@@ -1,26 +1,27 @@
+# Build stage
 FROM openjdk:17-jdk-slim AS build
 
 WORKDIR /app
 
 COPY gradlew gradlew
 COPY gradle gradle
-
 COPY build.gradle settings.gradle ./
 COPY src src
 
 RUN chmod +x gradlew
-
 RUN ./gradlew build -x test
 
+# Final stage
+FROM openjdk:17-jdk-slim
+
+WORKDIR /app
+
+# Install required libraries for running the app
 RUN apt-get update && apt-get install -y \
     libfreetype6 \
     fontconfig \
     libx11-6 \
-    && rm -rf /var/lib/apt/lists/* \
-
-FROM openjdk:17-jdk-slim
-
-WORKDIR /app
+    && rm -rf /var/lib/apt/lists/*
 
 COPY --from=build /app/build/libs/*.jar app.jar
 
