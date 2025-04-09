@@ -51,7 +51,6 @@ public class ExportService {
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
-        // Fill data
         int rowNum = 1;
         for (OrderProductResponseWithPayloadDto dto : orders) {
             Row row = sheet.createRow(rowNum++);
@@ -73,7 +72,7 @@ public class ExportService {
             String productsString = "";
             if (products != null) {
                 productsString = products.stream()
-                        .map(p -> safeString(p.getName()) + " x" + (p.getQuantity() != null ? p.getQuantity() : ""))
+                        .map(p -> safeString(p.getName()+"("+p.getPrice()) + "лей) x" + (p.getQuantity() != null ? p.getQuantity() : ""))
                         .collect(Collectors.joining(", "));
             }
             row.createCell(col++).setCellValue(productsString);
