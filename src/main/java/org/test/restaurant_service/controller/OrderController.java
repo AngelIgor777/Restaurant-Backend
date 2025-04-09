@@ -9,6 +9,9 @@ import org.test.restaurant_service.dto.response.OrdersStatesCount;
 import org.test.restaurant_service.entity.Order;
 import org.test.restaurant_service.service.OrderService;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,7 +28,10 @@ public class OrderController {
     @GetMapping
     @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
     public ResponseEntity<List<OrderProductResponseWithPayloadDto>> getAllPendingOrders(@RequestParam Order.OrderStatus status) {
-        List<OrderProductResponseWithPayloadDto> orders = orderService.getAllOrdersProductResponseWithPayloadDto(status);
+        LocalDate today = LocalDate.now();
+        LocalDateTime startOfWorkDay = today.atTime(LocalTime.of(7, 0));
+        LocalDateTime endOfWorkDay = today.atTime(LocalTime.of(23, 59));
+        List<OrderProductResponseWithPayloadDto> orders = orderService.getAllOrdersProductResponseWithPayloadDto(status, startOfWorkDay, endOfWorkDay);
         return ResponseEntity.ok(orders);
     }
 

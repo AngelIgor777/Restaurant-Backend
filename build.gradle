@@ -39,6 +39,8 @@ dependencies {
     implementation 'io.micrometer:micrometer-registry-prometheus'
     implementation 'com.github.ben-manes.caffeine:caffeine'
 
+    implementation 'org.apache.poi:poi-ooxml:5.2.3'
+
 
     // for image formatting
     implementation 'net.coobird:thumbnailator:0.4.20'

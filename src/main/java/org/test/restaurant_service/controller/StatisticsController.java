@@ -5,10 +5,14 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.test.restaurant_service.dto.response.OrderProductResponseWithPayloadDto;
 import org.test.restaurant_service.dto.response.StatisticsResultResponseDto;
+import org.test.restaurant_service.entity.Order;
+import org.test.restaurant_service.service.OrderService;
 import org.test.restaurant_service.service.StatisticsService;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/statistics")
@@ -16,6 +20,17 @@ import java.time.LocalDateTime;
 public class StatisticsController {
 
     private final StatisticsService statisticsService;
+    private final OrderService orderService;
+
+
+    @GetMapping("/all")
+    @PreAuthorize("@securityService.userIsAdminDisposableKeyOwner(@jwtServiceImpl.extractToken())")
+    public ResponseEntity<List<OrderProductResponseWithPayloadDto>> getAllPendingOrders(@RequestParam Order.OrderStatus status,
+                                                                                        @RequestParam LocalDateTime from,
+                                                                                        @RequestParam LocalDateTime to) {
+        List<OrderProductResponseWithPayloadDto> orders = orderService.getAllOrdersProductResponseWithPayloadDto(status, from, to);
+        return ResponseEntity.ok(orders);
+    }
 
     @GetMapping
     @PreAuthorize("@securityService.userIsAdminDisposableKeyOwner(@jwtServiceImpl.extractToken())")

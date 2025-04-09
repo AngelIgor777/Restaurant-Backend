@@ -120,12 +120,8 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional(readOnly = true)
     @Override
-    public List<OrderProductResponseWithPayloadDto> getAllOrdersProductResponseWithPayloadDto(Order.OrderStatus status) {
-        LocalDate today = LocalDate.now();
-        LocalDateTime startOfWorkDay = today.atTime(LocalTime.of(7, 0));
-
-        LocalDateTime endOfWorkDay = today.atTime(LocalTime.of(23, 59));
-        List<OrderProductResponseWithPayloadDto> list = orderRepository.findAllByStatusAndCreatedAtBetween(status, startOfWorkDay, endOfWorkDay)
+    public List<OrderProductResponseWithPayloadDto> getAllOrdersProductResponseWithPayloadDto(Order.OrderStatus status, LocalDateTime from, LocalDateTime to) {
+        List<OrderProductResponseWithPayloadDto> list = orderRepository.findAllByStatusAndCreatedAtBetween(status, from, to)
                 .stream()
                 .map(this::getOrderProductResponseWithPayloadDto)
                 .toList();
