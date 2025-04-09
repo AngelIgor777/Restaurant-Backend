@@ -1,4 +1,3 @@
-# Build stage
 FROM openjdk:17-jdk-slim AS build
 
 WORKDIR /app
@@ -11,12 +10,10 @@ COPY src src
 RUN chmod +x gradlew
 RUN ./gradlew build -x test
 
-# Final stage
 FROM openjdk:17-jdk-slim
 
 WORKDIR /app
 
-# Install required libraries for running the app
 RUN apt-get update && apt-get install -y \
     libfreetype6 \
     fontconfig \
