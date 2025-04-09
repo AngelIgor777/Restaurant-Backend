@@ -12,6 +12,12 @@ RUN chmod +x gradlew
 
 RUN ./gradlew build -x test
 
+# Install libfreetype6 and fontconfig
+RUN apt-get update && apt-get install -y \
+    libfreetype6 \
+    fontconfig \
+    && rm -rf /var/lib/apt/lists/*
+
 FROM openjdk:17-jdk-slim
 
 WORKDIR /app
