@@ -155,6 +155,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<OrderProductResponseWithPayloadDto> getAllUserOrdersProductResponseWithPayloadDto(UUID userUUID, Pageable pageable) {
         List<Order> ordersByUserUuid = orderRepository.findByUser_UuidOrderByCreatedAtDesc(userUUID, pageable);
         List<OrderProductResponseWithPayloadDto> list = new java.util.ArrayList<>(ordersByUserUuid.stream()
@@ -250,7 +251,6 @@ public class OrderServiceImpl implements OrderService {
             response.setExistDiscountCodes(true);
             response.setGlobalDiscountCode(orderDiscount.getDiscount().getCode());
         }
-
         response.setOrderResponseDTO(orderResponseDTO);
         return response;
     }
