@@ -1,6 +1,7 @@
 package org.test.restaurant_service.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,9 +27,11 @@ public class StatisticsController {
     @GetMapping("/all")
     @PreAuthorize("@securityService.userIsAdminDisposableKeyOwner(@jwtServiceImpl.extractToken())")
     public ResponseEntity<List<OrderProductResponseWithPayloadDto>> getAllPendingOrders(@RequestParam Order.OrderStatus status,
-                                                                                        @RequestParam LocalDateTime from,
-                                                                                        @RequestParam LocalDateTime to) {
-        List<OrderProductResponseWithPayloadDto> orders = orderService.getAllOrdersProductResponseWithPayloadDto(status, from, to);
+                                                                                        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+                                                                                        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
+                                                                                        Pageable pageable
+    ) {
+        List<OrderProductResponseWithPayloadDto> orders = orderService.getAllOrdersProductResponseWithPayloadDto(status, from, to, pageable);
         return ResponseEntity.ok(orders);
     }
 

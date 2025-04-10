@@ -28,6 +28,7 @@ public interface OrderService {
 
     void delete(Integer id);
 
+    List<OrderProductResponseWithPayloadDto> getAllOrdersProductResponseWithPayloadDto(Order.OrderStatus status, LocalDateTime from, LocalDateTime to, Pageable pageable);
     List<OrderProductResponseWithPayloadDto> getAllOrdersProductResponseWithPayloadDto(Order.OrderStatus status, LocalDateTime from, LocalDateTime to);
 
     OrderProductResponseWithPayloadDto getOrderProductResponseWithPayloadDto(Integer id);

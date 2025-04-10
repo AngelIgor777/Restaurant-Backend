@@ -120,6 +120,16 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional(readOnly = true)
     @Override
+    public List<OrderProductResponseWithPayloadDto> getAllOrdersProductResponseWithPayloadDto(Order.OrderStatus status, LocalDateTime from, LocalDateTime to, Pageable pageable) {
+        List<OrderProductResponseWithPayloadDto> list = orderRepository.findAllByStatusAndCreatedAtBetween(status, from, to, pageable)
+                .stream()
+                .map(this::getOrderProductResponseWithPayloadDto)
+                .toList();
+        return list;
+    }
+
+    @Transactional(readOnly = true)
+    @Override
     public List<OrderProductResponseWithPayloadDto> getAllOrdersProductResponseWithPayloadDto(Order.OrderStatus status, LocalDateTime from, LocalDateTime to) {
         List<OrderProductResponseWithPayloadDto> list = orderRepository.findAllByStatusAndCreatedAtBetween(status, from, to)
                 .stream()
@@ -164,7 +174,6 @@ public class OrderServiceImpl implements OrderService {
                     return response;
                 })
                 .toList());
-
         return list;
     }
 
