@@ -25,7 +25,6 @@ public interface ProductMapper {
     @Mapping(source = "photos", target = "photoUrl", qualifiedByName = "mapPhotoUrl")
     ProductResponseDTO toResponseDTO(Product product);
 
-
     //use for resolve lazy init of Product
     @Mapping(source = "type.name", target = "typeName")
     @Mapping(target = "quantity", ignore = true)
