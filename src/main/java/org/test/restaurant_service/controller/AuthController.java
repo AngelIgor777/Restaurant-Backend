@@ -39,13 +39,13 @@ public class AuthController {
         return ResponseEntity.ok(isRegisteredUser);
     }
 
-    @PostMapping("/change-password/{adminId}")
+    @PostMapping("/change-password/{userUUID}")
     @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
     public ResponseEntity<String> changePassword(
-            @PathVariable Long adminId,
+            @PathVariable UUID userUUID,
             @RequestBody PasswordChangeRequest request
     ) {
-        authService.changePassword(adminId, request);
+        authService.changePassword(userUUID, request);
         return ResponseEntity.ok("Password changed successfully");
     }
 }

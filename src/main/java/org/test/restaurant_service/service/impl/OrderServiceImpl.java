@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.test.restaurant_service.controller.websocket.WebSocketController;
 import org.test.restaurant_service.dto.request.OrderRequestDTO;
 import org.test.restaurant_service.dto.response.*;
 import org.test.restaurant_service.entity.*;
@@ -42,8 +43,9 @@ public class OrderServiceImpl implements OrderService {
     private final ProductMapperImpl productMapperImpl;
     private final TableMapperImpl tableMapperImpl;
     private final PhotoService photoService;
+    private final WebSocketController webSocketController;
 
-    public OrderServiceImpl(OrderRepository orderRepository, TableRepository tableRepository, OrderMapper orderMapper, OrderDiscountService orderDiscountService, OrderProductService orderProductService, AddressMapperImpl addressMapperImpl, ProductMapperImpl productMapperImpl, TableMapperImpl tableMapperImpl, @Qualifier("photoServiceImplS3") PhotoService photoService) {
+    public OrderServiceImpl(OrderRepository orderRepository, TableRepository tableRepository, OrderMapper orderMapper, OrderDiscountService orderDiscountService, OrderProductService orderProductService, AddressMapperImpl addressMapperImpl, ProductMapperImpl productMapperImpl, TableMapperImpl tableMapperImpl, @Qualifier("photoServiceImplS3") PhotoService photoService, WebSocketController webSocketController) {
         this.orderRepository = orderRepository;
         this.tableRepository = tableRepository;
         this.orderMapper = orderMapper;
@@ -53,6 +55,7 @@ public class OrderServiceImpl implements OrderService {
         this.productMapperImpl = productMapperImpl;
         this.tableMapperImpl = tableMapperImpl;
         this.photoService = photoService;
+        this.webSocketController = webSocketController;
     }
 
     @Override
@@ -154,6 +157,7 @@ public class OrderServiceImpl implements OrderService {
         Order orderById = getOrderById(orderId);
         orderById.setStatus(Order.OrderStatus.COMPLETED);
         orderRepository.save(orderById);
+        webSocketController.sendPendingOrderIncrement(-1);
     }
 
     @Override
@@ -162,6 +166,7 @@ public class OrderServiceImpl implements OrderService {
         orderById.setStatus(Order.OrderStatus.CONFIRMED);
         orderById.setOtp(null);
         orderRepository.save(orderById);
+        webSocketController.sendPendingOrderIncrement(-1);
     }
 
     @Override

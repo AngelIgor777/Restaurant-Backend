@@ -59,14 +59,14 @@ public class AuthService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void changePassword(Long adminId, PasswordChangeRequest request) {
-        Admin admin = adminRepository.findById(adminId)
+    public void changePassword(UUID userUUID, PasswordChangeRequest request) {
+        Admin admin = adminRepository.findAdminByUser_Uuid(userUUID)
                 .orElseThrow(() -> new EntityNotFoundException("Admin not found"));
-
-        if (!passwordEncoder.matches(request.getOldPassword(), admin.getPassword())) {
+        boolean equalsUUID = admin.getUser().getUuid().equals(userUUID);
+        boolean equalsLogin = admin.getLogin().equals(request.getLogin());
+        if (!equalsLogin || !equalsUUID || !passwordEncoder.matches(request.getOldPassword(), admin.getPassword())) {
             throw new IllegalArgumentException("Old password does not match");
         }
-
         admin.setPassword(passwordEncoder.encode(request.getNewPassword()));
         adminRepository.save(admin);
     }
