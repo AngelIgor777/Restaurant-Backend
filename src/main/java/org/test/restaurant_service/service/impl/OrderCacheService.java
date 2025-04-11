@@ -2,7 +2,7 @@ package org.test.restaurant_service.service.impl;
 
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-import org.test.restaurant_service.dto.request.OrderProductRequestWithPayloadDto;
+import org.test.restaurant_service.dto.request.OrderProductWithPayloadRequestDto;
 
 import java.time.Duration;
 
@@ -15,12 +15,12 @@ public class OrderCacheService {
         this.redisTemplate = redisTemplate;
     }
 
-    public void saveOrder(Long chatId, OrderProductRequestWithPayloadDto orderDto) {
+    public void saveOrder(Long chatId, OrderProductWithPayloadRequestDto orderDto) {
         redisTemplate.opsForValue().set("order:" + chatId, orderDto, Duration.ofMinutes(5)); // Save for 5 min
     }
 
-    public OrderProductRequestWithPayloadDto getOrder(Long chatId) {
-        return (OrderProductRequestWithPayloadDto) redisTemplate.opsForValue().get("order:" + chatId);
+    public OrderProductWithPayloadRequestDto getOrder(Long chatId) {
+        return (OrderProductWithPayloadRequestDto) redisTemplate.opsForValue().get("order:" + chatId);
     }
 
     public void deleteOrder(Long chatId) {

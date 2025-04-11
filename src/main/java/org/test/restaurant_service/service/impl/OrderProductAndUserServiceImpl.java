@@ -3,9 +3,10 @@ package org.test.restaurant_service.service.impl;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.test.restaurant_service.controller.websocket.WebSocketController;
 import org.test.restaurant_service.dto.request.AddressRequestDTO;
 import org.test.restaurant_service.dto.request.OrderProductRequestDTO;
-import org.test.restaurant_service.dto.request.OrderProductRequestWithPayloadDto;
+import org.test.restaurant_service.dto.request.OrderProductWithPayloadRequestDto;
 import org.test.restaurant_service.dto.response.*;
 import org.test.restaurant_service.entity.*;
 import org.test.restaurant_service.mapper.*;
@@ -38,8 +39,10 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
     private final TableMapper tableMapper;
     private final OrderDiscountService orderDiscountService;
     private final UserAddressService userAddressService;
+    private final PrinterService printerService;
+    private final WebSocketController webSocketController;
 
-    public OrderProductAndUserServiceImpl(OrderService orderService, OrderProductServiceImpl orderProductService, UserService userService, ProductDiscountService productDiscountService, DiscountService discountService, OrderProductMapper orderProductMapper, ProductMapper productMapper, @Qualifier("productServiceImpl") ProductService productService, AddressService addressService, OrderMapper orderMapper, AddressMapper addressMapper, TableMapper tableMapper, OrderDiscountService orderDiscountService, UserAddressService userAddressService) {
+    public OrderProductAndUserServiceImpl(OrderService orderService, OrderProductServiceImpl orderProductService, UserService userService, ProductDiscountService productDiscountService, DiscountService discountService, OrderProductMapper orderProductMapper, ProductMapper productMapper, @Qualifier("productServiceImpl") ProductService productService, AddressService addressService, OrderMapper orderMapper, AddressMapper addressMapper, TableMapper tableMapper, OrderDiscountService orderDiscountService, UserAddressService userAddressService, PrinterService printerService, WebSocketController webSocketController) {
         this.orderService = orderService;
         this.orderProductService = orderProductService;
         this.userService = userService;
@@ -54,6 +57,8 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
         this.tableMapper = tableMapper;
         this.orderDiscountService = orderDiscountService;
         this.userAddressService = userAddressService;
+        this.printerService = printerService;
+        this.webSocketController = webSocketController;
     }
 
     //1 check the user is register
@@ -64,7 +69,7 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
     //5 return all data info
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public OrderProductResponseWithPayloadDto createBulk(OrderProductRequestWithPayloadDto orderRequestDtoWithPayloadDto) {
+    public OrderProductResponseWithPayloadDto createBulk(OrderProductWithPayloadRequestDto orderRequestDtoWithPayloadDto) {
 
         Order.PaymentMethod paymentMethod = orderRequestDtoWithPayloadDto.getPaymentMethod();
         boolean orderInRestaurant = orderRequestDtoWithPayloadDto.isOrderInRestaurant();
@@ -108,7 +113,12 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
         checkTheOrderIsInRestaurant(order, orderRequestDtoWithPayloadDto, orderProductResponseWithPayloadDto);
 
         OrderDiscount orderDiscount = handleDiscountCodes(existDiscountCodes, globalDiscountCode, productDiscountCode, globalDiscountAmount, productDiscountAmount, totalPrice, order, orderProductResponseWithPayloadDto, productResponseDTOS);
+        Order.OrderStatus orderStatus = orderRequestDtoWithPayloadDto.getOrderStatus();
+        if (orderStatus != null) {
+            order.setStatus(orderStatus);
+        }
         Order savedOrder = orderService.create(order);
+
         if (orderDiscount != null) {
             orderDiscountService.save(orderDiscount);
         }
@@ -119,7 +129,14 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
         orderProductService.createAll(orderProducts);
 
         orderProductService.sendOrdersFromWebsocket(orderProductResponseWithPayloadDto);
-
+        if (orderStatus != null) {
+            if (orderStatus.equals(Order.OrderStatus.COMPLETED)) {
+                printerService.sendOrderToPrinter(savedOrder.getId());
+            }
+        }
+        if (savedOrder.getStatus().equals(Order.OrderStatus.PENDING)) {
+            webSocketController.sendPendingOrderIncrement(1);
+        }
         return orderProductResponseWithPayloadDto;
     }
 
@@ -187,7 +204,7 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
         return productDiscountAmount;
     }
 
-    private void checkTheUserIsRegistered(OrderProductRequestWithPayloadDto requestDtoWithPayloadDto, Order order, OrderProductResponseWithPayloadDto orderProductResponseWithPayloadDto) {
+    private void checkTheUserIsRegistered(OrderProductWithPayloadRequestDto requestDtoWithPayloadDto, Order order, OrderProductResponseWithPayloadDto orderProductResponseWithPayloadDto) {
         if (requestDtoWithPayloadDto.isUserRegistered()) {
             UUID userUUID;
             if ((userUUID = requestDtoWithPayloadDto.getUserUUID()) != null) {
@@ -198,7 +215,7 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
         }
     }
 
-    private void checkTheOrderIsInRestaurant(Order order, OrderProductRequestWithPayloadDto request, OrderProductResponseWithPayloadDto orderProductResponseWithPayloadDto) {
+    private void checkTheOrderIsInRestaurant(Order order, OrderProductWithPayloadRequestDto request, OrderProductResponseWithPayloadDto orderProductResponseWithPayloadDto) {
         if (request.isOrderInRestaurant()) {
             Table table = orderProductService.getByNumber(request.getTableRequestDTO().getNumber());
             order.setTable(table);

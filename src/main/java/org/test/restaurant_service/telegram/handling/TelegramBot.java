@@ -24,7 +24,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.test.restaurant_service.dto.request.AddressRequestDTO;
 import org.test.restaurant_service.dto.request.OrderProductRequestDTO;
-import org.test.restaurant_service.dto.request.OrderProductRequestWithPayloadDto;
+import org.test.restaurant_service.dto.request.OrderProductWithPayloadRequestDto;
 import org.test.restaurant_service.dto.request.TableRequestDTO;
 import org.test.restaurant_service.dto.response.*;
 import org.test.restaurant_service.entity.*;
@@ -252,7 +252,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         CallbackQuery callbackQuery = update.getCallbackQuery();
         String data = callbackQuery.getData();
         Long chatId = callbackQuery.getMessage().getChatId();
-        OrderProductRequestWithPayloadDto order = orderCacheService.getOrder(chatId);
+        OrderProductWithPayloadRequestDto order = orderCacheService.getOrder(chatId);
         if (data.startsWith(PAYMENT_CARD)) {
             order.setPaymentMethod(Order.PaymentMethod.CARD);
         } else if (data.startsWith(PAYMENT_CASH)) {
@@ -273,7 +273,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         Long chatId = message.getChatId();
         User user = userService.findByChatId(chatId);
         String text = message.getText();
-        OrderProductRequestWithPayloadDto order = orderCacheService.getOrder(chatId);
+        OrderProductWithPayloadRequestDto order = orderCacheService.getOrder(chatId);
         order.setOrderInRestaurant(false);
         AddressRequestDTO addressRequestDTO = new AddressRequestDTO();
         addressRequestDTO.setUserUUID(user.getUuid());
@@ -323,7 +323,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         Message message = update.getMessage();
         Long chatId = message.getChatId();
         String text = message.getText();
-        OrderProductRequestWithPayloadDto order = orderCacheService.getOrder(chatId);
+        OrderProductWithPayloadRequestDto order = orderCacheService.getOrder(chatId);
         order.setPhoneNumber(text);
         orderCacheService.saveOrder(chatId, order);
 
@@ -343,7 +343,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         CallbackQuery callbackQuery = update.getCallbackQuery();
         String tableNumber = callbackQuery.getData().substring(TABLE_SUFFIX.length());
         Long chatId = callbackQuery.getMessage().getChatId();
-        OrderProductRequestWithPayloadDto order = orderCacheService.getOrder(chatId);
+        OrderProductWithPayloadRequestDto order = orderCacheService.getOrder(chatId);
         order.setOrderInRestaurant(true);
         order.setTableRequestDTO(new TableRequestDTO(Integer.parseInt(tableNumber)));
         orderCacheService.saveOrder(chatId, order);
@@ -399,7 +399,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void handleQuickOrderCallback(Update update) {
-        OrderProductRequestWithPayloadDto orderDto = new OrderProductRequestWithPayloadDto();
+        OrderProductWithPayloadRequestDto orderDto = new OrderProductWithPayloadRequestDto();
         CallbackQuery callbackQuery = update.getCallbackQuery();
         String data = callbackQuery.getData();
         String productId = data.substring(QUICK_ORDER_SUFFIX.length());

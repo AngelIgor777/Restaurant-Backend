@@ -23,4 +23,8 @@ public class WebSocketController {
         log.debug("Sending order for print: {}", orderForPrintDto);
         messagingTemplate.convertAndSend("/topic/orders-print", orderForPrintDto);
     }
+
+    public void sendPendingOrderIncrement(Integer increment) {
+        messagingTemplate.convertAndSend("/topic/pending-orders-increment", increment);
+    }
 }

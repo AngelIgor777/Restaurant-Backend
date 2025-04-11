@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.test.restaurant_service.dto.request.OrderProductRequestDTO;
-import org.test.restaurant_service.dto.request.OrderProductRequestWithPayloadDto;
+import org.test.restaurant_service.dto.request.OrderProductWithPayloadRequestDto;
 import org.test.restaurant_service.dto.response.OrderProductResponseDTO;
 import org.test.restaurant_service.dto.response.OtpResponseDto;
 import org.test.restaurant_service.entity.OrderProduct;
@@ -32,7 +32,7 @@ public class OrderProductController {
 
     @PostMapping("/bulk")
     @ResponseStatus(HttpStatus.CREATED)
-    public OtpResponseDto createBulk(@Valid @RequestBody OrderProductRequestWithPayloadDto requestDtoWithPayloadDto) {
+    public OtpResponseDto createBulk(@Valid @RequestBody OrderProductWithPayloadRequestDto requestDtoWithPayloadDto) {
         return producer.send(requestDtoWithPayloadDto);
     }
 

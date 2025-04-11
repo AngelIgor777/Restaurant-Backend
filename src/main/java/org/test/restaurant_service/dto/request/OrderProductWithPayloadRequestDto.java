@@ -14,7 +14,7 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class OrderProductRequestWithPayloadDto {
+public class OrderProductWithPayloadRequestDto {
 
     @NotNull(message = "Order products cannot be null")
     @Size(min = 1, message = "At least one product must be included")
@@ -22,6 +22,8 @@ public class OrderProductRequestWithPayloadDto {
 
     @NotNull(message = "Payment method is required")
     private Order.PaymentMethod paymentMethod;
+
+    private Order.OrderStatus orderStatus;
 
     private boolean orderInRestaurant;
 

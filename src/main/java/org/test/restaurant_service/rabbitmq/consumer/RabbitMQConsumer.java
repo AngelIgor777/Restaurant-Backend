@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
-import org.test.restaurant_service.dto.request.OrderProductRequestWithPayloadDto;
+import org.test.restaurant_service.dto.request.OrderProductWithPayloadRequestDto;
 import org.test.restaurant_service.service.OrderProductAndUserService;
 import com.rabbitmq.client.Channel;
 
@@ -22,11 +22,11 @@ public class RabbitMQConsumer {
     @RabbitListener(queues = "#{rabbitMQConfig.getOrderSavingQueue()}", ackMode = "MANUAL")
     public void consumeUserRegistration(Message message, Channel channel) {
         try {
-            OrderProductRequestWithPayloadDto orderProductRequestWithPayloadDto = deserializeMessage(message);
+            OrderProductWithPayloadRequestDto orderProductWithPayloadRequestDto = deserializeMessage(message);
 
-            log.debug("Consumed message: {}", orderProductRequestWithPayloadDto);
+            log.debug("Consumed message: {}", orderProductWithPayloadRequestDto);
 
-            orderProductAndUserService.createBulk(orderProductRequestWithPayloadDto);
+            orderProductAndUserService.createBulk(orderProductWithPayloadRequestDto);
             channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
         } catch (Exception e) {
             log.error("Error processing message: {}", e.getMessage(), e);
@@ -39,10 +39,10 @@ public class RabbitMQConsumer {
         }
     }
 
-    private OrderProductRequestWithPayloadDto deserializeMessage(Message message) {
+    private OrderProductWithPayloadRequestDto deserializeMessage(Message message) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
-            return objectMapper.readValue(message.getBody(), OrderProductRequestWithPayloadDto.class);
+            return objectMapper.readValue(message.getBody(), OrderProductWithPayloadRequestDto.class);
         } catch (Exception e) {
             throw new RuntimeException("Failed to deserialize message");
         }

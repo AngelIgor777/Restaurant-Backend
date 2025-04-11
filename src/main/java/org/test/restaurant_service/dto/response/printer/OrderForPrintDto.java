@@ -13,15 +13,6 @@ public class OrderForPrintDto {
     private String createdAt;
     private String paymentMethod;
 
-    public OrderForPrintDto(Integer table, String phoneNumber, List<ProductItem> productItemList, BigDecimal totalPrice, String createdAt, String paymentMethod) {
-        this.table = table;
-        this.phoneNumber = phoneNumber;
-        this.productItemList = productItemList;
-        this.totalPrice = totalPrice;
-        this.createdAt = createdAt;
-        this.paymentMethod = paymentMethod;
-    }
-
     public OrderForPrintDto() {
     }
 
