@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.GetUserProfilePhotos;
@@ -22,10 +21,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMar
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import org.test.restaurant_service.dto.request.AddressRequestDTO;
-import org.test.restaurant_service.dto.request.OrderProductRequestDTO;
-import org.test.restaurant_service.dto.request.OrderProductWithPayloadRequestDto;
-import org.test.restaurant_service.dto.request.TableRequestDTO;
+import org.test.restaurant_service.dto.request.*;
 import org.test.restaurant_service.dto.response.*;
 import org.test.restaurant_service.entity.*;
 import org.test.restaurant_service.entity.User;
@@ -38,6 +34,7 @@ import org.test.restaurant_service.service.impl.*;
 import org.test.restaurant_service.telegram.config.BotConfig;
 import org.test.restaurant_service.telegram.util.TextUtil;
 
+import java.math.BigDecimal;
 import java.util.*;
 
 @Slf4j
@@ -59,17 +56,34 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final TableService tableService;
     private final RabbitMQJsonProducer rabbitMQJsonProducer;
     private final UserCacheService userCacheService;
+    private final UserBucketCacheService userBucketCacheService;
 
     private final String QUICK_ORDER_SUFFIX = "QO:";
     private final String LANG_SUFFIX = "LANG_";
+
+
+    private final String ADD_TO_BUCKET_SUFFIX = "ATB:";
+    private final String ADD_TO_BUCKET_PRODUCT_QUANTITY_SUFFIX = "ATBPC:";
+    private final String PLACE_ORDER_SUFFIX = "PLC:";
 
     //order types
     private final String ORDER_WITH_YOURSELF = "OT:Y";
     private final String ORDER_TO_TABLE = "OT:T";
     private final String ORDER_HOME = "OT:H";
 
+    //order types for bucket order
+    private final String ORDER_WITH_YOURSELF_BUCKET_SUFFIX = "BOWY:Y";
+    private final String BUCKET_ORDER_TYPE_TO_TABLE_SUFFIX = "BOTT:T";
+    private final String BUCKET_ORDER_TYPE_HOME_SUFFIX = "BOH:H";
+    private final String BUCKET_ORDER_TABLE_SUFFIX = "BOTS:S:";
+    private final String BUCKET_PAYMENT_CARD = "BPCD";
+    private final String BUCKET_PAYMENT_CASH = "BPCH";
+    private final String BUCKET_USER_WAITING_STATE_ADDRESS = "BWT_ADDR";
+    private final String BUCKET_USER_WAITING_STATE_PHONE = "BWT_PH";
+    private final String BUCKET_SHOW = "B_SHOW";
 
     private final String TABLE_SUFFIX = "T:";
+
 
     private final String PRODUCT_TYPE_SUFFIX = "PT:";
     private final String PRODUCT_TYPE_WHEN_PRODUCT_SUFFIX = "WP:";
@@ -77,11 +91,12 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final String PAYMENT_CARD = "PCD";
     private final String PAYMENT_CASH = "PCH";
 
+
     private final String USER_WAITING_STATE_ADDRESS = "WT_ADDR";
     private final String USER_WAITING_STATE_PHONE = "WT_PH";
     private final OrderCacheService orderCacheService;
 
-    public TelegramBot(TelegramUserServiceImpl telegramUserService, ProductTypeServiceImpl productTypeService, @Qualifier("productServiceImpl") ProductServiceImpl productService, BotConfig botConfig, TextUtil textUtil, UserService userService, S3Service s3Service, LanguageService languageService, ProductTranslationService productTranslationService, ProductTypeTranslationService productTypeTranslationService, ProductTypeTranslationMapperImpl productTypeTranslationMapper, TableService tableService, RabbitMQJsonProducer rabbitMQJsonProducer, UserCacheService userCacheService, OrderCacheService orderCacheService) {
+    public TelegramBot(TelegramUserServiceImpl telegramUserService, ProductTypeServiceImpl productTypeService, @Qualifier("productServiceImpl") ProductServiceImpl productService, BotConfig botConfig, TextUtil textUtil, UserService userService, S3Service s3Service, LanguageService languageService, ProductTranslationService productTranslationService, ProductTypeTranslationService productTypeTranslationService, ProductTypeTranslationMapperImpl productTypeTranslationMapper, TableService tableService, RabbitMQJsonProducer rabbitMQJsonProducer, UserCacheService userCacheService, UserBucketCacheService userBucketCacheService, OrderCacheService orderCacheService) {
         this.telegramUserService = telegramUserService;
         this.productTypeService = productTypeService;
         this.productService = productService;
@@ -95,6 +110,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         this.tableService = tableService;
         this.rabbitMQJsonProducer = rabbitMQJsonProducer;
         this.userCacheService = userCacheService;
+        this.userBucketCacheService = userBucketCacheService;
         ArrayList<BotCommand> botCommands = getCommands("ru");
         try {
             this.execute(new SetMyCommands(botCommands, new BotCommandScopeDefault(), null));
@@ -108,7 +124,6 @@ public class TelegramBot extends TelegramLongPollingBot {
     private Set<String> callbackProductTypesData = new HashSet<>();
 
     private Set<String> callbackProductTypesDataWithDeleting = new HashSet<>();
-
 
     private Set<String> callbackProductsData = new HashSet<>();
 
@@ -175,6 +190,10 @@ public class TelegramBot extends TelegramLongPollingBot {
                 handleUserAddressMessage(update);
             } else if (userState.equals(USER_WAITING_STATE_PHONE)) {
                 handlePhoneMessage(update);
+            } else if (userState.equals(BUCKET_USER_WAITING_STATE_ADDRESS)) {
+                handleBucketUserAddressMessage(update);
+            } else if (userState.equals(BUCKET_USER_WAITING_STATE_PHONE)) {
+                handlePhoneMessageForBucketOrderType(update);
             }
         } else {
             switch (text) {
@@ -219,7 +238,20 @@ public class TelegramBot extends TelegramLongPollingBot {
         boolean quickOrderCallback = data.startsWith(QUICK_ORDER_SUFFIX);
         boolean quickOrderTypeCallback = data.startsWith("O"); //orders type always start with "O"
         boolean tableCallback = data.startsWith(TABLE_SUFFIX);
-        boolean paymentMethodCallBack = data.startsWith("P"); // payment method start with "P"
+        boolean paymentMethodCallBack = data.startsWith("P"); // payment method always start with "P"
+        boolean addToBucketCallBack = data.startsWith(ADD_TO_BUCKET_SUFFIX);
+        boolean placeOrderCallBack = data.startsWith(PLACE_ORDER_SUFFIX);
+
+        boolean bucketOrderTypeToTableCallBack = data.startsWith(BUCKET_ORDER_TYPE_TO_TABLE_SUFFIX);
+        boolean bucketOrderTypeHomeCallBack = data.startsWith(BUCKET_ORDER_TYPE_HOME_SUFFIX);
+        boolean bucketTableCallBack = data.startsWith(BUCKET_ORDER_TABLE_SUFFIX);
+        boolean bucketShowCallBack = data.startsWith(BUCKET_SHOW);
+
+
+        boolean bucketPaymentMethodCardCallBack = data.startsWith(BUCKET_PAYMENT_CARD);
+        boolean bucketPaymentMethodCashCallBack = data.startsWith(BUCKET_PAYMENT_CASH);
+
+        boolean addToBucketProductQuantityCallBack = data.startsWith(ADD_TO_BUCKET_PRODUCT_QUANTITY_SUFFIX);
         boolean anyMatchProductTypes = callbackProductTypesData.stream()
                 .anyMatch(callbackItem -> callbackItem.equals(data));
 
@@ -237,15 +269,232 @@ public class TelegramBot extends TelegramLongPollingBot {
             handleQuickOrderCallback(update);
         } else if (quickOrderTypeCallback) {
             handleQuickOrderTypeCallback(update);
+        } else if (bucketTableCallBack) {
+            handleBucketTableCallBack(update);
         } else if (tableCallback) {
             handleTableCallback(update);
+        } else if (bucketPaymentMethodCardCallBack) {
+            handleBucketPaymentMethodCardCallBack(update);
+        } else if (bucketPaymentMethodCashCallBack) {
+            handleBucketPaymentMethodCashCallBack(update);
+        } else if (bucketOrderTypeToTableCallBack) {
+            handleBucketOrderToTableCallBack(update);
+        } else if (bucketShowCallBack) {
+            handleBucketShowCallBack(update);
+        } else if (bucketOrderTypeHomeCallBack) {
+            handleBucketOrderTypeHomeCallBack(update);
+        } else if (placeOrderCallBack) {
+            handlePlaceOrderCallBack(update);
         } else if (data.equals(CallBackButton.BACK_TO_MENU.toString())) {
             backToMenu(update);
         } else if (paymentMethodCallBack) {
             handlePaymentMethodCallBack(update);
+        } else if (addToBucketProductQuantityCallBack) {
+            handleAddToBucketProductQuantityCallBack(update);
+        } else if (addToBucketCallBack) {
+            handleAddToBucketCallBack(update);
         } else if (langCallback) {
             handleLanguageCallback(data, chatId);
         }
+    }
+
+    private void handleBucketShowCallBack(Update update) {
+        Long chatId = update.getCallbackQuery().getMessage().getChatId();
+        List<OrderProductRequestDTO> productsInBucket = userBucketCacheService.getProductsInBucket(chatId);
+        String text = formatTextForProductsInBucket(productsInBucket);
+        createAndEditMessage(update, text, getInlineKeyboardMarkupForBucketResult(chatId, productsInBucket != null && !productsInBucket.isEmpty()));
+    }
+
+    private void handleBucketPaymentMethodCashCallBack(Update update) {
+        CallbackQuery callbackQuery = update.getCallbackQuery();
+        Long chatId = callbackQuery.getMessage().getChatId();
+        OrderProductWithPayloadRequestDto order = userBucketCacheService.getOrder(chatId);
+        order.setPaymentMethod(Order.PaymentMethod.CASH);
+        handleBucketPayment(update, chatId, order);
+    }
+
+    private void handleBucketPayment(Update update, Long chatId, OrderProductWithPayloadRequestDto order) {
+        List<OrderProductRequestDTO> productsInBucket = userBucketCacheService.getProductsInBucket(chatId);
+        order.setOrderProductRequestDTO(productsInBucket);
+        order.setUserRegistered(true);
+        UUID userUUID = userService.findByChatId(chatId).getUuid();
+        order.setUserUUID(userUUID);
+        OtpResponseDto send = rabbitMQJsonProducer.send(order);
+        String messageAfterOrderPending = getMessageAfterOrderPending(send, order);
+
+        EditMessageText editMessageText = getEditMessageText(update, messageAfterOrderPending);
+
+        sendMessageWithMarkdown(editMessageText);
+        userBucketCacheService.deleteBucket(chatId);
+        userBucketCacheService.deleteOrder(chatId);
+    }
+
+    private void handleBucketPaymentMethodCardCallBack(Update update) {
+        CallbackQuery callbackQuery = update.getCallbackQuery();
+        Long chatId = callbackQuery.getMessage().getChatId();
+        OrderProductWithPayloadRequestDto order = userBucketCacheService.getOrder(chatId);
+        order.setPaymentMethod(Order.PaymentMethod.CARD);
+        handleBucketPayment(update, chatId, order);
+    }
+
+    private void handleBucketTableCallBack(Update update) {
+        OrderProductWithPayloadRequestDto orderDto = new OrderProductWithPayloadRequestDto();
+        CallbackQuery callbackQuery = update.getCallbackQuery();
+        Integer tableNumber = Integer.parseInt(callbackQuery.getData().substring(BUCKET_ORDER_TABLE_SUFFIX.length()));
+        Long chatId = callbackQuery.getMessage().getChatId();
+        orderDto.setTableRequestDTO(new TableRequestDTO(tableNumber));
+        orderDto.setOrderInRestaurant(true);
+        userBucketCacheService.saveOrder(chatId, orderDto);
+        createAndEditMessage(update, "Выберите метод оплаты", getInlineKeyboardMarkupForPayment(OrderType.BUCKET));
+    }
+
+    private void createAndEditMessage(Update update, String text, InlineKeyboardMarkup keyboard) {
+        EditMessageText editMessageText = getEditMessageText(update, text);
+        editMessageText.setReplyMarkup(keyboard);
+        executeMessage(editMessageText);
+    }
+
+    private void createAndSendMessage(Update update, String text, InlineKeyboardMarkup keyboard) {
+        SendMessage editMessageText = getSendMessage(update, text);
+        editMessageText.setReplyMarkup(keyboard);
+        executeMessage(editMessageText);
+    }
+
+
+    private void handleBucketOrderToTableCallBack(Update update) {
+        EditMessageText editMessageText = getEditMessageText(update, "Выберите столик:");
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> buttons = new ArrayList<>();
+        setButtonsToTablesData(buttons, OrderType.BUCKET);
+        markup.setKeyboard(buttons);
+        editMessageText.setReplyMarkup(markup);
+        executeMessage(editMessageText);
+    }
+
+    private void handleBucketOrderTypeHomeCallBack(Update update) {
+        EditMessageText editMessageText = getEditMessageText(update, "Отправьте мне в одну строку ваш адрес.\nНапишите город/село, улицу, дом");
+        CallbackQuery callbackQuery = update.getCallbackQuery();
+        Long chatId = callbackQuery.getMessage().getChatId();
+
+        userCacheService.saveUserState(chatId, BUCKET_USER_WAITING_STATE_ADDRESS); // Store in Redis
+        executeMessage(editMessageText);
+    }
+
+
+    private void handlePlaceOrderCallBack(Update update) {
+        CallbackQuery callbackQuery = update.getCallbackQuery();
+        String data = callbackQuery.getData();
+        createAndEditMessage(update, "Выберите тип заказа", getOrderTypeKeyboard(OrderType.BUCKET));
+    }
+
+    private InlineKeyboardMarkup getOrderTypeKeyboard(OrderType orderType) {
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+
+        List<List<InlineKeyboardButton>> buttons = new ArrayList<>();
+
+        if (orderType.equals(OrderType.QUICK)) {
+            buttons.add(List.of(createOneLineButton("На столик 🍽", ORDER_TO_TABLE)));
+            buttons.add(List.of(createOneLineButton("Домой 🏠", ORDER_HOME)));
+        } else if (orderType.equals(OrderType.BUCKET)) {
+            buttons.add(List.of(createOneLineButton("На столик 🍽", BUCKET_ORDER_TYPE_TO_TABLE_SUFFIX)));
+            buttons.add(List.of(createOneLineButton("Домой 🏠", BUCKET_ORDER_TYPE_HOME_SUFFIX)));
+        }
+
+
+        markup.setKeyboard(buttons);
+        return markup;
+    }
+
+    private void handleAddToBucketProductQuantityCallBack(Update update) {
+        CallbackQuery callbackQuery = update.getCallbackQuery();
+        String data = callbackQuery.getData();
+        String quantityAndProductId = data.substring(ADD_TO_BUCKET_PRODUCT_QUANTITY_SUFFIX.length());
+        Integer quantity = Integer.parseInt(quantityAndProductId.substring(0, 1));
+        Integer productId = Integer.parseInt(quantityAndProductId.substring(2));
+        Long chatId = callbackQuery.getMessage().getChatId();
+
+        userBucketCacheService.saveProductToBucket(chatId, productId, quantity);
+
+        List<OrderProductRequestDTO> productsInBucket = userBucketCacheService.getProductsInBucket(chatId);
+        String text = formatTextForProductsInBucket(productsInBucket);
+        createAndEditMessage(update, text, getInlineKeyboardMarkupForBucketResult(chatId, productsInBucket != null && !productsInBucket.isEmpty()));
+    }
+
+    private InlineKeyboardMarkup getInlineKeyboardMarkupForBucketResult(long chatId, boolean existProducts) {
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> buttons = new ArrayList<>();
+        ArrayList<InlineKeyboardButton> inlineKeyboardButtons = new ArrayList<>();
+        inlineKeyboardButtons.add(createOneLineButton("Посмотреть меню", CallBackButton.BACK_TO_MENU.toString()));
+        if (existProducts) {
+            inlineKeyboardButtons.add(createOneLineButton("Оформить заказ", PLACE_ORDER_SUFFIX + chatId));
+        }
+        buttons.add(inlineKeyboardButtons);
+        markup.setKeyboard(buttons);
+        return markup;
+    }
+
+    private String formatTextForProductsInBucket(List<OrderProductRequestDTO> productsInBucket) {
+        StringBuilder text = new StringBuilder();
+        text.append("🧺 Содержимое вашей корзины:\n\n");
+        BigDecimal totalSum = BigDecimal.ZERO;
+
+        if (productsInBucket != null && !productsInBucket.isEmpty()) {
+            for (OrderProductRequestDTO productInBucketInfo : productsInBucket) {
+                Integer productId = productInBucketInfo.getProductId();
+                Integer quantity = productInBucketInfo.getQuantity();
+                Product product = productService.getSimpleById(productId);
+                BigDecimal price = product.getPrice();
+                BigDecimal priceOfProductsQuantity = price.multiply(BigDecimal.valueOf(quantity));
+
+                text.append("• ").append(product.getName()).append("\n")
+                        .append("💵 Цена: ").append(price).append(" лей\n")
+                        .append("🛒 Кол-во: ").append(quantity).append("\n")
+                        .append("➖➖➖➖➖\n");
+
+                totalSum = totalSum.add(priceOfProductsQuantity);
+            }
+            text.append("\n*Общая сумма:* ").append(totalSum).append(" лей");
+        } else {
+            text.append("Ваша корзина пуста. Но вы можете посмотреть наше меню и заполнить её😊 ");
+        }
+
+        return text.toString();
+    }
+
+    private void handleAddToBucketCallBack(Update update) {
+        CallbackQuery callbackQuery = update.getCallbackQuery();
+        String data = callbackQuery.getData();
+        int productId = Integer.parseInt(data.substring(ADD_TO_BUCKET_SUFFIX.length()));
+        Long chatId = callbackQuery.getMessage().getChatId();
+        String paymentMethodText = "Выберите количество:";
+        SendMessage sendMessage = getSendMessage(chatId.toString(), paymentMethodText);
+        InlineKeyboardMarkup inlineKeyboardMarkupForAddProductCount = getInlineKeyboardMarkupForAddProductCount(productId);
+        sendMessage.setReplyMarkup(inlineKeyboardMarkupForAddProductCount);
+
+        executeMessage(sendMessage);
+    }
+
+    private InlineKeyboardMarkup getInlineKeyboardMarkupForAddProductCount(int productId) {
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> buttons = new ArrayList<>();
+
+        buttons.add(List.of(
+                createOneLineButton("1", ADD_TO_BUCKET_PRODUCT_QUANTITY_SUFFIX + "1:" + productId),
+                createOneLineButton("2", ADD_TO_BUCKET_PRODUCT_QUANTITY_SUFFIX + "2:" + productId),
+                createOneLineButton("3", ADD_TO_BUCKET_PRODUCT_QUANTITY_SUFFIX + "3:" + productId))
+        );
+        buttons.add(List.of(
+                createOneLineButton("4", ADD_TO_BUCKET_PRODUCT_QUANTITY_SUFFIX + "4:" + productId),
+                createOneLineButton("5", ADD_TO_BUCKET_PRODUCT_QUANTITY_SUFFIX + "5:" + productId),
+                createOneLineButton("6", ADD_TO_BUCKET_PRODUCT_QUANTITY_SUFFIX + "6:" + productId))
+        );
+        buttons.add(List.of(
+                createOneLineButton("7", ADD_TO_BUCKET_PRODUCT_QUANTITY_SUFFIX + "7:" + productId),
+                createOneLineButton("8", ADD_TO_BUCKET_PRODUCT_QUANTITY_SUFFIX + "9:" + productId),
+                createOneLineButton("9", ADD_TO_BUCKET_PRODUCT_QUANTITY_SUFFIX + "9:" + productId))
+        );
+        markup.setKeyboard(buttons);
+        return markup;
     }
 
     private void handlePaymentMethodCallBack(Update update) {
@@ -258,14 +507,20 @@ public class TelegramBot extends TelegramLongPollingBot {
         } else if (data.startsWith(PAYMENT_CASH)) {
             order.setPaymentMethod(Order.PaymentMethod.CASH);
         }
+
         OtpResponseDto otpResponseDto = rabbitMQJsonProducer.send(order);
         orderCacheService.deleteOrder(chatId);
-        String string = "Номер вашего заказа: " + otpResponseDto.getOtp() +
-                "\n\n\nВ скором времени всё будет готово! 😉\nА пока можете зайти на наш сайт и посмотреть меню более детально [parktown.md](http://195.133.27.38/#menu/%s)";
+        String text = getMessageAfterOrderPending(otpResponseDto, order);
 
-        EditMessageText editMessageText = getEditMessageText(update, string);
+        EditMessageText editMessageText = getEditMessageText(update, text);
 
         sendMessageWithMarkdown(editMessageText);
+    }
+
+    private String getMessageAfterOrderPending(OtpResponseDto otpResponseDto, OrderProductWithPayloadRequestDto order) {
+        String text = String.format("Номер вашего заказа: %s\n\n\n" +
+                "В скором времени всё будет готово! 😉\nА пока можете зайти на наш сайт и посмотреть меню более детально [parktown.md](http://195.133.27.38/#menu/%s)", otpResponseDto.getOtp(), order.getUserUUID());
+        return text;
     }
 
     private void handleUserAddressMessage(Update update) {
@@ -286,24 +541,68 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
 
+    private void handleBucketUserAddressMessage(Update update) {
+        OrderProductWithPayloadRequestDto order = new OrderProductWithPayloadRequestDto();
+        order.setOrderInRestaurant(false);
+        Message message = update.getMessage();
+        Long chatId = message.getChatId();
+        User user = userService.findByChatId(chatId);
+        String text = message.getText();
+        AddressRequestDTO addressRequestDTO = new AddressRequestDTO();
+        addressRequestDTO.setUserUUID(user.getUuid());
+        addressRequestDTO.setStreet(text);
+        addressRequestDTO.setUserUUID(user.getUuid());
+        order.setAddressRequestDTO(addressRequestDTO);
+        userBucketCacheService.saveOrder(chatId, order);
+        sendPhoneForBucketOrderType(chatId);
+    }
+
+    private void sendPhoneForBucketOrderType(Long chatId) {
+        String text = "Введите номер вашего мобильного телефона:";
+        SendMessage message = new SendMessage();
+        message.setChatId(String.valueOf(chatId));
+        message.setText(text);
+
+        userCacheService.saveUserState(chatId, BUCKET_USER_WAITING_STATE_PHONE);
+        executeMessage(message);
+    }
+
+    private void handlePhoneMessageForBucketOrderType(Update update) {
+        Message message = update.getMessage();
+        Long chatId = message.getChatId();
+        String text = message.getText();
+        OrderProductWithPayloadRequestDto order = userBucketCacheService.getOrder(chatId);
+        order.setPhoneNumber(text);
+        userBucketCacheService.saveOrder(chatId, order);
+
+        userCacheService.removeUserState(chatId);
+        createAndSendMessage(update, "Выберите метод оплаты", getInlineKeyboardMarkupForPayment(OrderType.BUCKET));
+    }
+
     private void sendPaymentMethod(Long chatId) {
         String paymentMethodText = "Выберите метод оплаты";
         SendMessage message = new SendMessage();
         message.setChatId(String.valueOf(chatId));
         message.setText(paymentMethodText);
 
-        InlineKeyboardMarkup markup = getInlineKeyboardMarkupForPayment();
+        InlineKeyboardMarkup markup = getInlineKeyboardMarkupForPayment(OrderType.QUICK);
         message.setReplyMarkup(markup);
         executeMessage(message);
     }
 
-    private InlineKeyboardMarkup getInlineKeyboardMarkupForPayment() {
+    private InlineKeyboardMarkup getInlineKeyboardMarkupForPayment(OrderType orderType) {
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> buttons = new ArrayList<>();
+        if (orderType.equals(OrderType.QUICK)) {
+            buttons.add(List.of(
+                    createOneLineButton("Карта", PAYMENT_CARD),
+                    createOneLineButton("Наличные", PAYMENT_CASH)));
+        } else if (orderType.equals(OrderType.BUCKET)) {
+            buttons.add(List.of(
+                    createOneLineButton("Карта", BUCKET_PAYMENT_CARD),
+                    createOneLineButton("Наличные", BUCKET_PAYMENT_CASH)));
+        }
 
-        buttons.add(List.of(
-                createOneLineButton("Карта", PAYMENT_CARD),
-                createOneLineButton("Наличные", PAYMENT_CASH)));
         markup.setKeyboard(buttons);
         return markup;
     }
@@ -333,12 +632,8 @@ public class TelegramBot extends TelegramLongPollingBot {
 
 
     private void handleTableCallback(Update update) {
-        String paymentMethodText = "Выберите метод оплаты";
-        EditMessageText editMessageText = getEditMessageText(update, paymentMethodText);
-
-        InlineKeyboardMarkup markup = getInlineKeyboardMarkupForPayment();
-        editMessageText.setReplyMarkup(markup);
-        executeMessage(editMessageText);
+        String paymentMethodText = "Выберите метод оплаты:";
+        createAndEditMessage(update, paymentMethodText, getInlineKeyboardMarkupForPayment(OrderType.QUICK));
 
         CallbackQuery callbackQuery = update.getCallbackQuery();
         String tableNumber = callbackQuery.getData().substring(TABLE_SUFFIX.length());
@@ -360,21 +655,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         String data = callbackQuery.getData();
         if (data.equals(ORDER_TO_TABLE)) {
             editMessageText.setText("Выберите столик:");
-
-            byte size = tableService.countAll();
-            int buttonsPerRow = 4;
-            int rows = (int) Math.ceil((double) size / buttonsPerRow);
-            //4 tables per row
-            for (int i = 0; i < rows; i++) {
-                List<InlineKeyboardButton> inlineKeyboardButtons = new ArrayList<>();
-                for (int j = i * buttonsPerRow + 1; j <= Math.min(size, (i + 1) * buttonsPerRow); j++) {
-                    String table = String.valueOf(j);
-                    InlineKeyboardButton tempOneLineButton
-                            = createOneLineButton(table, TABLE_SUFFIX + table);
-                    inlineKeyboardButtons.add(tempOneLineButton);
-                }
-                buttons.add(inlineKeyboardButtons);
-            }
+            setButtonsToTablesData(buttons, OrderType.QUICK);
         } else if (data.equals(ORDER_HOME)) {
             editMessageText.setText("Отправьте мне в одну строку ваш адрес.\nНапишите город/село, улицу, дом");
             userCacheService.saveUserState(chatId, USER_WAITING_STATE_ADDRESS); // Store in Redis
@@ -384,8 +665,37 @@ public class TelegramBot extends TelegramLongPollingBot {
         executeMessage(editMessageText);
     }
 
+
+    private void setButtonsToTablesData(List<List<InlineKeyboardButton>> buttons, OrderType orderType) {
+        byte size = tableService.countAll();
+        int buttonsPerRow = 4;
+        int rows = (int) Math.ceil((double) size / buttonsPerRow);
+        //4 tables per row
+        for (int i = 0; i < rows; i++) {
+            List<InlineKeyboardButton> inlineKeyboardButtons = new ArrayList<>();
+            for (int j = i * buttonsPerRow + 1; j <= Math.min(size, (i + 1) * buttonsPerRow); j++) {
+                String table = String.valueOf(j);
+                String callBack = null;
+                if (orderType.equals(OrderType.QUICK)) {
+                    callBack = TABLE_SUFFIX + table;
+                } else if (orderType.equals(OrderType.BUCKET)) {
+                    callBack = BUCKET_ORDER_TABLE_SUFFIX + table;
+                }
+                InlineKeyboardButton tempOneLineButton
+                        = createOneLineButton(table, callBack);
+                inlineKeyboardButtons.add(tempOneLineButton);
+            }
+            buttons.add(inlineKeyboardButtons);
+        }
+    }
+
     private EditMessageText getEditMessageText(Update update, String text) {
-        Message message = update.getCallbackQuery().getMessage();
+        Message message;
+        try {
+            message = update.getCallbackQuery().getMessage();
+        } catch (NullPointerException e) {
+            message = update.getMessage();
+        }
         Long chatId = message.getChatId();
         Integer messageId = message.getMessageId();
         return getEditMessageText(String.valueOf(chatId), text, messageId);
@@ -422,16 +732,8 @@ public class TelegramBot extends TelegramLongPollingBot {
         orderDto.setUserRegistered(true);
         orderDto.setUserUUID(userUUID);
         orderCacheService.saveOrder(chatId, orderDto);
-
-        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> buttons = new ArrayList<>();
-
-        buttons.add(List.of(createOneLineButton("На столик 🍽", ORDER_TO_TABLE)));
-        buttons.add(List.of(createOneLineButton("Домой 🏠", ORDER_HOME)));
-
-        markup.setKeyboard(buttons);
-        sendMessage.setReplyMarkup(markup);
-
+        InlineKeyboardMarkup orderTypeKeyboard = getOrderTypeKeyboard(OrderType.QUICK);
+        sendMessage.setReplyMarkup(orderTypeKeyboard);
         executeMessage(sendMessage);
     }
 
@@ -498,7 +800,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         return null;
     }
 
-    @Transactional(rollbackFor = Exception.class)
     public void handleLanguageCallback(String data, Long chatId) {
         User user = userService.findByChatId(chatId);
         String langCode = data.substring(5);
@@ -543,28 +844,34 @@ public class TelegramBot extends TelegramLongPollingBot {
         List<List<InlineKeyboardButton>> rowsInLine = new ArrayList<>();
         List<InlineKeyboardButton> inlineKeyboardButtons = new ArrayList<>();
         List<InlineKeyboardButton> inlineKeyboardButtons2 = new ArrayList<>();
+        List<InlineKeyboardButton> inlineKeyboardButtons3 = new ArrayList<>();
 
         InlineKeyboardButton inlineBackKeyboardButton = new InlineKeyboardButton();
         InlineKeyboardButton inlineQuickOrderButton = new InlineKeyboardButton();
-        addButtons(langCode, productResponse, productTypeTranslationResponseDTO, inlineBackKeyboardButton, inlineQuickOrderButton);
+        InlineKeyboardButton inlineAddToBucketButton = new InlineKeyboardButton();
+        formatButtons(langCode, productResponse, productTypeTranslationResponseDTO, inlineBackKeyboardButton, inlineQuickOrderButton, inlineAddToBucketButton);
 
         inlineKeyboardButtons.add(inlineBackKeyboardButton);
         rowsInLine.add(inlineKeyboardButtons);
-        markupInLine.setKeyboard(rowsInLine);
 
         inlineKeyboardButtons2.add(inlineQuickOrderButton);
         rowsInLine.add(inlineKeyboardButtons2);
 
+        inlineKeyboardButtons3.add(inlineAddToBucketButton);
+        rowsInLine.add(inlineKeyboardButtons3);
+
+        markupInLine.setKeyboard(rowsInLine);
         sendPhoto.setReplyMarkup(markupInLine);
 
         executeMessage(sendPhoto);
     }
 
-    private void addButtons(String langCode,
-                            ProductResponseDTO productResponse,
-                            ProductTypeTranslationResponseDTO productTypeTranslationResponseDTO,
-                            InlineKeyboardButton backToTypesButton,
-                            InlineKeyboardButton quickOrderButton) {
+    private void formatButtons(String langCode,
+                               ProductResponseDTO productResponse,
+                               ProductTypeTranslationResponseDTO productTypeTranslationResponseDTO,
+                               InlineKeyboardButton backToTypesButton,
+                               InlineKeyboardButton quickOrderButton,
+                               InlineKeyboardButton addToBucketButton) {
         if (langCode.equals("ru")) {
             backToTypesButton.setText("Назад ✨");
             String productTypeCallbackData = PRODUCT_TYPE_WHEN_PRODUCT_SUFFIX + productResponse.getTypeName();
@@ -573,6 +880,8 @@ public class TelegramBot extends TelegramLongPollingBot {
             quickOrderButton.setText("Быстрый заказ 🔔");
             quickOrderButton.setCallbackData(QUICK_ORDER_SUFFIX + productResponse.getId().toString());
 
+            addToBucketButton.setText("Добавить в корзину 📥");
+            addToBucketButton.setCallbackData(ADD_TO_BUCKET_SUFFIX + productResponse.getId().toString());
         } else {
             backToTypesButton.setText("Înapoi ✨");
             backToTypesButton.setCallbackData(productTypeTranslationResponseDTO.getName());
@@ -594,7 +903,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         User user = userService.findByChatId(chatId);
 
         EditMessageText editMessage = setEditMessageTextProperties(update);
-        InlineKeyboardMarkup menuInlineMarkup = getMenuInlineMarkup(user.getTelegramUserEntity().getLanguage().getCode());
+        InlineKeyboardMarkup menuInlineMarkup = getMenuKeyboard(user.getTelegramUserEntity().getLanguage().getCode());
         editMessage.setText(menuText.toString());
         editMessage.setReplyMarkup(menuInlineMarkup);
         executeMessage(editMessage);
@@ -752,7 +1061,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    private static EditMessageText getEditMessageText(String chatId, String text, int messageId) {
+    private EditMessageText getEditMessageText(String chatId, String text, int messageId) {
         EditMessageText message = new EditMessageText();
         message.setChatId(chatId);
         message.setText(text);
@@ -761,7 +1070,19 @@ public class TelegramBot extends TelegramLongPollingBot {
         return message;
     }
 
-    private static EditMessageText getEditMessageText(String chatId, int messageId) {
+    private SendMessage getSendMessage(Update update, String text) {
+        return getSendMessage(String.valueOf(update.getMessage().getChatId()), text);
+    }
+
+    private SendMessage getSendMessage(String chatId, String text) {
+        SendMessage message = new SendMessage();
+        message.setChatId(String.valueOf(chatId));
+        message.setText(text);
+        message.setParseMode("HTML");
+        return message;
+    }
+
+    private EditMessageText getEditMessageText(String chatId, int messageId) {
         EditMessageText message = new EditMessageText();
         message.setChatId(chatId);
         message.setMessageId(messageId);
@@ -782,7 +1103,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         row.add(button);
         rowsInLine.add(row);
     }
-
 
     private final StringBuilder menuText = new StringBuilder();
 
@@ -819,7 +1139,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void createMenu(SendMessage message, String langCode) {
-        InlineKeyboardMarkup menuInlineMarkup = getMenuInlineMarkup(langCode);
+        InlineKeyboardMarkup menuInlineMarkup = getMenuKeyboard(langCode);
         message.setReplyMarkup(menuInlineMarkup);
         executeMessage(message);
         deleteMenuText();
@@ -830,7 +1150,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         menuText.delete(0, menuText.length());
     }
 
-    private InlineKeyboardMarkup getMenuInlineMarkup(String langCode) {
+    private InlineKeyboardMarkup getMenuKeyboard(String langCode) {
 
         List<String> productTypes = setMenuText(langCode);
 
@@ -857,6 +1177,8 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
             rowsInLine.add(row);
         }
+
+        rowsInLine.add(List.of(createOneLineButton("Корзина 🧺", BUCKET_SHOW)));
 
         markupInLine.setKeyboard(rowsInLine);
         return markupInLine;
@@ -919,7 +1241,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         sendMessage(chatId, textUtil.getHelpText(codeLang));
     }
 
-    @Transactional(rollbackFor = Exception.class)
     public void registerFull(Update update) {
         Long chatId = update.getMessage().getChatId();
         String errorText;
@@ -1053,6 +1374,10 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private enum CallBackButton {
         BACK_TO_MENU;
+    }
+
+    private enum OrderType {
+        QUICK, BUCKET
     }
 
 }
