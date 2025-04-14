@@ -7,23 +7,30 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.test.restaurant_service.dto.request.TableRequestDTO;
 import org.test.restaurant_service.dto.response.TableResponseDTO;
-import org.test.restaurant_service.service.TableService;
+import org.test.restaurant_service.service.impl.TableServiceImpl;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/tables")
 @RequiredArgsConstructor
 public class TableController {
 
-    private final TableService tableService;
+    private final TableServiceImpl tableService;
 
     @GetMapping
-    public Page<TableResponseDTO> getAll(Pageable pageable) {
+    public List<TableResponseDTO> getAll(Pageable pageable) {
         return tableService.getAll(pageable);
     }
 
     @GetMapping("/{id}")
     public TableResponseDTO getById(@PathVariable Integer id) {
         return tableService.getById(id);
+    }
+
+    @PostMapping("/open/{tableId}")
+    public TableResponseDTO closeTable(@PathVariable Integer tableId) {
+        return tableService.openTable(tableId);
     }
 
     @PostMapping

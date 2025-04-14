@@ -1,4 +1,4 @@
-package org.test.restaurant_service.service.impl;
+package org.test.restaurant_service.service.impl.cache;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -46,7 +46,6 @@ public class UserBucketCacheService {
     public void deleteBucket(Long chatId) {
         redisTemplate.delete("bucket:" + chatId);
     }
-
 
     public void saveOrder(Long chatId, OrderProductWithPayloadRequestDto order) {
         redisTemplate.opsForValue().set("tgBucketOrder:" + chatId, order, Duration.ofMinutes(30));

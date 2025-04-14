@@ -6,11 +6,10 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.test.restaurant_service.controller.websocket.WebSocketController;
+import org.test.restaurant_service.controller.websocket.WebSocketSender;
 import org.test.restaurant_service.dto.request.order.ProductsForPrintRequest;
 import org.test.restaurant_service.dto.response.printer.OrderForPrintDto;
 import org.test.restaurant_service.dto.response.printer.ProductItem;
-import org.test.restaurant_service.entity.Address;
 import org.test.restaurant_service.entity.Order;
 import org.test.restaurant_service.entity.OrderProduct;
 import org.test.restaurant_service.entity.Product;
@@ -26,7 +25,7 @@ public class PrinterService {
     private static final Logger log = LoggerFactory.getLogger(PrinterService.class);
     private final OrderService orderService;
     private final OrderProductService orderProductService;
-    private final WebSocketController webSocketController;
+    private final WebSocketSender webSocketSender;
     private final ObjectMapper jacksonObjectMapper;
 
     public void sendOrderToPrinter(Integer orderId, @Nullable ProductsForPrintRequest productsId) {
@@ -45,7 +44,7 @@ public class PrinterService {
         orderForPrintDto.setProductItemList(productItems);
         try {
             String orderForPrintDtoStringInJsonFormat = jacksonObjectMapper.writeValueAsString(orderForPrintDto);
-            webSocketController.sendOrderForLocalPrinter(orderForPrintDto);
+            webSocketSender.sendOrderForLocalPrinter(orderForPrintDto);
             log.debug("Send order for printing: {}", orderForPrintDtoStringInJsonFormat);
         } catch (JsonProcessingException e) {
             log.error("Failed to convert order to json", e);

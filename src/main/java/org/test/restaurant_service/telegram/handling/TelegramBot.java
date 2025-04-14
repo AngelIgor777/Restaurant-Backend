@@ -32,6 +32,9 @@ import org.test.restaurant_service.mapper.ProductTypeTranslationMapperImpl;
 import org.test.restaurant_service.rabbitmq.producer.RabbitMQJsonProducer;
 import org.test.restaurant_service.service.*;
 import org.test.restaurant_service.service.impl.*;
+import org.test.restaurant_service.service.impl.cache.OrderCacheService;
+import org.test.restaurant_service.service.impl.cache.UserBucketCacheService;
+import org.test.restaurant_service.service.impl.cache.UserCacheService;
 import org.test.restaurant_service.telegram.config.BotConfig;
 import org.test.restaurant_service.telegram.util.TextUtil;
 
@@ -54,7 +57,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final ProductTranslationService productTranslationService;
     private final ProductTypeTranslationService productTypeTranslationService;
     private final ProductTypeTranslationMapper productTypeTranslationMapper;
-    private final TableService tableService;
+    private final TableServiceImpl tableService;
     private final RabbitMQJsonProducer rabbitMQJsonProducer;
     private final UserCacheService userCacheService;
     private final UserBucketCacheService userBucketCacheService;
@@ -97,7 +100,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final String USER_WAITING_STATE_PHONE = "WT_PH";
     private final OrderCacheService orderCacheService;
 
-    public TelegramBot(TelegramUserServiceImpl telegramUserService, ProductTypeServiceImpl productTypeService, @Qualifier("productServiceImpl") ProductServiceImpl productService, BotConfig botConfig, TextUtil textUtil, UserService userService, S3Service s3Service, LanguageService languageService, ProductTranslationService productTranslationService, ProductTypeTranslationService productTypeTranslationService, ProductTypeTranslationMapperImpl productTypeTranslationMapper, TableService tableService, RabbitMQJsonProducer rabbitMQJsonProducer, UserCacheService userCacheService, UserBucketCacheService userBucketCacheService, OrderCacheService orderCacheService) {
+    public TelegramBot(TelegramUserServiceImpl telegramUserService, ProductTypeServiceImpl productTypeService, @Qualifier("productServiceImpl") ProductServiceImpl productService, BotConfig botConfig, TextUtil textUtil, UserService userService, S3Service s3Service, LanguageService languageService, ProductTranslationService productTranslationService, ProductTypeTranslationService productTypeTranslationService, ProductTypeTranslationMapperImpl productTypeTranslationMapper, TableServiceImpl tableService, RabbitMQJsonProducer rabbitMQJsonProducer, UserCacheService userCacheService, UserBucketCacheService userBucketCacheService, OrderCacheService orderCacheService) {
         this.telegramUserService = telegramUserService;
         this.productTypeService = productTypeService;
         this.productService = productService;

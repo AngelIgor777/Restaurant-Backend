@@ -6,4 +6,5 @@ import lombok.Data;
 public class TableResponseDTO {
     private Integer id;
     private Integer number;
+    private boolean isOpen = false;
 }

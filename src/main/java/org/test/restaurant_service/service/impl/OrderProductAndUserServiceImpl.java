@@ -3,15 +3,17 @@ package org.test.restaurant_service.service.impl;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.test.restaurant_service.controller.websocket.WebSocketController;
+import org.test.restaurant_service.controller.websocket.WebSocketSender;
 import org.test.restaurant_service.dto.request.AddressRequestDTO;
 import org.test.restaurant_service.dto.request.OrderProductRequestDTO;
 import org.test.restaurant_service.dto.request.order.OrderProductWithPayloadAndPrintRequestDto;
 import org.test.restaurant_service.dto.request.order.OrderProductWithPayloadRequestDto;
+import org.test.restaurant_service.dto.request.table.TableOrderInfo;
 import org.test.restaurant_service.dto.response.*;
 import org.test.restaurant_service.entity.*;
 import org.test.restaurant_service.mapper.*;
 import org.test.restaurant_service.service.*;
+import org.test.restaurant_service.service.impl.cache.TableCacheService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -19,6 +21,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -41,9 +44,11 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
     private final OrderDiscountService orderDiscountService;
     private final UserAddressService userAddressService;
     private final PrinterService printerService;
-    private final WebSocketController webSocketController;
+    private final WebSocketSender webSocketSender;
+    private final TableCacheService tableCacheService;
+    private final TableServiceImpl tableService;
 
-    public OrderProductAndUserServiceImpl(OrderService orderService, OrderProductServiceImpl orderProductService, UserService userService, ProductDiscountService productDiscountService, DiscountService discountService, OrderProductMapper orderProductMapper, ProductMapper productMapper, @Qualifier("productServiceImpl") ProductService productService, AddressService addressService, OrderMapper orderMapper, AddressMapper addressMapper, TableMapper tableMapper, OrderDiscountService orderDiscountService, UserAddressService userAddressService, PrinterService printerService, WebSocketController webSocketController) {
+    public OrderProductAndUserServiceImpl(OrderService orderService, OrderProductServiceImpl orderProductService, UserService userService, ProductDiscountService productDiscountService, DiscountService discountService, OrderProductMapper orderProductMapper, ProductMapper productMapper, @Qualifier("productServiceImpl") ProductService productService, AddressService addressService, OrderMapper orderMapper, AddressMapper addressMapper, TableMapper tableMapper, OrderDiscountService orderDiscountService, UserAddressService userAddressService, PrinterService printerService, WebSocketSender webSocketSender, TableCacheService tableCacheService, TableServiceImpl tableService) {
         this.orderService = orderService;
         this.orderProductService = orderProductService;
         this.userService = userService;
@@ -59,7 +64,9 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
         this.orderDiscountService = orderDiscountService;
         this.userAddressService = userAddressService;
         this.printerService = printerService;
-        this.webSocketController = webSocketController;
+        this.webSocketSender = webSocketSender;
+        this.tableCacheService = tableCacheService;
+        this.tableService = tableService;
     }
 
     //1 check the user is register
@@ -110,8 +117,17 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
         BigDecimal productDiscountAmount = BigDecimal.ZERO;
         order.setTotalPrice(totalPrice.get());
 
-        checkTheOrderIsInRestaurant(order, requestDto, orderProductResponseWithPayloadDto);
-
+        boolean isInRestaurant = checkTheOrderIsInRestaurant(order, requestDto, orderProductResponseWithPayloadDto);
+        if (isInRestaurant) {
+            Set<Integer> ids = tableCacheService.getOpenTables().getIds();
+            Table table = tableService.getByNumber(requestDto.getTableRequestDTO().getNumber());
+            Integer tableId = table.getId();
+            if (ids.contains(tableId)) {
+                tableCacheService.addOrderIdToTable(order.getId(), requestDto.getTableRequestDTO().getNumber());
+                Set<Integer> tableOrders = tableCacheService.getTableOrders(tableId);
+                webSocketSender.sendTablesOrderInfo(new TableOrderInfo(tableId, tableOrders));
+            }
+        }
         OrderDiscount orderDiscount = handleDiscountCodes(existDiscountCodes, globalDiscountCode, productDiscountCode, globalDiscountAmount, productDiscountAmount, totalPrice, order, orderProductResponseWithPayloadDto, productResponseDTOS);
 
         OrderProductWithPayloadAndPrintRequestDto requestDtoForPrint = null;
@@ -143,7 +159,7 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
             }
         }
         if (savedOrder.getStatus().equals(Order.OrderStatus.PENDING)) {
-            webSocketController.sendPendingOrderIncrement(1);
+            webSocketSender.sendPendingOrderIncrement(1);
         }
         return orderProductResponseWithPayloadDto;
     }
@@ -223,14 +239,15 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
         }
     }
 
-    private void checkTheOrderIsInRestaurant(Order order, OrderProductWithPayloadRequestDto request, OrderProductResponseWithPayloadDto orderProductResponseWithPayloadDto) {
+    private boolean checkTheOrderIsInRestaurant(Order order, OrderProductWithPayloadRequestDto request, OrderProductResponseWithPayloadDto orderProductResponseWithPayloadDto) {
         if (request.isOrderInRestaurant()) {
-            Table table = orderProductService.getByNumber(request.getTableRequestDTO().getNumber());
+            Table table = tableService.getByNumber(request.getTableRequestDTO().getNumber());
             order.setTable(table);
             orderProductResponseWithPayloadDto.setTableResponseDTO(tableMapper.toResponseDTO(table));
             if (order.hasUser()) {
                 orderProductResponseWithPayloadDto.setUserUUID(request.getUserUUID());
             }
+            return true;
         } else {
             if (order.hasUser()) {
                 User user = order.getUser();
@@ -256,6 +273,7 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
                 AddressResponseDTO responseDto = addressMapper.toResponseDto(address);
                 orderProductResponseWithPayloadDto.setAddressResponseDTO(responseDto);
             }
+            return false;
         }
     }
 
@@ -268,7 +286,7 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
             // Calculate the discount for this product
             BigDecimal productDiscount = productTotalPrice
                     .multiply(productDiscountPercentage)
-                    .divide(new BigDecimal(100));
+                    .divide(new BigDecimal(100), RoundingMode.HALF_UP);
             productDiscountAmount = productDiscountAmount.add(productDiscount);
         }
         return productDiscountAmount;

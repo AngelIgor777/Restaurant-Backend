@@ -6,8 +6,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.test.restaurant_service.controller.websocket.WebSocketController;
+import org.test.restaurant_service.controller.websocket.WebSocketSender;
 import org.test.restaurant_service.dto.request.OrderRequestDTO;
+import org.test.restaurant_service.dto.request.table.OpenTables;
+import org.test.restaurant_service.dto.request.table.TableOrdersPriceInfo;
 import org.test.restaurant_service.dto.response.*;
 import org.test.restaurant_service.entity.*;
 import org.test.restaurant_service.mapper.AddressMapperImpl;
@@ -20,12 +22,15 @@ import org.test.restaurant_service.service.OrderDiscountService;
 import org.test.restaurant_service.service.OrderProductService;
 import org.test.restaurant_service.service.OrderService;
 import org.test.restaurant_service.service.PhotoService;
+import org.test.restaurant_service.service.impl.cache.TableCacheService;
 
 import javax.persistence.EntityNotFoundException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -43,9 +48,10 @@ public class OrderServiceImpl implements OrderService {
     private final ProductMapperImpl productMapperImpl;
     private final TableMapperImpl tableMapperImpl;
     private final PhotoService photoService;
-    private final WebSocketController webSocketController;
+    private final WebSocketSender webSocketSender;
+    private final TableCacheService tableCacheService;
 
-    public OrderServiceImpl(OrderRepository orderRepository, TableRepository tableRepository, OrderMapper orderMapper, OrderDiscountService orderDiscountService, OrderProductService orderProductService, AddressMapperImpl addressMapperImpl, ProductMapperImpl productMapperImpl, TableMapperImpl tableMapperImpl, @Qualifier("photoServiceImplS3") PhotoService photoService, WebSocketController webSocketController) {
+    public OrderServiceImpl(OrderRepository orderRepository, TableRepository tableRepository, OrderMapper orderMapper, OrderDiscountService orderDiscountService, OrderProductService orderProductService, AddressMapperImpl addressMapperImpl, ProductMapperImpl productMapperImpl, TableMapperImpl tableMapperImpl, @Qualifier("photoServiceImplS3") PhotoService photoService, WebSocketSender webSocketSender, TableCacheService tableCacheService) {
         this.orderRepository = orderRepository;
         this.tableRepository = tableRepository;
         this.orderMapper = orderMapper;
@@ -55,7 +61,8 @@ public class OrderServiceImpl implements OrderService {
         this.productMapperImpl = productMapperImpl;
         this.tableMapperImpl = tableMapperImpl;
         this.photoService = photoService;
-        this.webSocketController = webSocketController;
+        this.webSocketSender = webSocketSender;
+        this.tableCacheService = tableCacheService;
     }
 
     @Override
@@ -157,7 +164,7 @@ public class OrderServiceImpl implements OrderService {
         Order orderById = getOrderById(orderId);
         orderById.setStatus(Order.OrderStatus.COMPLETED);
         orderRepository.save(orderById);
-        webSocketController.sendPendingOrderIncrement(-1);
+        webSocketSender.sendPendingOrderIncrement(-1);
     }
 
     @Override
@@ -166,7 +173,7 @@ public class OrderServiceImpl implements OrderService {
         orderById.setStatus(Order.OrderStatus.CONFIRMED);
         orderById.setOtp(null);
         orderRepository.save(orderById);
-        webSocketController.sendPendingOrderIncrement(-1);
+        webSocketSender.sendPendingOrderIncrement(-1);
     }
 
     @Override
@@ -201,6 +208,16 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    public List<OrderProductResponseWithPayloadDto> searchOrdersWithPayloadDtoById(List<Integer> ids) {
+        return ids.stream()
+                .map(id -> {
+                    Order order = getOrderById(id);
+                    return getOrderProductResponseWithPayloadDto(order);
+                })
+                .toList();
+    }
+
+    @Override
     public OrdersStatesCount getOrdersStatesCount() {
         LocalDate today = LocalDate.now();
         LocalDateTime startOfWorkDay = today.atTime(LocalTime.of(7, 0));
@@ -216,7 +233,7 @@ public class OrderServiceImpl implements OrderService {
         return ordersStatesCount;
     }
 
-    private OrderProductResponseWithPayloadDto getOrderProductResponseWithPayloadDto(Order order) {
+    public OrderProductResponseWithPayloadDto getOrderProductResponseWithPayloadDto(Order order) {
         log.debug("Handle order: {}", order);
         OrderProductResponseWithPayloadDto response = new OrderProductResponseWithPayloadDto();
         response.setOtp(order.getOtp());
@@ -267,5 +284,22 @@ public class OrderServiceImpl implements OrderService {
         }
         response.setOrderResponseDTO(orderResponseDTO);
         return response;
+    }
+
+    public TableOrdersPriceInfo countPriceForTable(Integer tableId) {
+        Set<Integer> tableOrders = tableCacheService.getTableOrders(tableId);
+        BigDecimal totalPrice = tableOrders.stream()
+                .map(id -> getOrderById(id).getTotalPrice())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        tableCacheService.deleteTableOrders(tableId);
+        tableCacheService.deleteTableFromClosed(tableId);
+
+        OpenTables openTables = tableCacheService.getOpenTables();
+        openTables.getIds().remove(tableId);
+        tableCacheService.saveOpenTables(openTables);
+
+        webSocketSender.sendOpenTables(openTables);
+        return new TableOrdersPriceInfo(totalPrice);
     }
 }

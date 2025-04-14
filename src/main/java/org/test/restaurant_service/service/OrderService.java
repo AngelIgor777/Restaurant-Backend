@@ -2,6 +2,7 @@ package org.test.restaurant_service.service;
 
 import org.springframework.data.domain.Pageable;
 import org.test.restaurant_service.dto.request.OrderRequestDTO;
+import org.test.restaurant_service.dto.request.table.TableOrdersPriceInfo;
 import org.test.restaurant_service.dto.response.OrderProductResponseWithPayloadDto;
 import org.test.restaurant_service.dto.response.OrderResponseDTO;
 import org.test.restaurant_service.dto.response.OrdersStatesCount;
@@ -48,5 +49,9 @@ public interface OrderService {
 
     OrderProductResponseWithPayloadDto searchOrderProductResponseWithPayloadDtoByValidationCode(String query);
 
+    List<OrderProductResponseWithPayloadDto> searchOrdersWithPayloadDtoById(List<Integer> ids);
+
     OrdersStatesCount getOrdersStatesCount();
+
+    TableOrdersPriceInfo countPriceForTable(Integer tableId);
 }

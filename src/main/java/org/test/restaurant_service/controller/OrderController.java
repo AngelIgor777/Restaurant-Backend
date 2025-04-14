@@ -4,6 +4,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.test.restaurant_service.dto.request.table.TableOrdersPriceInfo;
 import org.test.restaurant_service.dto.response.OrderProductResponseWithPayloadDto;
 import org.test.restaurant_service.dto.response.OrdersStatesCount;
 import org.test.restaurant_service.entity.Order;
@@ -55,6 +56,13 @@ public class OrderController {
         return ResponseEntity.ok(order);
     }
 
+    @GetMapping("/searchOrders")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    public ResponseEntity<List<OrderProductResponseWithPayloadDto>> searchOrdersById(@RequestParam List<Integer> ids) {
+        List<OrderProductResponseWithPayloadDto> order = orderService.searchOrdersWithPayloadDtoById(ids);
+        return ResponseEntity.ok(order);
+    }
+
     @PostMapping("/complete/{orderId}")
     @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
     public void completeOrder(@PathVariable Integer orderId) {
@@ -77,5 +85,11 @@ public class OrderController {
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Integer id) {
         orderService.delete(id);
+    }
+
+
+    @PostMapping("/count/{tableId}")
+    public TableOrdersPriceInfo countPriceForTable(@PathVariable Integer tableId) {
+        return orderService.countPriceForTable(tableId);
     }
 }

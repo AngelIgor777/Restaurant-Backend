@@ -1,4 +1,4 @@
-package org.test.restaurant_service.service.impl;
+package org.test.restaurant_service.service.impl.cache;
 
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
