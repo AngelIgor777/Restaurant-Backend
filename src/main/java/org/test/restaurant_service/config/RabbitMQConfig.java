@@ -30,6 +30,14 @@ public class RabbitMQConfig {
     @Value("${rabbitmq.queues.json.queue2.routingKey}")
     private String productHistoryRoutingKey;
 
+
+    @Value("${rabbitmq.queues.json.queue3.name}")
+    private String orderBulkFromAdminQueue;
+
+    @Value("${rabbitmq.queues.json.queue3.routingKey}")
+    private String orderBulkFromAdminRoutingKey;
+
+
     @Bean
     public Queue orderSavingQueue() {
         return new Queue(orderSavingQueue);
@@ -38,6 +46,11 @@ public class RabbitMQConfig {
     @Bean
     public Queue productHistorySavingQueue() {
         return new Queue(productHistorySavingQueue);
+    }
+
+    @Bean
+    public Queue orderBulkFromAdminQueue() {
+        return new Queue(orderBulkFromAdminQueue);
     }
 
 
@@ -65,6 +78,14 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    public Binding orderBulkFromAdminBinding() {
+        return BindingBuilder
+                .bind(orderBulkFromAdminQueue())
+                .to(topicExchange())
+                .with(orderBulkFromAdminRoutingKey);
+    }
+
+    @Bean
     public MessageConverter messageConverter() {
         return new Jackson2JsonMessageConverter();
     }
@@ -74,7 +95,6 @@ public class RabbitMQConfig {
         RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
         rabbitTemplate.setMessageConverter(messageConverter());
         return rabbitTemplate;
-
     }
 
 }

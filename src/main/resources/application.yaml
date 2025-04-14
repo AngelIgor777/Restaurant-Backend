@@ -60,6 +60,9 @@ rabbitmq:
       queue2:
         name: product_history_saving_queue
         routingKey: ${RABBITMQ_QUEUES_JSON_QUEUE2_ROUTINGKEY}
+      queue3:
+        name: order_bulk_from_admin_queue
+        routingKey: ${RABBITMQ_QUEUES_JSON_QUEUE3_ROUTINGKEY}
   exchanges:
     exchange:
       name: java_exchange

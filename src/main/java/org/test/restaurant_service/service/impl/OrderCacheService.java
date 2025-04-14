@@ -2,7 +2,7 @@ package org.test.restaurant_service.service.impl;
 
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-import org.test.restaurant_service.dto.request.OrderProductWithPayloadRequestDto;
+import org.test.restaurant_service.dto.request.order.OrderProductWithPayloadRequestDto;
 
 import java.time.Duration;
 
