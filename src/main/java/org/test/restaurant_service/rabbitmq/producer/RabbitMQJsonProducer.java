@@ -5,7 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.test.restaurant_service.dto.request.OrderProductWithPayloadRequestDto;
+import org.test.restaurant_service.dto.request.order.OrderProductWithPayloadAndPrintRequestDto;
+import org.test.restaurant_service.dto.request.order.OrderProductWithPayloadRequestDto;
 import org.test.restaurant_service.dto.response.OtpResponseDto;
 import org.test.restaurant_service.entity.Order;
 import org.test.restaurant_service.service.OtpService;
@@ -20,29 +21,37 @@ public class RabbitMQJsonProducer {
 
     @Value("${rabbitmq.queues.json.queue1.routingKey}")
     private String orderSavingRoutingKey;
-    private final OtpService otpService;
+
+    @Value("${rabbitmq.queues.json.queue3.routingKey}")
+    private String orderBulkFromAdminRoutingKey;
 
     private final RabbitTemplate rabbitTemplate;
+    private final OtpService otpService;
 
     public OtpResponseDto send(OrderProductWithPayloadRequestDto request) {
+        return sendMessage(request, orderSavingRoutingKey);
+    }
+
+    public OtpResponseDto send(OrderProductWithPayloadAndPrintRequestDto request) {
+        return sendMessage(request, orderBulkFromAdminRoutingKey);
+    }
+
+    private <T extends OrderProductWithPayloadRequestDto> OtpResponseDto sendMessage(T request, String routingKey) {
         OtpResponseDto otpResponseDto = new OtpResponseDto();
-        Order.OrderStatus orderStatus = request.getOrderStatus();
-        if (orderStatus != null) {
-            if (orderStatus.equals(Order.OrderStatus.CONFIRMED)) {
-                rabbitTemplate.convertAndSend(exchangeName, orderSavingRoutingKey, request);
-                return otpResponseDto;
-            } else {
+        if (request instanceof OrderProductWithPayloadAndPrintRequestDto) {
+            OrderProductWithPayloadAndPrintRequestDto requestForPrintDto = (OrderProductWithPayloadAndPrintRequestDto) request;
+            if (needsOtp(requestForPrintDto)) {
                 String otp = otpService.generateOtpForOrder();
                 request.setOtp(otp);
                 otpResponseDto.setOtp(otp);
-                rabbitTemplate.convertAndSend(exchangeName, orderSavingRoutingKey, request);
-                return otpResponseDto;
             }
         }
-        String otp = otpService.generateOtpForOrder();
-        request.setOtp(otp);
-        otpResponseDto.setOtp(otp);
-        rabbitTemplate.convertAndSend(exchangeName, orderSavingRoutingKey, request);
+
+        rabbitTemplate.convertAndSend(exchangeName, routingKey, request);
         return otpResponseDto;
+    }
+
+    private boolean needsOtp(OrderProductWithPayloadAndPrintRequestDto request) {
+        return request.getOrderStatus() == null || !Order.OrderStatus.CONFIRMED.equals(request.getOrderStatus());
     }
 }

@@ -22,6 +22,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.test.restaurant_service.dto.request.*;
+import org.test.restaurant_service.dto.request.order.OrderProductWithPayloadRequestDto;
 import org.test.restaurant_service.dto.response.*;
 import org.test.restaurant_service.entity.*;
 import org.test.restaurant_service.entity.User;

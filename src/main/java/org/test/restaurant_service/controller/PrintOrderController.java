@@ -2,10 +2,8 @@ package org.test.restaurant_service.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.test.restaurant_service.dto.request.order.ProductsForPrintRequest;
 import org.test.restaurant_service.service.PrinterService;
 
 
@@ -18,7 +16,8 @@ public class PrintOrderController {
 
     @PostMapping("/{orderId}/print")
     @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
-    public void sendToPrinter(@PathVariable Integer orderId) {
-        printerService.sendOrderToPrinter(orderId);
+    public void sendToPrinter(@PathVariable Integer orderId,
+                              @RequestBody ProductsForPrintRequest productsId) {
+        printerService.sendOrderToPrinter(orderId, productsId);
     }
 }
