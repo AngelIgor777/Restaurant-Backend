@@ -27,4 +27,9 @@ public class WebSocketController {
     public void sendPendingOrderIncrement(Integer increment) {
         messagingTemplate.convertAndSend("/topic/pending-orders-increment", increment);
     }
+
+    public void sendCloseTables(Integer increment) {
+        messagingTemplate.convertAndSend("/topic/pending-orders-increment", increment);
+    }
+
 }
