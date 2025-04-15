@@ -45,6 +45,7 @@ jobs:
           echo "REDIS_HOST=${{ secrets.REDIS_HOST }}" >> src/main/resources/.env
           echo "REDIS_PORT=${{ secrets.REDIS_PORT }}" >> src/main/resources/.env
           echo "DISPOSABLE_ADMIN_KEY=${{ secrets.DISPOSABLE_ADMIN_KEY }}" >> src/main/resources/.env
+          echo "RABBITMQ_QUEUES_JSON_QUEUE3_ROUTINGKEY=${{ secrets.RABBITMQ_QUEUES_JSON_QUEUE3_ROUTINGKEY }}" >> src/main/resources/.env
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
