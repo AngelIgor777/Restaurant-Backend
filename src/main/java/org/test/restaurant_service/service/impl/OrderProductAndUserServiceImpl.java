@@ -118,16 +118,7 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
         order.setTotalPrice(totalPrice.get());
 
         boolean isInRestaurant = checkTheOrderIsInRestaurant(order, requestDto, orderProductResponseWithPayloadDto);
-        if (isInRestaurant) {
-            Set<Integer> ids = tableCacheService.getOpenTables().getIds();
-            Table table = tableService.getByNumber(requestDto.getTableRequestDTO().getNumber());
-            Integer tableId = table.getId();
-            if (ids.contains(tableId)) {
-                tableCacheService.addOrderIdToTable(order.getId(), requestDto.getTableRequestDTO().getNumber());
-                Set<Integer> tableOrders = tableCacheService.getTableOrders(tableId);
-                webSocketSender.sendTablesOrderInfo(new TableOrderInfo(tableId, tableOrders));
-            }
-        }
+
         OrderDiscount orderDiscount = handleDiscountCodes(existDiscountCodes, globalDiscountCode, productDiscountCode, globalDiscountAmount, productDiscountAmount, totalPrice, order, orderProductResponseWithPayloadDto, productResponseDTOS);
 
         OrderProductWithPayloadAndPrintRequestDto requestDtoForPrint = null;
@@ -141,6 +132,21 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
         }
 
         Order savedOrder = orderService.create(order);
+
+        if (isInRestaurant) {
+            Set<Integer> ids = tableCacheService.getOpenTables().getIds();
+            if (ids != null) {
+                Table table = tableService.getByNumber(requestDto.getTableRequestDTO().getNumber());
+                Integer tableId = table.getId();
+                if (ids.contains(tableId)) {
+                    tableCacheService.addOrderIdToTable(savedOrder.getId(), tableId);
+                    TableOrderInfo tableOrderInfo = new TableOrderInfo();
+                    tableOrderInfo.setTableId(tableId);
+                    orderService.setTableMetaData(tableOrderInfo);
+                    webSocketSender.sendTablesOrderInfo(tableOrderInfo);
+                }
+            }
+        }
 
         if (orderDiscount != null) {
             orderDiscountService.save(orderDiscount);

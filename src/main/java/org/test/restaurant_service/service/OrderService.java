@@ -2,6 +2,7 @@ package org.test.restaurant_service.service;
 
 import org.springframework.data.domain.Pageable;
 import org.test.restaurant_service.dto.request.OrderRequestDTO;
+import org.test.restaurant_service.dto.request.table.TableOrderInfo;
 import org.test.restaurant_service.dto.request.table.TableOrdersPriceInfo;
 import org.test.restaurant_service.dto.response.OrderProductResponseWithPayloadDto;
 import org.test.restaurant_service.dto.response.OrderResponseDTO;
@@ -54,4 +55,6 @@ public interface OrderService {
     OrdersStatesCount getOrdersStatesCount();
 
     TableOrdersPriceInfo countPriceForTable(Integer tableId);
+
+    void setTableMetaData(TableOrderInfo tableOrderInfo);
 }

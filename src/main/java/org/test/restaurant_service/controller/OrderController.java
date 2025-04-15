@@ -3,6 +3,7 @@ package org.test.restaurant_service.controller;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.test.restaurant_service.dto.request.table.TableOrdersPriceInfo;
 import org.test.restaurant_service.dto.response.OrderProductResponseWithPayloadDto;
@@ -37,6 +38,7 @@ public class OrderController {
     }
 
     @GetMapping("/countStats")
+    @Transactional(readOnly = true)
     @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
     public ResponseEntity<OrdersStatesCount> getOrdersStatesCount() {
         OrdersStatesCount orders = orderService.getOrdersStatesCount();

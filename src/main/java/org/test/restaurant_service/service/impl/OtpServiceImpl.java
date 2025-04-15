@@ -23,16 +23,26 @@ public class OtpServiceImpl implements OtpService {
 
     @Override
     public String generateOtpForOrder() {
-        String otp = generateOtp();
+        String otp = generate2DOtp();
 
+        int i = 0;
         while (orderService.existsByOtp(otp)) {
-            otp = generateOtp();
+            otp = generate2DOtp();
+            i++;
+            if (i > 99) {
+                otp = generate3DOtp();
+                i = 0;
+            }
         }
         return otp;
     }
 
-    private static String generateOtp() {
+    private static String generate2DOtp() {
         return String.valueOf(10 + new Random().nextInt(90));
+    }
+
+    private static String generate3DOtp() {
+        return String.valueOf(100 + new Random().nextInt(99));
     }
 
     public boolean verifyOtp(Long chatId, String otp) {

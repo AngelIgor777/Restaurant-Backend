@@ -16,7 +16,7 @@ public class OrderCacheService {
     }
 
     public void saveOrder(Long chatId, OrderProductWithPayloadRequestDto orderDto) {
-        redisTemplate.opsForValue().set("order:" + chatId, orderDto, Duration.ofMinutes(5)); // Save for 5 min
+        redisTemplate.opsForValue().set("order:" + chatId, orderDto, Duration.ofMinutes(5));
     }
 
     public OrderProductWithPayloadRequestDto getOrder(Long chatId) {

@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.test.restaurant_service.controller.websocket.WebSocketSender;
 import org.test.restaurant_service.dto.request.OrderRequestDTO;
 import org.test.restaurant_service.dto.request.table.OpenTables;
+import org.test.restaurant_service.dto.request.table.TableOrderInfo;
 import org.test.restaurant_service.dto.request.table.TableOrdersPriceInfo;
 import org.test.restaurant_service.dto.response.*;
 import org.test.restaurant_service.entity.*;
@@ -29,6 +30,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -133,7 +135,7 @@ public class OrderServiceImpl implements OrderService {
     public List<OrderProductResponseWithPayloadDto> getAllOrdersProductResponseWithPayloadDto(Order.OrderStatus status, LocalDateTime from, LocalDateTime to, Pageable pageable) {
         List<OrderProductResponseWithPayloadDto> list = orderRepository.findAllByStatusAndCreatedAtBetween(status, from, to, pageable)
                 .stream()
-                .map(this::getOrderProductResponseWithPayloadDto)
+                .map(order -> getOrderProductResponseWithPayloadDto(order, false))
                 .toList();
         return list;
     }
@@ -143,7 +145,7 @@ public class OrderServiceImpl implements OrderService {
     public List<OrderProductResponseWithPayloadDto> getAllOrdersProductResponseWithPayloadDto(Order.OrderStatus status, LocalDateTime from, LocalDateTime to) {
         List<OrderProductResponseWithPayloadDto> list = orderRepository.findAllByStatusAndCreatedAtBetween(status, from, to)
                 .stream()
-                .map(this::getOrderProductResponseWithPayloadDto)
+                .map(order -> getOrderProductResponseWithPayloadDto(order, false))
                 .toList();
         return list;
     }
@@ -151,7 +153,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderProductResponseWithPayloadDto getOrderProductResponseWithPayloadDto(Integer id) {
         return getOrderProductResponseWithPayloadDto(orderRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Order not found with id " + id)));
+                .orElseThrow(() -> new EntityNotFoundException("Order not found with id " + id)), false);
     }
 
     @Override
@@ -182,7 +184,7 @@ public class OrderServiceImpl implements OrderService {
         List<Order> ordersByUserUuid = orderRepository.findByUser_UuidOrderByCreatedAtDesc(userUUID, pageable);
         List<OrderProductResponseWithPayloadDto> list = new java.util.ArrayList<>(ordersByUserUuid.stream()
                 .map(order -> {
-                    OrderProductResponseWithPayloadDto response = getOrderProductResponseWithPayloadDto(order);
+                    OrderProductResponseWithPayloadDto response = getOrderProductResponseWithPayloadDto(order, false);
                     return response;
                 })
                 .toList());
@@ -204,7 +206,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderProductResponseWithPayloadDto searchOrderProductResponseWithPayloadDtoByValidationCode(String query) {
         Order order = orderRepository.findByOtp(query)
                 .orElseThrow(() -> new EntityNotFoundException("Order not found with OTP " + query));
-        return getOrderProductResponseWithPayloadDto(order);
+        return getOrderProductResponseWithPayloadDto(order, false);
     }
 
     @Override
@@ -212,7 +214,7 @@ public class OrderServiceImpl implements OrderService {
         return ids.stream()
                 .map(id -> {
                     Order order = getOrderById(id);
-                    return getOrderProductResponseWithPayloadDto(order);
+                    return getOrderProductResponseWithPayloadDto(order, false);
                 })
                 .toList();
     }
@@ -230,10 +232,56 @@ public class OrderServiceImpl implements OrderService {
         ordersStatesCount.setPendingOrders(pendingCount);
         ordersStatesCount.setConfirmedOrders(confirmedCount);
         ordersStatesCount.setCompletedOrders(completedCount);
+        ordersStatesCount.setOpenTables(tableCacheService.getOpenTables());
+        List<TableOrderInfo> allTableOrderInfos = tableCacheService.getAllTableOrderInfos();
+
+        for (TableOrderInfo tableOrderInfo : allTableOrderInfos) {
+            if (tableOrderInfo != null) {
+                setTableMetaData(tableOrderInfo);
+            }
+        }
+        ordersStatesCount.setTableOrderInfos(allTableOrderInfos);
         return ordersStatesCount;
     }
 
-    public OrderProductResponseWithPayloadDto getOrderProductResponseWithPayloadDto(Order order) {
+    @Override
+    public void setTableMetaData(TableOrderInfo tableOrderInfo) {
+        TableStateOrders pendingOrders = new TableStateOrders();
+        List<OrderProductResponseWithPayloadDto> pendingOrdersList = new ArrayList<>();
+        TableStateOrders completedOrders = new TableStateOrders();
+        List<OrderProductResponseWithPayloadDto> completedOrdersList = new ArrayList<>();
+        TableStateOrders confirmedOrders = new TableStateOrders();
+        List<OrderProductResponseWithPayloadDto> confirmedOrdersList = new ArrayList<>();
+
+        int tableId = tableOrderInfo.getTableId();
+        Set<Integer> tableOrders = tableCacheService.getTableOrders(tableId);
+        if (tableOrders != null && !tableOrders.isEmpty()) {
+            for (Integer orderId : tableOrders) {
+                Order order = getOrderById(orderId);
+                OrderProductResponseWithPayloadDto orderWithPayload = getOrderProductResponseWithPayloadDto(order, false);
+                if (order.getStatus().equals(Order.OrderStatus.PENDING)) {
+                    pendingOrdersList.add(orderWithPayload);
+                    pendingOrders.setCount(pendingOrders.getCount() + 1);
+                } else if (order.getStatus().equals(Order.OrderStatus.COMPLETED)) {
+                    completedOrdersList.add(orderWithPayload);
+                    completedOrders.setCount(confirmedOrders.getCount() + 1);
+                } else if (order.getStatus().equals(Order.OrderStatus.CONFIRMED)) {
+                    confirmedOrdersList.add(orderWithPayload);
+                    confirmedOrders.setCount(confirmedOrders.getCount() + 1);
+                }
+            }
+        }
+
+        pendingOrders.setOrders(pendingOrdersList);
+        completedOrders.setOrders(completedOrdersList);
+        confirmedOrders.setOrders(confirmedOrdersList);
+
+        tableOrderInfo.setPendingOrders(pendingOrders);
+        tableOrderInfo.setCompletedOrders(completedOrders);
+        tableOrderInfo.setConfirmedOrders(confirmedOrders);
+    }
+
+    public OrderProductResponseWithPayloadDto getOrderProductResponseWithPayloadDto(Order order, boolean useProductPhoto) {
         log.debug("Handle order: {}", order);
         OrderProductResponseWithPayloadDto response = new OrderProductResponseWithPayloadDto();
         response.setOtp(order.getOtp());
@@ -248,12 +296,12 @@ public class OrderServiceImpl implements OrderService {
                 .map(orderProduct -> {
                     Product product = orderProduct.getProduct();
                     totalCookingTime.updateAndGet(time -> time.plusMinutes((long) product.getCookingTime().getMinute() * orderProduct.getQuantity()));
-                    ProductResponseDTO productResponseDTO = productMapperImpl.toResponseIgnorePhotos(product);
-                    List<PhotoResponseDTO> photos = photoService.getPhotosByProductId(product.getId());
-                    if (photos.get(0) != null) {
-                        productResponseDTO.setPhotoUrl(photos.get(0).getUrl());
+                    ProductResponseDTO productResponseDTO;
+                    if (!useProductPhoto) {
+                        productResponseDTO = productMapperImpl.toResponseIgnorePhotos(product);
+                    } else {
+                        productResponseDTO = productMapperImpl.toResponseDTO(product);
                     }
-
                     productResponseDTO.setQuantity(orderProduct.getQuantity());
                     return productResponseDTO;
                 }).toList();

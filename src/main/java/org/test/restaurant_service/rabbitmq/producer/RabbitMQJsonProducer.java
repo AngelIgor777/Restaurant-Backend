@@ -45,13 +45,19 @@ public class RabbitMQJsonProducer {
                 request.setOtp(otp);
                 otpResponseDto.setOtp(otp);
             }
+        } else {
+            String otp = otpService.generateOtpForOrder();
+            request.setOtp(otp);
+            otpResponseDto.setOtp(otp);
         }
 
         rabbitTemplate.convertAndSend(exchangeName, routingKey, request);
         return otpResponseDto;
     }
 
-    private boolean needsOtp(OrderProductWithPayloadAndPrintRequestDto request) {
-        return request.getOrderStatus() == null || !Order.OrderStatus.CONFIRMED.equals(request.getOrderStatus());
+    private <T extends OrderProductWithPayloadRequestDto> boolean needsOtp(T request) {
+            OrderProductWithPayloadAndPrintRequestDto requestForPrintDto = (OrderProductWithPayloadAndPrintRequestDto) request;
+            return requestForPrintDto.getOrderStatus() == null || !Order.OrderStatus.CONFIRMED.equals(requestForPrintDto.getOrderStatus());
+
     }
 }

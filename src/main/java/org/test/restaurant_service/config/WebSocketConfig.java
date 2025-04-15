@@ -18,11 +18,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-
         registry.addEndpoint("/ws-orders-print")
                 .setAllowedOrigins("http://localhost:8080")
                 .setAllowedOriginPatterns("http://localhost:*", "http://127.0.0.1:*", "http://195.133.27.38:*", "https://websocketking.com/");
-
 
         registry.addEndpoint("/ws-orders")
                 .setAllowedOrigins("http://195.133.27.38")
