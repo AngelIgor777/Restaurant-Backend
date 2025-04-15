@@ -354,6 +354,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void createAndEditMessage(Update update, String text, InlineKeyboardMarkup keyboard) {
         EditMessageText editMessageText = getEditMessageText(update, text);
+        editMessageText.setParseMode("Markdown");
         editMessageText.setReplyMarkup(keyboard);
         executeMessage(editMessageText);
     }
@@ -522,9 +523,45 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private String getMessageAfterOrderPending(OtpResponseDto otpResponseDto, OrderProductWithPayloadRequestDto order) {
-        String text = String.format("Номер вашего заказа: %s\n\n\n" +
-                "В скором времени всё будет готово! 😉\nА пока можете зайти на наш сайт и посмотреть меню более детально [parktown.md](http://195.133.27.38/#menu/%s)", otpResponseDto.getOtp(), order.getUserUUID());
-        return text;
+        StringBuilder message = new StringBuilder();
+
+        message.append("✅ *Ваш заказ принят!*\n\n")
+                .append("*Проверочный код:* ").append(otpResponseDto.getOtp()).append("\n\n");
+
+        message.append("*Состав заказа:*\n");
+
+        BigDecimal total = BigDecimal.ZERO;
+
+        for (OrderProductRequestDTO item : order.getOrderProductRequestDTO()) {
+            Product product = productService.getSimpleById(item.getProductId());
+            BigDecimal itemTotal = product.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
+            total = total.add(itemTotal);
+
+            message.append("• ").append(product.getName())
+                    .append(" — ").append(item.getQuantity()).append(" шт. ")
+                    .append(String.format("(%.2f лей)\n", itemTotal));
+        }
+
+        message.append("\n*Итого:* ").append(String.format("%.2f лей\n", total));
+
+        if (order.isOrderInRestaurant() && order.getTableRequestDTO() != null) {
+            message.append("*Стол:* №").append(order.getTableRequestDTO().getNumber()).append("\n");
+        } else if (order.getAddressRequestDTO() != null) {
+            AddressRequestDTO address = order.getAddressRequestDTO();
+            message.append("*Адрес:* ")
+                    .append(address.getCity()).append(", ул. ").append(address.getStreet())
+                    .append(" ").append(address.getHomeNumber());
+            if (address.getApartmentNumber() != null) {
+                message.append(", кв. ").append(address.getApartmentNumber());
+            }
+            message.append("\n");
+        }
+
+        message.append("\n🕒 В скором времени всё будет готово!\n")
+                .append("А пока можете посмотреть меню [на сайте](http://195.133.27.38/#menu/")
+                .append(order.getUserUUID()).append(")");
+
+        return message.toString();
     }
 
     private void handleUserAddressMessage(Update update) {
