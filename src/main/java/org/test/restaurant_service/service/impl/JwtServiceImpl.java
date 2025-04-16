@@ -4,19 +4,24 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.test.restaurant_service.dto.response.admin.JwtResponse;
+import org.test.restaurant_service.dto.response.JwtResponse;
+import org.test.restaurant_service.entity.Role;
+import org.test.restaurant_service.entity.User;
 import org.test.restaurant_service.entity.Admin;
 import org.test.restaurant_service.entity.User;
 import org.test.restaurant_service.service.JwtService;
+import org.test.restaurant_service.service.UserService;
 import org.test.restaurant_service.util.JwtAlgorithmUtil;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class JwtServiceImpl implements JwtService {
+    private final UserService userService;
 
     private final HttpServletRequest request;
 
@@ -33,6 +38,34 @@ public class JwtServiceImpl implements JwtService {
     }
 
     @Override
+    public JwtResponse generateUserAccessToken(UUID userUUID) {
+        User user = userService.findByUUID(userUUID);
+        List<String> userRoles = user.getRoles()
+                .stream()
+                .map(role -> role.getRoleName().name())
+                .toList();
+        Algorithm algorithm = JwtAlgorithm.getAccessAlgorithm();
+        String accessToken = JWT.create()
+                .withSubject(user.getTelegramUserEntity().getChatId().toString())
+                .withClaim("roles", userRoles)
+                .withExpiresAt(new Date(System.currentTimeMillis() + ACCESS_TOKEN_EXPIRATION_TIME))
+                .sign(algorithm);
+
+        return JwtResponse.builder()
+                .accessToken(accessToken)
+                .userUUID(userUUID).build();
+    }
+
+    @Override
+    public Long getChatId(String accessToken) {
+        String subject = JWT.require(JwtAlgorithm.getAccessAlgorithm())
+                .build()
+                .verify(accessToken)
+                .getSubject();
+        return Long.parseLong(subject);
+    }
+
+    @Override
     public String extractToken() {
         String header = request.getHeader("Authorization");
         if (header != null && header.startsWith("Bearer ")) {
@@ -43,7 +76,7 @@ public class JwtServiceImpl implements JwtService {
 
     @Override
     public List<String> getRoles(String accessToken) {
-        return JWT.require(JwtAlgorithmUtil.getAccessAlgorithm())
+        return JWT.require(JwtAlgorithm.getAccessAlgorithm())
                 .build()
                 .verify(accessToken)
                 .getClaim("roles").asList(String.class);

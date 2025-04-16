@@ -25,6 +25,7 @@ public class ApplicationConfig {
                 .build();
     }
 
+    //todo find correct pool size and queue
     @Bean
     public TaskExecutor taskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();

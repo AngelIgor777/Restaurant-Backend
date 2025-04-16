@@ -73,11 +73,18 @@ server:
 jwt:
   access: ${JWT_ACCESS}
 
-bot:
-  name:
-    ${BOT_NAME}
-  key:
-    ${BOT_KEY}
+telegram:
+  bot:
+    name:
+      ${BOT_NAME}
+    key:
+      ${BOT_KEY}
+  workBot:
+    name:
+      ${WORK_BOT_NAME}
+    key:
+      ${WORK_BOT_KEY}
+
 
 scheduler:
   cron:

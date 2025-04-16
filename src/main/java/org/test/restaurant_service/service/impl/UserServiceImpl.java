@@ -51,4 +51,13 @@ public class UserServiceImpl implements UserService {
     public Page<User> search(String query, Pageable pageable) {
         return userRepository.search(query, pageable);
     }
+
+    @Override
+    public List<User> getStaff() {
+        List<RoleName> roles = List.of(
+                RoleName.ROLE_COOK,
+                RoleName.ROLE_MODERATOR
+        );
+        return userRepository.findAllStaffUsers(roles);
+    }
 }

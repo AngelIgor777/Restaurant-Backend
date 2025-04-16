@@ -15,6 +15,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RoleServiceImpl implements RoleService {
     private final RoleRepository roleRepository;
+    private final StaffSendingOrderService staffSendingOrderService;
 
     private final UserService userService;
 
@@ -41,6 +42,14 @@ public class RoleServiceImpl implements RoleService {
         User user = userService.findByChatId(chatId);
         ensureUserHasRole(user, roleName);
         userService.save(user);
+        switch (roleName.name()) {
+            case "ROLE_COOK": {
+                staffSendingOrderService.createStaffSendingOrder(user, chatId);
+            }
+            case "ROLE_MODERATOR": {
+                staffSendingOrderService.createStaffSendingOrder(user, chatId);
+            }
+        }
     }
 
 }
