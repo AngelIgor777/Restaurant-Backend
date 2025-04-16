@@ -85,6 +85,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final String BUCKET_USER_WAITING_STATE_ADDRESS = "BWT_ADDR";
     private final String BUCKET_USER_WAITING_STATE_PHONE = "BWT_PH";
     private final String BUCKET_SHOW = "B_SHOW";
+    private final String BUCKET_DELETE_PRODUCT = "DEL_PR:";
 
     private final String TABLE_SUFFIX = "T:";
 
@@ -134,19 +135,18 @@ public class TelegramBot extends TelegramLongPollingBot {
     private ArrayList<BotCommand> getCommands(String langCode) {
         ArrayList<BotCommand> botCommands = new ArrayList<>();
         if ("ro".equals(langCode)) {
-            botCommands.add(new BotCommand("/start", "Porniți botul"));
+            botCommands.add(new BotCommand("/menu", "Afișați meniul"));
             botCommands.add(new BotCommand("/website", "Accesați site-ul web"));
             botCommands.add(new BotCommand("/help", "Lista comenzilor disponibile"));
             botCommands.add(new BotCommand("/info", "Informații despre bot"));
-            botCommands.add(new BotCommand("/menu", "Afișați meniul"));
             botCommands.add(new BotCommand("/about", "Afișați informațiile mele"));
             botCommands.add(new BotCommand("/lang", "Schimbați limba"));
         } else {
-            botCommands.add(new BotCommand("/start", "Запуск бота"));
+            botCommands.add(new BotCommand("/menu", "Показать меню"));
             botCommands.add(new BotCommand("/website", "Зайти на сайт"));
+            botCommands.add(new BotCommand("/basket", "Посмотреть корзину"));
             botCommands.add(new BotCommand("/help", "Список доступных команд"));
             botCommands.add(new BotCommand("/info", "Информация о боте"));
-            botCommands.add(new BotCommand("/menu", "Показать меню"));
             botCommands.add(new BotCommand("/about", "Показать мою информацию"));
             botCommands.add(new BotCommand("/lang", "Изменить язык"));
         }
@@ -207,6 +207,9 @@ public class TelegramBot extends TelegramLongPollingBot {
                 case "/start":
                     registerFull(update);
                     break;
+                case "/basket":
+                    sendBasket(update);
+                    break;
                 case "/help":
                     sendHelpMessage(update);
                     break;
@@ -250,6 +253,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         boolean bucketOrderTypeHomeCallBack = data.startsWith(BUCKET_ORDER_TYPE_HOME_SUFFIX);
         boolean bucketTableCallBack = data.startsWith(BUCKET_ORDER_TABLE_SUFFIX);
         boolean bucketShowCallBack = data.startsWith(BUCKET_SHOW);
+        boolean bucketdeleteProductCallBack = data.startsWith(BUCKET_DELETE_PRODUCT);
 
 
         boolean bucketPaymentMethodCardCallBack = data.startsWith(BUCKET_PAYMENT_CARD);
@@ -279,6 +283,8 @@ public class TelegramBot extends TelegramLongPollingBot {
             handleTableCallback(update);
         } else if (bucketPaymentMethodCardCallBack) {
             handleBucketPaymentMethodCardCallBack(update);
+        } else if (bucketdeleteProductCallBack) {
+            handleDeleteProductFromBucket(update);
         } else if (bucketPaymentMethodCashCallBack) {
             handleBucketPaymentMethodCashCallBack(update);
         } else if (bucketOrderTypeToTableCallBack) {
@@ -302,11 +308,35 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
+    private void handleDeleteProductFromBucket(Update update) {
+        String data = update.getCallbackQuery().getData();
+        int productIdToDelete = Integer.parseInt(data.replace(BUCKET_DELETE_PRODUCT, ""));
+        Long chatId = update.getCallbackQuery().getMessage().getChatId();
+        List<OrderProductRequestDTO> bucket = userBucketCacheService.getProductsInBucket(chatId);
+        if (bucket != null) {
+            bucket.removeIf(p -> p.getProductId().equals(productIdToDelete));
+            userBucketCacheService.saveBucketForUser(chatId, bucket);
+        }
+
+        String updatedText = formatTextForProductsInBucket(bucket);
+        InlineKeyboardMarkup updatedMarkup = getInlineKeyboardMarkupForBucketResult(chatId, bucket);
+        createAndEditMessage(update, updatedText, updatedMarkup);
+    }
+
+
+    private void sendBasket(Update update) {
+        Long chatId = update.getMessage().getChatId();
+        List<OrderProductRequestDTO> productsInBucket = userBucketCacheService.getProductsInBucket(chatId);
+        String text = formatTextForProductsInBucket(productsInBucket);
+        createAndSendMessage(update, text, getInlineKeyboardMarkupForBucketResult(chatId, productsInBucket));
+    }
+
+
     private void handleBucketShowCallBack(Update update) {
         Long chatId = update.getCallbackQuery().getMessage().getChatId();
         List<OrderProductRequestDTO> productsInBucket = userBucketCacheService.getProductsInBucket(chatId);
         String text = formatTextForProductsInBucket(productsInBucket);
-        createAndEditMessage(update, text, getInlineKeyboardMarkupForBucketResult(chatId, productsInBucket != null && !productsInBucket.isEmpty()));
+        createAndEditMessage(update, text, getInlineKeyboardMarkupForBucketResult(chatId, productsInBucket));
     }
 
     private void handleBucketPaymentMethodCashCallBack(Update update) {
@@ -422,18 +452,30 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         List<OrderProductRequestDTO> productsInBucket = userBucketCacheService.getProductsInBucket(chatId);
         String text = formatTextForProductsInBucket(productsInBucket);
-        createAndEditMessage(update, text, getInlineKeyboardMarkupForBucketResult(chatId, productsInBucket != null && !productsInBucket.isEmpty()));
+        createAndEditMessage(update, text, getInlineKeyboardMarkupForBucketResult(chatId, productsInBucket));
     }
 
-    private InlineKeyboardMarkup getInlineKeyboardMarkupForBucketResult(long chatId, boolean existProducts) {
+    private InlineKeyboardMarkup getInlineKeyboardMarkupForBucketResult(long chatId, List<OrderProductRequestDTO> productsInBucket) {
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> buttons = new ArrayList<>();
-        ArrayList<InlineKeyboardButton> inlineKeyboardButtons = new ArrayList<>();
-        inlineKeyboardButtons.add(createOneLineButton("Посмотреть меню", CallBackButton.BACK_TO_MENU.toString()));
-        if (existProducts) {
-            inlineKeyboardButtons.add(createOneLineButton("Оформить заказ", PLACE_ORDER_SUFFIX + chatId));
+
+        if (productsInBucket != null && !productsInBucket.isEmpty()) {
+            //todo to optimize for bucket receive on db
+            for (OrderProductRequestDTO dto : productsInBucket) {
+                Product product = productService.getSimpleById(dto.getProductId());
+                String buttonText = "❌ " + product.getName();
+                String callbackData = BUCKET_DELETE_PRODUCT + dto.getProductId();
+                buttons.add(List.of(createOneLineButton(buttonText, callbackData)));
+            }
         }
-        buttons.add(inlineKeyboardButtons);
+
+        ArrayList<InlineKeyboardButton> bottomButtons = new ArrayList<>();
+        bottomButtons.add(createOneLineButton("Посмотреть меню", CallBackButton.BACK_TO_MENU.toString()));
+        if (productsInBucket != null && !productsInBucket.isEmpty()) {
+            bottomButtons.add(createOneLineButton("Оформить заказ", PLACE_ORDER_SUFFIX + chatId));
+        }
+        buttons.add(bottomButtons);
+
         markup.setKeyboard(buttons);
         return markup;
     }

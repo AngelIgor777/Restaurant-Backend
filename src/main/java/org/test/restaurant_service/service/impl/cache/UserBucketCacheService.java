@@ -36,8 +36,13 @@ public class UserBucketCacheService {
             productInBucketInfo.setQuantity(quantity);
             productsId.add(productInBucketInfo);
         }
+        saveBucketForUser(chatId, productsId);
+    }
+
+    public void saveBucketForUser(Long chatId, List<OrderProductRequestDTO> productsId) {
         redisTemplate.opsForValue().set("bucket:" + chatId, productsId, Duration.ofMinutes(30));
     }
+
 
     public List<OrderProductRequestDTO> getProductsInBucket(Long chatId) {
         return (List<OrderProductRequestDTO>) redisTemplate.opsForValue().get("bucket:" + chatId);
@@ -58,4 +63,5 @@ public class UserBucketCacheService {
     public void deleteOrder(Long chatId) {
         redisTemplate.delete("tgBucketOrder:" + chatId);
     }
+
 }
