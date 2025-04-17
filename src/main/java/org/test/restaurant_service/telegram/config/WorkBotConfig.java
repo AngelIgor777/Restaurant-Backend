@@ -6,12 +6,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Getter
-public class BotConfig {
-    @Value("${telegram.bot.name}")
-    String botName;
-
-    @Value("${telegram.bot.key}")
-    String botKey;
+public class WorkBotConfig extends BotConfig {
 
     @Value("${telegram.workBot.name}")
     private String workBotName;

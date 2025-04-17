@@ -8,6 +8,7 @@ import org.springframework.stereotype.Controller;
 import org.test.restaurant_service.dto.request.table.OpenTables;
 import org.test.restaurant_service.dto.request.table.TableOrderInfo;
 import org.test.restaurant_service.dto.response.OrderProductResponseWithPayloadDto;
+import org.test.restaurant_service.dto.response.WaiterCallRequestDTO;
 import org.test.restaurant_service.dto.response.printer.OrderForPrintDto;
 
 @Controller
@@ -36,6 +37,10 @@ public class WebSocketSender {
 
     public void sendTablesOrderInfo(TableOrderInfo tableOrderInfo) {
         messagingTemplate.convertAndSend("/topic/tables-info", tableOrderInfo);
+    }
+
+    public void sendCallToWaiter(WaiterCallRequestDTO callWaiterDTO) {
+        messagingTemplate.convertAndSend("/topic/call-waiter", callWaiterDTO);
     }
 
 }

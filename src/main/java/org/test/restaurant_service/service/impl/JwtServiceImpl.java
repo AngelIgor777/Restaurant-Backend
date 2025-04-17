@@ -25,11 +25,11 @@ public class JwtServiceImpl implements JwtService {
 
     private final HttpServletRequest request;
 
+    private static long ACCESS_TOKEN_EXPIRATION_TIME = (30 * 24 * 60 * 60 * 1000L) * 6;
 
     public String generateUserAccessToken(Long chatId, List<String> roles) {
         Algorithm algorithm = JwtAlgorithmUtil.getAccessAlgorithm();
 
-        long ACCESS_TOKEN_EXPIRATION_TIME = (30 * 24 * 60 * 60 * 1000L) * 6;
         return JWT.create()
                 .withSubject(chatId.toString())
                 .withClaim("roles", roles)
@@ -44,7 +44,7 @@ public class JwtServiceImpl implements JwtService {
                 .stream()
                 .map(role -> role.getRoleName().name())
                 .toList();
-        Algorithm algorithm = JwtAlgorithm.getAccessAlgorithm();
+        Algorithm algorithm = JwtAlgorithmUtil.getAccessAlgorithm();
         String accessToken = JWT.create()
                 .withSubject(user.getTelegramUserEntity().getChatId().toString())
                 .withClaim("roles", userRoles)
@@ -58,7 +58,7 @@ public class JwtServiceImpl implements JwtService {
 
     @Override
     public Long getChatId(String accessToken) {
-        String subject = JWT.require(JwtAlgorithm.getAccessAlgorithm())
+        String subject = JWT.require(JwtAlgorithmUtil.getAccessAlgorithm())
                 .build()
                 .verify(accessToken)
                 .getSubject();
@@ -76,7 +76,7 @@ public class JwtServiceImpl implements JwtService {
 
     @Override
     public List<String> getRoles(String accessToken) {
-        return JWT.require(JwtAlgorithm.getAccessAlgorithm())
+        return JWT.require(JwtAlgorithmUtil.getAccessAlgorithm())
                 .build()
                 .verify(accessToken)
                 .getClaim("roles").asList(String.class);
@@ -90,7 +90,7 @@ public class JwtServiceImpl implements JwtService {
                 .getClaim("roles").asList(String.class);
     }
 
-    public JwtResponse generateJwtResponseForAdmin(Admin admin, User user) {
+    public org.test.restaurant_service.dto.response.admin.JwtResponse generateJwtResponseForAdmin(Admin admin, User user) {
         List<String> roles = user.getRoles()
                 .stream()
                 .map(role -> role.getRoleName().name())
@@ -101,7 +101,7 @@ public class JwtServiceImpl implements JwtService {
                 .withClaim("roles", roles)
                 .withExpiresAt(new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 12))
                 .sign(algorithm);
-        JwtResponse jwtResponse = new JwtResponse();
+        org.test.restaurant_service.dto.response.admin.JwtResponse jwtResponse = new org.test.restaurant_service.dto.response.admin.JwtResponse();
         jwtResponse.setDisposableToken(token);
         jwtResponse.setUserUUID(user.getUuid());
         return jwtResponse;

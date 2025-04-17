@@ -21,6 +21,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMar
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import org.test.restaurant_service.controller.websocket.WebSocketSender;
 import org.test.restaurant_service.dto.request.*;
 import org.test.restaurant_service.dto.request.order.OrderProductWithPayloadRequestDto;
 import org.test.restaurant_service.dto.response.*;
@@ -29,16 +30,21 @@ import org.test.restaurant_service.entity.User;
 import org.test.restaurant_service.mapper.ProductMapper;
 import org.test.restaurant_service.mapper.ProductTypeTranslationMapper;
 import org.test.restaurant_service.mapper.ProductTypeTranslationMapperImpl;
+import org.test.restaurant_service.mapper.TelegramUserMapper;
 import org.test.restaurant_service.rabbitmq.producer.RabbitMQJsonProducer;
 import org.test.restaurant_service.service.*;
 import org.test.restaurant_service.service.impl.*;
 import org.test.restaurant_service.service.impl.cache.OrderCacheService;
 import org.test.restaurant_service.service.impl.cache.UserBucketCacheService;
 import org.test.restaurant_service.service.impl.cache.UserCacheService;
+import org.test.restaurant_service.service.impl.cache.WaiterCallCacheService;
 import org.test.restaurant_service.telegram.config.BotConfig;
 import org.test.restaurant_service.telegram.util.TextUtil;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Slf4j
@@ -61,6 +67,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final RabbitMQJsonProducer rabbitMQJsonProducer;
     private final UserCacheService userCacheService;
     private final UserBucketCacheService userBucketCacheService;
+    private final WaiterCallCacheService waiterCallCacheService;
 
     private final String QUICK_ORDER_SUFFIX = "QO:";
     private final String LANG_SUFFIX = "LANG_";
@@ -74,6 +81,9 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final String ORDER_WITH_YOURSELF = "OT:Y";
     private final String ORDER_TO_TABLE = "OT:T";
     private final String ORDER_HOME = "OT:H";
+
+    public final String CALL_WAITER_TABLE_SUFFIX = "CALL_W_T:";
+
 
     //order types for bucket order
     private final String ORDER_WITH_YOURSELF_BUCKET_SUFFIX = "BOWY:Y";
@@ -100,8 +110,11 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final String USER_WAITING_STATE_ADDRESS = "WT_ADDR";
     private final String USER_WAITING_STATE_PHONE = "WT_PH";
     private final OrderCacheService orderCacheService;
+    private final WebSocketSender webSocketSender;
+    private final WorkTelegramBot workTelegramBot;
+    private final StaffSendingOrderService staffSendingOrderService;
 
-    public TelegramBot(TelegramUserServiceImpl telegramUserService, ProductTypeServiceImpl productTypeService, @Qualifier("productServiceImpl") ProductServiceImpl productService, BotConfig botConfig, TextUtil textUtil, UserService userService, S3Service s3Service, LanguageService languageService, ProductTranslationService productTranslationService, ProductTypeTranslationService productTypeTranslationService, ProductTypeTranslationMapperImpl productTypeTranslationMapper, TableServiceImpl tableService, RabbitMQJsonProducer rabbitMQJsonProducer, UserCacheService userCacheService, UserBucketCacheService userBucketCacheService, OrderCacheService orderCacheService) {
+    public TelegramBot(TelegramUserServiceImpl telegramUserService, ProductTypeServiceImpl productTypeService, @Qualifier("productServiceImpl") ProductServiceImpl productService, BotConfig botConfig, TextUtil textUtil, UserService userService, S3Service s3Service, LanguageService languageService, ProductTranslationService productTranslationService, ProductTypeTranslationService productTypeTranslationService, ProductTypeTranslationMapperImpl productTypeTranslationMapper, TableServiceImpl tableService, RabbitMQJsonProducer rabbitMQJsonProducer, UserCacheService userCacheService, UserBucketCacheService userBucketCacheService, OrderCacheService orderCacheService, WebSocketSender webSocketSender, WorkTelegramBot workTelegramBot, StaffSendingOrderService staffSendingOrderService, WaiterCallCacheService waiterCallCacheService, WaiterCallCacheService waiterCallCacheService1) {
         this.telegramUserService = telegramUserService;
         this.productTypeService = productTypeService;
         this.productService = productService;
@@ -116,6 +129,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         this.rabbitMQJsonProducer = rabbitMQJsonProducer;
         this.userCacheService = userCacheService;
         this.userBucketCacheService = userBucketCacheService;
+        this.waiterCallCacheService = waiterCallCacheService1;
         ArrayList<BotCommand> botCommands = getCommands("ru");
         try {
             this.execute(new SetMyCommands(botCommands, new BotCommandScopeDefault(), null));
@@ -124,6 +138,9 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         this.productTypeTranslationMapper = productTypeTranslationMapper;
         this.orderCacheService = orderCacheService;
+        this.webSocketSender = webSocketSender;
+        this.workTelegramBot = workTelegramBot;
+        this.staffSendingOrderService = staffSendingOrderService;
     }
 
     private Set<String> callbackProductTypesData = new HashSet<>();
@@ -210,6 +227,9 @@ public class TelegramBot extends TelegramLongPollingBot {
                 case "/basket":
                     sendBasket(update);
                     break;
+                case "/waiter":
+                    sendTableSelection(update);
+                    break;
                 case "/help":
                     sendHelpMessage(update);
                     break;
@@ -253,7 +273,9 @@ public class TelegramBot extends TelegramLongPollingBot {
         boolean bucketOrderTypeHomeCallBack = data.startsWith(BUCKET_ORDER_TYPE_HOME_SUFFIX);
         boolean bucketTableCallBack = data.startsWith(BUCKET_ORDER_TABLE_SUFFIX);
         boolean bucketShowCallBack = data.startsWith(BUCKET_SHOW);
-        boolean bucketdeleteProductCallBack = data.startsWith(BUCKET_DELETE_PRODUCT);
+        boolean bucketDeleteProductCallBack = data.startsWith(BUCKET_DELETE_PRODUCT);
+
+        boolean callWaiterCallback = data.startsWith(CALL_WAITER_TABLE_SUFFIX);
 
 
         boolean bucketPaymentMethodCardCallBack = data.startsWith(BUCKET_PAYMENT_CARD);
@@ -279,11 +301,13 @@ public class TelegramBot extends TelegramLongPollingBot {
             handleQuickOrderTypeCallback(update);
         } else if (bucketTableCallBack) {
             handleBucketTableCallBack(update);
+        } else if (callWaiterCallback) {
+            handleCallWaiterTableCallback(update);
         } else if (tableCallback) {
             handleTableCallback(update);
         } else if (bucketPaymentMethodCardCallBack) {
             handleBucketPaymentMethodCardCallBack(update);
-        } else if (bucketdeleteProductCallBack) {
+        } else if (bucketDeleteProductCallBack) {
             handleDeleteProductFromBucket(update);
         } else if (bucketPaymentMethodCashCallBack) {
             handleBucketPaymentMethodCashCallBack(update);
@@ -305,6 +329,102 @@ public class TelegramBot extends TelegramLongPollingBot {
             handleAddToBucketCallBack(update);
         } else if (langCallback) {
             handleLanguageCallback(data, chatId);
+        }
+    }
+
+    private void handleCallWaiterTableCallback(Update update) {
+        CallbackQuery callbackQuery = update.getCallbackQuery();
+        String data = callbackQuery.getData();
+        Long chatId = callbackQuery.getMessage().getChatId();
+
+        // Extract table number
+        String tableNumber = data.replace(CALL_WAITER_TABLE_SUFFIX, "");
+
+        // 1. Confirm to the user
+        String text = "✅ Официант был вызван к столику №" + tableNumber;
+        createAndEditMessage(update, text);
+
+        // 2. Prepare waiter call DTO
+        TelegramUserEntity user = telegramUserService.getByChatId(chatId);
+        TelegramUserDTO dto = TelegramUserMapper.INSTANCE.toDto(user);
+
+        WaiterCallRequestDTO waiterCallRequestDTO = WaiterCallRequestDTO.builder()
+                .tableNumber(Integer.parseInt(tableNumber))
+                .requestTime(LocalTime.now())
+                .telegramUser(dto)
+                .build();
+
+        waiterCallCacheService.saveWaiterCall(waiterCallRequestDTO);
+        webSocketSender.sendCallToWaiter(waiterCallRequestDTO);
+
+        List<StaffSendingOrder> allSendingState = staffSendingOrderService.getAllSendingState(true);
+        String caption = buildWaiterNotificationMessage(waiterCallRequestDTO);
+        String photoUrl = dto.getPhotoUrl(); // May be null
+
+        for (StaffSendingOrder staff : allSendingState) {
+            SendPhoto sendPhoto = new SendPhoto();
+            sendPhoto.setChatId(staff.getChatId().toString());
+            sendPhoto.setCaption(caption);
+            sendPhoto.setParseMode("HTML");
+            if (photoUrl != null && !photoUrl.isEmpty()) {
+                sendPhoto.setPhoto(new InputFile(photoUrl));
+            } else {
+                sendPhoto.setPhoto(new InputFile("https://dummyimage.com/600x400/cccccc/000000.png&text=No+Photo"));
+            }
+            try {
+                workTelegramBot.execute(sendPhoto);
+            } catch (TelegramApiException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    private String buildWaiterNotificationMessage(WaiterCallRequestDTO dto) {
+        TelegramUserDTO user = dto.getTelegramUser();
+
+        return String.format("""
+                        <b>📞 Вызов официанта!</b>
+                        
+                        🍽 <b>Столик:</b> №%d
+                        🕒 <b>Время:</b> %s
+                        
+                        <b>👤 Клиент:</b>
+                        ▫ <b>Имя:</b> %s
+                        ▫ <b>Никнейм:</b> @%s
+                        """,
+                dto.getTableNumber(),
+                dto.getRequestTime().format(DateTimeFormatter.ofPattern("HH:mm")),
+                user.getFirstname(),
+                user.getUsername() != null ? user.getUsername() : "—",
+                user.getChatId()
+        );
+    }
+
+    private void sendTableSelection(Update update) {
+        String text = "Пожалуйста, выберите номер столика, к которому должен подойти официант:";
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> buttons = new ArrayList<>();
+
+        setButtonsToCallWaiter(buttons);
+        markup.setKeyboard(buttons);
+        createAndSendMessage(update, text, markup);
+    }
+
+    private void setButtonsToCallWaiter(List<List<InlineKeyboardButton>> buttons) {
+        byte size = tableService.countAll(); // number of tables
+        int buttonsPerRow = 4;
+        int rows = (int) Math.ceil((double) size / buttonsPerRow);
+
+        for (int i = 0; i < rows; i++) {
+            List<InlineKeyboardButton> rowButtons = new ArrayList<>();
+            for (int j = i * buttonsPerRow + 1; j <= Math.min(size, (i + 1) * buttonsPerRow); j++) {
+                String table = String.valueOf(j);
+                String callback = CALL_WAITER_TABLE_SUFFIX + table;
+                InlineKeyboardButton button = createOneLineButton(table, callback);
+                rowButtons.add(button);
+            }
+            buttons.add(rowButtons);
         }
     }
 
@@ -389,9 +509,27 @@ public class TelegramBot extends TelegramLongPollingBot {
         executeMessage(editMessageText);
     }
 
+    private void createAndEditMessage(Update update, String text) {
+        EditMessageText editMessageText = getEditMessageText(update, text);
+        editMessageText.setParseMode("Markdown");
+        executeMessage(editMessageText);
+    }
+
+
     private void createAndSendMessage(Update update, String text, InlineKeyboardMarkup keyboard) {
         SendMessage editMessageText = getSendMessage(update, text);
         editMessageText.setReplyMarkup(keyboard);
+        executeMessage(editMessageText);
+    }
+
+    protected void createAndSendMessage(Update update, String text) {
+        SendMessage editMessageText = getSendMessage(update, text);
+        executeMessage(editMessageText);
+    }
+
+
+    protected void createAndSendMessage(Long chatId, String text) {
+        SendMessage editMessageText = getSendMessage(chatId.toString(), text);
         executeMessage(editMessageText);
     }
 

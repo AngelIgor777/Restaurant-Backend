@@ -9,15 +9,17 @@ import javax.persistence.EntityNotFoundException;
 
 import lombok.RequiredArgsConstructor;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class StaffSendingOrderService {
     private final StaffSendingOrderRepository staffSendingOrderRepository;
 
-    public void enableSending(Long chatId) {
+    public void setStaffSendingState(Long chatId, boolean sendingState) {
         StaffSendingOrder staffSendingOrder = staffSendingOrderRepository.findByChatId(chatId)
                 .orElseThrow(() -> new EntityNotFoundException("StaffSendingOrder not found for chatId: " + chatId));
-        staffSendingOrder.setSendingOn(true);
+        staffSendingOrder.setSendingOn(sendingState);
         staffSendingOrderRepository.save(staffSendingOrder);
     }
 
@@ -29,5 +31,9 @@ public class StaffSendingOrderService {
             staffSendingOrder.setSendingOn(false);
             staffSendingOrderRepository.save(staffSendingOrder);
         }
+    }
+
+    public List<StaffSendingOrder> getAllSendingState(boolean sendingState) {
+        return staffSendingOrderRepository.findAllBySendingOn(sendingState);
     }
 }

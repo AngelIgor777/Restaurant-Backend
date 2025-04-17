@@ -5,7 +5,6 @@ import org.test.restaurant_service.dto.response.admin.JwtResponse;
 import org.test.restaurant_service.entity.Admin;
 import org.test.restaurant_service.entity.User;
 
-import org.test.restaurant_service.dto.response.JwtResponse;
 
 import java.util.List;
 import java.util.UUID;
@@ -19,7 +18,7 @@ public interface JwtService {
 
     public Long getChatId(String accessToken);
 
-    JwtResponse generateUserAccessToken(UUID userUUID);
+    org.test.restaurant_service.dto.response.JwtResponse generateUserAccessToken(UUID userUUID);
 
     JwtResponse generateJwtResponseForAdmin(Admin admin, User user);
 

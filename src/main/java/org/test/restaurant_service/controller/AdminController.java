@@ -47,5 +47,4 @@ public class AdminController {
         roleService.ensureUserHasRole(chatId, role);
     }
 
-
 }

@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.UUID;
 
 public interface OrderService {
-    OrderResponseDTO create(OrderRequestDTO requestDTO);
 
     boolean existsByOtp(String otp);
 
@@ -25,8 +24,6 @@ public interface OrderService {
     List<OrderResponseDTO> getAllOrders();
 
     Order getOrderById(Integer id);
-
-    OrderResponseDTO update(Integer id, OrderRequestDTO requestDTO);
 
     void delete(Integer id);
 

@@ -68,16 +68,6 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public OrderResponseDTO create(OrderRequestDTO requestDTO) {
-        Table table = tableRepository.findById(requestDTO.getTableId())
-                .orElseThrow(() -> new EntityNotFoundException("Table not found with id " + requestDTO.getTableId()));
-        Order order = orderMapper.toEntity(requestDTO);
-        order.setTable(table);
-        order = orderRepository.save(order);
-        return orderMapper.toResponseDTO(order);
-    }
-
-    @Override
     public boolean existsByOtp(String otp) {
         return orderRepository.existsByOtp(otp);
     }
@@ -105,20 +95,6 @@ public class OrderServiceImpl implements OrderService {
         return orderRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Order not found with id " + id));
 
-    }
-
-    @Override
-    public OrderResponseDTO update(Integer id, OrderRequestDTO requestDTO) {
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Order not found with id " + id));
-        orderMapper.updateEntityFromRequestDTO(requestDTO, order);
-        if (requestDTO.getTableId() != null) {
-            Table table = tableRepository.findById(requestDTO.getTableId())
-                    .orElseThrow(() -> new EntityNotFoundException("Table not found with id " + requestDTO.getTableId()));
-            order.setTable(table);
-        }
-        order = orderRepository.save(order);
-        return orderMapper.toResponseDTO(order);
     }
 
     @Override
