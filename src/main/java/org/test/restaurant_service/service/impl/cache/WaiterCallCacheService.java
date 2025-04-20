@@ -25,7 +25,7 @@ public class WaiterCallCacheService {
     }
 
     public WaiterCallRequestDTO getWaiterCallByTable(Integer tableNumber) {
-        return (WaiterCallRequestDTO) redisTemplate.opsForValue().get(PREFIX + tableNumber);
+        return jacksonObjectMapper.convertValue(redisTemplate.opsForValue().get(PREFIX + tableNumber), WaiterCallRequestDTO.class);
     }
 
     public void deleteWaiterCall(Integer tableNumber) {
@@ -42,8 +42,8 @@ public class WaiterCallCacheService {
         for (String key : keys) {
             Object value = redisTemplate.opsForValue().get(key);
             WaiterCallRequestDTO waiterCallRequestDTO = jacksonObjectMapper.convertValue(value, WaiterCallRequestDTO.class);
-                calls.add(waiterCallRequestDTO);
-            }
+            calls.add(waiterCallRequestDTO);
+        }
         return calls;
     }
 }

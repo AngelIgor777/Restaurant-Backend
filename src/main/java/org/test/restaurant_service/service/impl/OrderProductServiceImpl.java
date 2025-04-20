@@ -34,7 +34,7 @@ public class OrderProductServiceImpl implements OrderProductService {
     private final OrderMapper orderMapper;
     private final WebSocketSender webSocketSender;
     private final ProductMapper productMapper;
-    private final TableServiceImpl tableService;
+    private final TableService tableService;
 
 
     @Override

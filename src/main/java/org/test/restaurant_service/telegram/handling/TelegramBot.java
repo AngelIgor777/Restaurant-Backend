@@ -42,7 +42,6 @@ import org.test.restaurant_service.telegram.config.BotConfig;
 import org.test.restaurant_service.telegram.util.TextUtil;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -63,7 +62,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final ProductTranslationService productTranslationService;
     private final ProductTypeTranslationService productTypeTranslationService;
     private final ProductTypeTranslationMapper productTypeTranslationMapper;
-    private final TableServiceImpl tableService;
+    private final TableService tableService;
     private final RabbitMQJsonProducer rabbitMQJsonProducer;
     private final UserCacheService userCacheService;
     private final UserBucketCacheService userBucketCacheService;
@@ -114,7 +113,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final WorkTelegramBot workTelegramBot;
     private final StaffSendingOrderService staffSendingOrderService;
 
-    public TelegramBot(TelegramUserServiceImpl telegramUserService, ProductTypeServiceImpl productTypeService, @Qualifier("productServiceImpl") ProductServiceImpl productService, BotConfig botConfig, TextUtil textUtil, UserService userService, S3Service s3Service, LanguageService languageService, ProductTranslationService productTranslationService, ProductTypeTranslationService productTypeTranslationService, ProductTypeTranslationMapperImpl productTypeTranslationMapper, TableServiceImpl tableService, RabbitMQJsonProducer rabbitMQJsonProducer, UserCacheService userCacheService, UserBucketCacheService userBucketCacheService, OrderCacheService orderCacheService, WebSocketSender webSocketSender, WorkTelegramBot workTelegramBot, StaffSendingOrderService staffSendingOrderService, WaiterCallCacheService waiterCallCacheService, WaiterCallCacheService waiterCallCacheService1) {
+    public TelegramBot(TelegramUserServiceImpl telegramUserService, ProductTypeServiceImpl productTypeService, @Qualifier("productServiceImpl") ProductServiceImpl productService, BotConfig botConfig, TextUtil textUtil, UserService userService, S3Service s3Service, LanguageService languageService, ProductTranslationService productTranslationService, ProductTypeTranslationService productTypeTranslationService, ProductTypeTranslationMapperImpl productTypeTranslationMapper, TableService tableService, RabbitMQJsonProducer rabbitMQJsonProducer, UserCacheService userCacheService, UserBucketCacheService userBucketCacheService, OrderCacheService orderCacheService, WebSocketSender webSocketSender, WorkTelegramBot workTelegramBot, StaffSendingOrderService staffSendingOrderService, WaiterCallCacheService waiterCallCacheService, WaiterCallCacheService waiterCallCacheService1) {
         this.telegramUserService = telegramUserService;
         this.productTypeService = productTypeService;
         this.productService = productService;

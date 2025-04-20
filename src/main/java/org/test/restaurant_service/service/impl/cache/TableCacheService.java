@@ -1,38 +1,62 @@
 package org.test.restaurant_service.service.impl.cache;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.test.restaurant_service.dto.request.table.OpenTables;
 import org.test.restaurant_service.dto.request.table.TableOrderInfo;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 public class TableCacheService {
 
     private final RedisTemplate<String, Object> redisTemplate;
+    private final ObjectMapper jacksonObjectMapper;
 
-    public void addTableToOpen(Integer tableId) {
+    public UUID addTableToOpen(Integer tableId) {
         OpenTables openTables = getOpenTables();
         if (openTables == null) {
             openTables = new OpenTables();
             openTables.setIds(new HashSet<>());
         }
-        openTables.getIds().add(tableId);
-        saveOpenTables(openTables);
+        Set<Integer> ids = openTables.getIds();
+        if (ids.contains(tableId)) {
+            return getSessionUUID(tableId);
+        } else {
+            ids.add(tableId);
+            saveOpenTables(openTables);
+            return generateSessionUUID(tableId);
+        }
     }
+
+    public UUID generateSessionUUID(Integer tableId) {
+        UUID sessionUUID = UUID.randomUUID();
+        redisTemplate.opsForValue().set("session:" + tableId, sessionUUID);
+        return sessionUUID;
+    }
+
+    public UUID getSessionUUID(Integer tableId) {
+        Object object = redisTemplate.opsForValue().get("session:" + tableId);
+        return jacksonObjectMapper.convertValue(object, UUID.class);
+    }
+
+    public UUID deleteSessionUUID(Integer tableId) {
+        Object object = redisTemplate.opsForValue().getAndDelete(("session:" + tableId));
+        return jacksonObjectMapper.convertValue(object, UUID.class);
+    }
+
 
     public void saveOpenTables(OpenTables openTables) {
         redisTemplate.opsForValue().set("openTables", openTables);
     }
 
     public OpenTables getOpenTables() {
-        OpenTables openTables = (OpenTables) redisTemplate.opsForValue().get("openTables");
+        Object object = redisTemplate.opsForValue().get("openTables");
+        OpenTables openTables = jacksonObjectMapper.convertValue(object, OpenTables.class);
         if (openTables == null) {
             openTables = new OpenTables();
             openTables.setIds(new HashSet<>());
@@ -77,13 +101,17 @@ public class TableCacheService {
                 tableOrderInfos.add(tableOrderInfo);
             }
         }
-
         return tableOrderInfos;
     }
 
 
     public Set<Integer> getTableOrders(Integer tableId) {
-        return (Set<Integer>) redisTemplate.opsForValue().get("tableOrders:" + tableId);
+        Object object = redisTemplate.opsForValue().get("tableOrders:" + tableId);
+        if (object == null) {
+            return new HashSet<>();
+        }
+        return jacksonObjectMapper.convertValue(object, new TypeReference<Set<Integer>>() {
+        });
     }
 
     public void deleteOrderIdFromTable(Integer tableId, Integer orderId) {
@@ -93,6 +121,7 @@ public class TableCacheService {
         }
         redisTemplate.opsForValue().set("tableOrders:" + tableId, tableOrders);
     }
+
 
     public void deleteTableOrders(Integer tableId) {
         redisTemplate.delete("tableOrders:" + tableId);

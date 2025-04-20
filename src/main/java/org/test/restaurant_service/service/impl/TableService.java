@@ -15,10 +15,11 @@ import org.test.restaurant_service.service.impl.cache.TableCacheService;
 import javax.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class TableServiceImpl {
+public class TableService {
 
     private final TableRepository tableRepository;
     private final TableMapper tableMapper;
@@ -76,8 +77,9 @@ public class TableServiceImpl {
     }
 
     public TableResponseDTO openTable(Integer id) {
-        tableCacheService.addTableToOpen(id);
+        UUID uuid = tableCacheService.addTableToOpen(id);
         TableResponseDTO table = getById(id);
+        table.setSessionUUID(uuid);
         table.setOpen(true);
 
         OpenTables openTables = tableCacheService.getOpenTables();

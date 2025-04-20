@@ -25,7 +25,7 @@ public interface OrderService {
 
     Order getOrderById(Integer id);
 
-    void delete(Integer id);
+    void delete(int id, Integer tableId);
 
     List<OrderProductResponseWithPayloadDto> getAllOrdersProductResponseWithPayloadDto(Order.OrderStatus status, LocalDateTime from, LocalDateTime to, Pageable pageable);
 
@@ -37,7 +37,7 @@ public interface OrderService {
 
     void completeOrder(Integer orderId);
 
-    void confirmOrder(Integer orderId);
+    void confirmOrder(Integer orderId, UUID sessionUUID);
 
     List<OrderProductResponseWithPayloadDto> getAllUserOrdersProductResponseWithPayloadDto(UUID userUUID, Pageable pageable);
 

@@ -7,7 +7,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.test.restaurant_service.controller.websocket.WebSocketSender;
-import org.test.restaurant_service.dto.request.OrderRequestDTO;
 import org.test.restaurant_service.dto.request.table.OpenTables;
 import org.test.restaurant_service.dto.request.table.TableOrderInfo;
 import org.test.restaurant_service.dto.request.table.TableOrdersPriceInfo;
@@ -30,10 +29,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -42,29 +38,27 @@ public class OrderServiceImpl implements OrderService {
 
     private static final Logger log = LoggerFactory.getLogger(OrderServiceImpl.class);
     private final OrderRepository orderRepository;
-    private final TableRepository tableRepository;
     private final OrderMapper orderMapper;
     private final OrderDiscountService orderDiscountService;
     private final OrderProductService orderProductService;
     private final AddressMapperImpl addressMapperImpl;
     private final ProductMapperImpl productMapperImpl;
     private final TableMapperImpl tableMapperImpl;
-    private final PhotoService photoService;
     private final WebSocketSender webSocketSender;
     private final TableCacheService tableCacheService;
+    private final TableOrderScoreService tableOrderScoreService;
 
-    public OrderServiceImpl(OrderRepository orderRepository, TableRepository tableRepository, OrderMapper orderMapper, OrderDiscountService orderDiscountService, OrderProductService orderProductService, AddressMapperImpl addressMapperImpl, ProductMapperImpl productMapperImpl, TableMapperImpl tableMapperImpl, @Qualifier("photoServiceImplS3") PhotoService photoService, WebSocketSender webSocketSender, TableCacheService tableCacheService) {
+    public OrderServiceImpl(OrderRepository orderRepository, OrderMapper orderMapper, OrderDiscountService orderDiscountService, OrderProductService orderProductService, AddressMapperImpl addressMapperImpl, ProductMapperImpl productMapperImpl, TableMapperImpl tableMapperImpl, WebSocketSender webSocketSender, TableCacheService tableCacheService, TableOrderScoreService tableOrderScoreService) {
         this.orderRepository = orderRepository;
-        this.tableRepository = tableRepository;
         this.orderMapper = orderMapper;
         this.orderDiscountService = orderDiscountService;
         this.orderProductService = orderProductService;
         this.addressMapperImpl = addressMapperImpl;
         this.productMapperImpl = productMapperImpl;
         this.tableMapperImpl = tableMapperImpl;
-        this.photoService = photoService;
         this.webSocketSender = webSocketSender;
         this.tableCacheService = tableCacheService;
+        this.tableOrderScoreService = tableOrderScoreService;
     }
 
     @Override
@@ -98,11 +92,14 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public void delete(Integer id) {
+    public void delete(int id, Integer tableId) {
         if (!orderRepository.existsById(id)) {
             throw new EntityNotFoundException("Order not found with id " + id);
         }
         orderRepository.deleteById(id);
+        if (tableId != null) {
+            tableCacheService.deleteOrderIdFromTable(tableId, id);
+        }
     }
 
 
@@ -145,13 +142,17 @@ public class OrderServiceImpl implements OrderService {
         webSocketSender.sendPendingOrderIncrement(-1);
     }
 
+    //todo
     @Override
-    public void confirmOrder(Integer orderId) {
+    public void confirmOrder(Integer orderId, UUID sessionUUID) {
         Order orderById = getOrderById(orderId);
         orderById.setStatus(Order.OrderStatus.CONFIRMED);
         orderById.setOtp(null);
         orderRepository.save(orderById);
         webSocketSender.sendPendingOrderIncrement(-1);
+        if (sessionUUID != null) {
+            tableOrderScoreService.save(orderById.getTable(), orderById, sessionUUID);
+        }
     }
 
     @Override
@@ -313,7 +314,10 @@ public class OrderServiceImpl implements OrderService {
     public TableOrdersPriceInfo countPriceForTable(Integer tableId) {
         Set<Integer> tableOrders = tableCacheService.getTableOrders(tableId);
         BigDecimal totalPrice = tableOrders.stream()
-                .map(id -> getOrderById(id).getTotalPrice())
+                .map(this::getOrderById)
+                .filter(Objects::nonNull)
+                .filter(order -> order.getStatus() == Order.OrderStatus.CONFIRMED)
+                .map(Order::getTotalPrice)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         tableCacheService.deleteTableOrders(tableId);
@@ -324,6 +328,7 @@ public class OrderServiceImpl implements OrderService {
         tableCacheService.saveOpenTables(openTables);
 
         webSocketSender.sendOpenTables(openTables);
-        return new TableOrdersPriceInfo(totalPrice);
+        UUID sessionUUID = tableCacheService.deleteSessionUUID(tableId);
+        return new TableOrdersPriceInfo(totalPrice, sessionUUID);
     }
 }

@@ -46,9 +46,9 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
     private final PrinterService printerService;
     private final WebSocketSender webSocketSender;
     private final TableCacheService tableCacheService;
-    private final TableServiceImpl tableService;
+    private final TableService tableService;
 
-    public OrderProductAndUserServiceImpl(OrderService orderService, OrderProductServiceImpl orderProductService, UserService userService, ProductDiscountService productDiscountService, DiscountService discountService, OrderProductMapper orderProductMapper, ProductMapper productMapper, @Qualifier("productServiceImpl") ProductService productService, AddressService addressService, OrderMapper orderMapper, AddressMapper addressMapper, TableMapper tableMapper, OrderDiscountService orderDiscountService, UserAddressService userAddressService, PrinterService printerService, WebSocketSender webSocketSender, TableCacheService tableCacheService, TableServiceImpl tableService) {
+    public OrderProductAndUserServiceImpl(OrderService orderService, OrderProductServiceImpl orderProductService, UserService userService, ProductDiscountService productDiscountService, DiscountService discountService, OrderProductMapper orderProductMapper, ProductMapper productMapper, @Qualifier("productServiceImpl") ProductService productService, AddressService addressService, OrderMapper orderMapper, AddressMapper addressMapper, TableMapper tableMapper, OrderDiscountService orderDiscountService, UserAddressService userAddressService, PrinterService printerService, WebSocketSender webSocketSender, TableCacheService tableCacheService, TableService tableService) {
         this.orderService = orderService;
         this.orderProductService = orderProductService;
         this.userService = userService;

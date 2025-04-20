@@ -8,8 +8,11 @@ import org.springframework.web.bind.annotation.*;
 import org.test.restaurant_service.dto.request.table.TableOrdersPriceInfo;
 import org.test.restaurant_service.dto.response.OrderProductResponseWithPayloadDto;
 import org.test.restaurant_service.dto.response.OrdersStatesCount;
+import org.test.restaurant_service.dto.response.TableOrderScoreResponseDTO;
 import org.test.restaurant_service.entity.Order;
 import org.test.restaurant_service.service.OrderService;
+import org.test.restaurant_service.service.impl.OrderTableScoreService;
+import org.test.restaurant_service.service.impl.TableOrderScoreService;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -22,9 +25,11 @@ import java.util.UUID;
 public class OrderController {
 
     private final OrderService orderService;
+    private final OrderTableScoreService orderTableScoreService;
 
-    public OrderController(OrderService orderService) {
+    public OrderController(OrderService orderService, OrderTableScoreService orderTableScoreService) {
         this.orderService = orderService;
+        this.orderTableScoreService = orderTableScoreService;
     }
 
     @GetMapping
@@ -73,8 +78,9 @@ public class OrderController {
 
     @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
     @PostMapping("/confirm/{orderId}")
-    public void confirmOrder(@PathVariable Integer orderId) {
-        orderService.confirmOrder(orderId);
+    public void confirmOrder(@PathVariable Integer orderId,
+                             @RequestParam(required = false) UUID sessionUUID) {
+        orderService.confirmOrder(orderId, sessionUUID);
     }
 
     @GetMapping("/user")
@@ -85,13 +91,19 @@ public class OrderController {
 
     @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Integer id) {
-        orderService.delete(id);
+    public void delete(@PathVariable int id,
+                       @RequestParam(required = false) Integer tableId) {
+        orderService.delete(id, tableId);
     }
-
 
     @PostMapping("/count/{tableId}")
     public TableOrdersPriceInfo countPriceForTable(@PathVariable Integer tableId) {
         return orderService.countPriceForTable(tableId);
     }
+
+    @GetMapping("/by-session")
+    public TableOrderScoreResponseDTO getOrdersBySessionUUID(@RequestParam UUID sessionUUID, @RequestParam int tableId) {
+        return orderTableScoreService.getTableOrderScore(sessionUUID, tableId);
+    }
+
 }

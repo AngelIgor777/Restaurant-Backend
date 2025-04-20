@@ -7,16 +7,19 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.test.restaurant_service.dto.request.TableRequestDTO;
 import org.test.restaurant_service.dto.response.TableResponseDTO;
-import org.test.restaurant_service.service.impl.TableServiceImpl;
+import org.test.restaurant_service.service.impl.TableOrderScoreService;
+import org.test.restaurant_service.service.impl.TableService;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/tables")
 @RequiredArgsConstructor
 public class TableController {
 
-    private final TableServiceImpl tableService;
+    private final TableService tableService;
+    private final TableOrderScoreService tableOrderScoreService;
 
     @GetMapping
     public List<TableResponseDTO> getAll(Pageable pageable) {
@@ -53,4 +56,10 @@ public class TableController {
         tableService.deleteById(id);
     }
 
+    
+    @GetMapping("/scores")
+    public List<String> getScores() {
+        List<String> uuiDs = tableOrderScoreService.getUUIDs();
+        return uuiDs;
+    }
 }
