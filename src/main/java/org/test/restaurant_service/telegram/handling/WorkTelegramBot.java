@@ -27,7 +27,6 @@ public class WorkTelegramBot extends TelegramLongPollingBot {
         this.staffSendingOrderService = staffSendingOrderService;
     }
 
-
     @Override
     public String getBotUsername() {
         return botConfig.getWorkBotName();
@@ -49,9 +48,6 @@ public class WorkTelegramBot extends TelegramLongPollingBot {
     private void handleTextCommand(Update update, String text) {
         Long chatId = update.getMessage().getChatId();
         switch (text) {
-            case "/start":
-                sendMessage(update.getMessage().getChatId(), "Привет!");
-                break;
             case "/on":
                 handleStaffState(update, true);
                 break;
