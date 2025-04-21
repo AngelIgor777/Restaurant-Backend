@@ -161,7 +161,7 @@ public class OrderServiceImpl implements OrderService {
         List<Order> ordersByUserUuid = orderRepository.findByUser_UuidOrderByCreatedAtDesc(userUUID, pageable);
         List<OrderProductResponseWithPayloadDto> list = new java.util.ArrayList<>(ordersByUserUuid.stream()
                 .map(order -> {
-                    OrderProductResponseWithPayloadDto response = getOrderProductResponseWithPayloadDto(order, false);
+                    OrderProductResponseWithPayloadDto response = getOrderProductResponseWithPayloadDto(order, true);
                     return response;
                 })
                 .toList());
