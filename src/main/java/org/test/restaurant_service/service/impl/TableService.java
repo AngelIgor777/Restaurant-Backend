@@ -35,6 +35,10 @@ public class TableService {
                     if (ids.contains(table.getId())) {
                         responseDTO.setOpen(true);
                     }
+                    UUID sessionUUID = tableCacheService.getSessionUUID(table.getId());
+                    if (sessionUUID != null) {
+                        responseDTO.setSessionUUID(sessionUUID);
+                    }
                     return responseDTO;
                 }).toList();
     }
