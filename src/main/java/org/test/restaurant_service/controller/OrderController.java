@@ -102,8 +102,8 @@ public class OrderController {
     }
 
     @GetMapping("/by-session")
-    public TableOrderScoreResponseDTO getOrdersBySessionUUID(@RequestParam UUID sessionUUID, @RequestParam int tableId) {
-        return orderTableScoreService.getTableOrderScore(sessionUUID, tableId);
+    public TableOrderScoreResponseDTO getOrdersBySessionUUID(@RequestParam UUID sessionUUID) {
+        return orderTableScoreService.getTableOrderScore(sessionUUID);
     }
 
 }

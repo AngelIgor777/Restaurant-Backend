@@ -22,8 +22,8 @@ public class OrderTableScoreService {
     private final TableOrderScoreRepository scoreRepository;
 
 
-    public TableOrderScoreResponseDTO getTableOrderScore(UUID sessionUUID, Integer tableId) {
-        List<TableOrderScore> scores = scoreRepository.findAllBySessionUUIDAndTable_Id(sessionUUID, tableId);
+    public TableOrderScoreResponseDTO getTableOrderScore(UUID sessionUUID) {
+        List<TableOrderScore> scores = scoreRepository.findAllBySessionUUID(sessionUUID);
 
         AtomicReference<BigDecimal> totalPrice = new AtomicReference<>(BigDecimal.ZERO);
 
@@ -35,7 +35,7 @@ public class OrderTableScoreService {
         List<OrderProductResponseWithPayloadDto> orderDtos = orderService.searchOrdersWithPayloadDtoById(orderIds);
 
         return TableOrderScoreResponseDTO.builder()
-                .tableId(tableId)
+                .tableId(scores.get(0).getTable().getId())
                 .orders(orderDtos)
                 .totalPrice(totalPrice.get())
                 .build();

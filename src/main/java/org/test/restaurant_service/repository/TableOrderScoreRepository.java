@@ -12,7 +12,7 @@ import java.util.UUID;
 @Repository
 public interface TableOrderScoreRepository extends JpaRepository<TableOrderScore, Integer> {
 
-    List<TableOrderScore> findAllBySessionUUIDAndTable_Id(UUID sessionUUID, Integer tableId);
+    List<TableOrderScore> findAllBySessionUUID(UUID sessionUUID);
 
     void deleteAllByTable_Id(Integer tableId);
 
@@ -21,4 +21,5 @@ public interface TableOrderScoreRepository extends JpaRepository<TableOrderScore
             "GROUP BY session_uuid " +
             "ORDER BY MIN(created_at) DESC", nativeQuery = true)
     List<String> findUniqueSessionUUIDsOrderedByFirstCreatedAtDesc();
+
 }
