@@ -6,9 +6,7 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.test.restaurant_service.dto.request.SharedBucketProductRequestDTO;
-import org.test.restaurant_service.dto.response.OrderProductResponseWithPayloadDto;
 import org.test.restaurant_service.dto.response.sharedBucket.UserBucketResponseDto;
-import org.test.restaurant_service.service.SharedBucketProductService;
 import org.test.restaurant_service.service.SharedBucketService;
 
 import java.util.List;
@@ -20,11 +18,7 @@ public class OrderWebSocketController {
 
     private final SimpMessagingTemplate messagingTemplate;
     private final SharedBucketService sharedBucketService;
-    private final SharedBucketProductService sharedBucketProductService;
 
-    public void sendOrdersFromWebsocket(OrderProductResponseWithPayloadDto orderProducts) {
-        messagingTemplate.convertAndSend("/topic/orders", orderProducts);
-    }
 
     @MessageMapping("/order/{sessionUuid}/addProduct")
     public void addProduct(@DestinationVariable UUID sessionUuid, SharedBucketProductRequestDTO request) {
@@ -40,7 +34,7 @@ public class OrderWebSocketController {
         boolean allConfirmed = sharedBucketService.allUsersConfirmed(sessionUUID);
 
         if (allConfirmed) {
-            messagingTemplate.convertAndSend("/topic/order/" + sessionUUID + "/confirmed", true);
+            messagingTemplate.convertAndSend("/topic/order/" + sessionUUID + "/progress", true);
         } else {
             messagingTemplate.convertAndSend("/topic/order/" + sessionUUID + "/progress", userUUID.toString());
         }

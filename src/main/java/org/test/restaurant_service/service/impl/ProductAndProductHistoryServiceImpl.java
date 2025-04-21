@@ -1,6 +1,5 @@
 package org.test.restaurant_service.service.impl;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,13 +18,11 @@ public class ProductAndProductHistoryServiceImpl implements ProductAndProductHis
 
     private final ProductService productService;
     private final ProductHistoryService productHistoryService;
-    private final PhotoService photoService;
     private final S3Service s3Service;
 
-    public ProductAndProductHistoryServiceImpl(@Qualifier("productServiceImpl") ProductService productService, ProductHistoryService productHistoryService, @Qualifier("photoServiceImplS3") PhotoService photoService, S3Service s3Service) {
+    public ProductAndProductHistoryServiceImpl(@Qualifier("productServiceImpl") ProductService productService, ProductHistoryService productHistoryService, S3Service s3Service) {
         this.productService = productService;
         this.productHistoryService = productHistoryService;
-        this.photoService = photoService;
         this.s3Service = s3Service;
     }
 

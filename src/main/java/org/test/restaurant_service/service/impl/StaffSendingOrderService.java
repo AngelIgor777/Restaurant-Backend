@@ -14,6 +14,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class StaffSendingOrderService {
+
     private final StaffSendingOrderRepository staffSendingOrderRepository;
 
     public void setStaffSendingState(Long chatId, boolean sendingState) {

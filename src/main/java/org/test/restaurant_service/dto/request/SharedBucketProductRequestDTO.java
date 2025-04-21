@@ -10,7 +10,7 @@ import java.util.UUID;
 @NoArgsConstructor
 public class SharedBucketProductRequestDTO {
     private Integer productId;
-    private Integer sharedBucketId;
-    private UUID userUUID;
     private Integer quantity;
+    private UUID userUUID;
+    private Integer sharedBucketId;
 }
