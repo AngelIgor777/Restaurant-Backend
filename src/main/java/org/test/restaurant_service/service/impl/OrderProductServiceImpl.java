@@ -3,7 +3,7 @@ package org.test.restaurant_service.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.test.restaurant_service.controller.websocket.OrderWebSocketController;
+import org.test.restaurant_service.controller.websocket.WebSocketSender;
 import org.test.restaurant_service.dto.request.OrderProductRequestDTO;
 import org.test.restaurant_service.dto.response.OrderProductResponseDTO;
 import org.test.restaurant_service.dto.response.OrderProductResponseWithPayloadDto;
@@ -31,17 +31,16 @@ public class OrderProductServiceImpl implements OrderProductService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final OrderProductMapper orderProductMapper;
-    private final TableRepository tableRepository;
     private final OrderMapper orderMapper;
-    private final OrderWebSocketController orderWebSocketController;
+    private final WebSocketSender webSocketSender;
     private final ProductMapper productMapper;
-    private final UserRepository userRepository;
+    private final TableService tableService;
 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public OrderResponseDTO createBulk(List<OrderProductRequestDTO> requestDTOs, Integer tableNumber, Order.PaymentMethod paymentMethod) {
-        Table table = getByNumber(tableNumber);
+        Table table = tableService.getByNumber(tableNumber);
         Order order = Order.builder()
                 .table(table)
                 .paymentMethod(paymentMethod)
@@ -103,14 +102,8 @@ public class OrderProductServiceImpl implements OrderProductService {
         return totalPrice.updateAndGet(v -> v.add(product.getPrice()));
     }
 
-
-    public Table getByNumber(Integer tableNumber) {
-        return tableRepository.findTablesByNumber(tableNumber)
-                .orElseThrow(() -> new EntityNotFoundException("Table not found with number " + tableNumber));
-    }
-
     public void sendOrdersFromWebsocket(OrderProductResponseWithPayloadDto payloadDto) {
-        orderWebSocketController.sendOrdersFromWebsocket(payloadDto);
+        webSocketSender.sendOrdersFromWebsocket(payloadDto);
     }
 
     @Override

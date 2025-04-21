@@ -62,12 +62,12 @@ class TextUtil {
             """
                     📖 <b>Доступные команды:</b>
                     
-                    🚀 /start - <i>Запуск бота</i>
+                    🍽️ /menu - <i>Показать меню</i>
+                    🥂 /website - <i>Зайти на сайт</i>
                     ❓ /help - <i>Список доступных команд</i>
                     ℹ️ /info - <i>Информация о боте</i>
-                    🍽️ /menu - <i>Показать меню</i>
                     📁 /about - <i>Показать информацию профиля</i>
-                    
+                    🗣 /lang - <i>Изменить язык</i>
                     ✨ Используйте команды, чтобы сделать ваше настроение более радостным!
                     """;
 
@@ -194,8 +194,7 @@ class TextUtil {
                     "Iată ce am pregătit cu drag pentru tine 😋:\n";
         } else {
             return "🍽️ Вы выбрали категорию <b>" + productType + "</b>!\n\n" +
-                    "Можете нажать на блюдо, чтобы увидеть подробное описание.\n\n" +
-                    "Вот, что мы с любовью приготовили для вас 😋:\n";
+                    "Нажмите на блюдо, чтобы увидеть описание.\n";
         }
     }
 
@@ -241,14 +240,10 @@ class TextUtil {
     public String getMessageAfterRegister(UUID userUUID, String language) {
         return switch (language) {
             case "ro" -> String.format("""
-                    Felicitări! Acum faceți parte din familia noastră!
-                    
                     🌐Vizitați site-ul nostru [parktown.md](http://195.133.27.38/#menu/%s).
                     🎁Participați la tombole și urmăriți știrile!
                     """, userUUID);
             case "ru" -> String.format("""
-                    Поздравляем! Теперь вы являетесь частью нашей семьи!
-                    
                     🌐Заходите на наш сайт [parktown.md](http://195.133.27.38/#menu/%s).
                     🎁Участвуйте в розыгрышах и смотрите за новостями!
                     """, userUUID);
@@ -409,7 +404,7 @@ class TextUtil {
         } else {
             return new StringBuilder()
                     .append("🔥 Внимание! Специальное предложение! 🔥\n\n")
-                    .append("🎉 Скидка ").append(discountPercentage).append("% на блюдо!\n\n")
+                    .append("🎉 Скидка ").append(discountPercentage).append("% на блюдо '").append(product.getName()).append("'\n\n")
                     .append("💰 Вместо ").append(product.getPrice()).append(" леев всего ").append(priceWithDiscount).append(" леев\n")
                     .append("📅 Акция действует с ").append(formattedValidFrom).append(" до ").append(formattedValidTo).append("\n\n")
                     .append("🎟 Используйте промокод: `").append(code).append("`\n\n")

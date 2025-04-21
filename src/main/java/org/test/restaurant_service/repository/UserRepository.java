@@ -24,4 +24,15 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     @Query("SELECT u FROM User u JOIN u.roles r WHERE r.roleName IN (:roles)")
     List<User> findUsersByRoles(@Param("roles") List<RoleName> roles);
 
+    @Query("SELECT u FROM User u " +
+            "LEFT JOIN TelegramUserEntity tu ON u.telegramUserEntity.id = tu.id " +
+            "WHERE LOWER(tu.firstname) LIKE LOWER(CONCAT('%', :query, '%')) " +
+            " OR " +
+            "LOWER(tu.username) LIKE LOWER(CONCAT('%', :query, '%'))")
+    Page<User> search(String query, Pageable pageable);
+
+    @Query("SELECT u FROM User u " +
+            "JOIN u.roles r " +
+            "WHERE r.roleName IN (:roleNames)")
+    List<User> findAllStaffUsers(@Param("roleNames") List<RoleName> roleNames);
 }

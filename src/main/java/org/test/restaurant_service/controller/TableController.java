@@ -7,7 +7,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.test.restaurant_service.dto.request.TableRequestDTO;
 import org.test.restaurant_service.dto.response.TableResponseDTO;
-import org.test.restaurant_service.service.TableService;
+import org.test.restaurant_service.service.impl.TableOrderScoreService;
+import org.test.restaurant_service.service.impl.TableService;
+
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/tables")
@@ -15,15 +19,21 @@ import org.test.restaurant_service.service.TableService;
 public class TableController {
 
     private final TableService tableService;
+    private final TableOrderScoreService tableOrderScoreService;
 
     @GetMapping
-    public Page<TableResponseDTO> getAll(Pageable pageable) {
+    public List<TableResponseDTO> getAll(Pageable pageable) {
         return tableService.getAll(pageable);
     }
 
     @GetMapping("/{id}")
     public TableResponseDTO getById(@PathVariable Integer id) {
         return tableService.getById(id);
+    }
+
+    @PostMapping("/open/{tableId}")
+    public TableResponseDTO closeTable(@PathVariable Integer tableId) {
+        return tableService.openTable(tableId);
     }
 
     @PostMapping
@@ -46,4 +56,10 @@ public class TableController {
         tableService.deleteById(id);
     }
 
+    
+    @GetMapping("/scores")
+    public List<String> getScores() {
+        List<String> uuiDs = tableOrderScoreService.getUUIDs();
+        return uuiDs;
+    }
 }

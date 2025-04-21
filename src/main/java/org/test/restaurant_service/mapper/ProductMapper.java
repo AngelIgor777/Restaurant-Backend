@@ -6,6 +6,7 @@ import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 import org.test.restaurant_service.dto.request.ProductRequestDTO;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
+import org.test.restaurant_service.entity.Photo;
 import org.test.restaurant_service.entity.Product;
 import org.test.restaurant_service.entity.ProductHistory;
 
@@ -17,14 +18,12 @@ public interface ProductMapper {
     @Mapping(source = "typeId", target = "type.id")
     @Mapping(target = "id", ignore = true) // Игнорирование id при обновлении
     @Mapping(target = "photos", ignore = true)
-    Product
-
-    toEntity(ProductRequestDTO requestDTO);
+    Product toEntity(ProductRequestDTO requestDTO);
 
     @Mapping(source = "type.name", target = "typeName")
     @Mapping(target = "quantity", ignore = true)
+    @Mapping(source = "photos", target = "photoUrl", qualifiedByName = "mapPhotoUrl")
     ProductResponseDTO toResponseDTO(Product product);
-
 
     //use for resolve lazy init of Product
     @Mapping(source = "type.name", target = "typeName")
@@ -52,4 +51,9 @@ public interface ProductMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "photos", ignore = true)
     void updateEntityFromRequestDTO(ProductRequestDTO requestDTO, @MappingTarget Product product);
+
+    @Named("mapPhotoUrl")
+    default String mapPhotoUrl(java.util.List<Photo> photos) {
+        return (photos != null && !photos.isEmpty()) ? photos.get(0).getUrl() : null;
+    }
 }

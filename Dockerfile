@@ -1,33 +1,27 @@
-# Этап сборки
 FROM openjdk:17-jdk-slim AS build
 
-# Указываем рабочую директорию для сборки
 WORKDIR /app
 
-# Копируем файлы Gradle Wrapper
 COPY gradlew gradlew
 COPY gradle gradle
-
-# Копируем файлы проекта, кроме тех, которые игнорируются в .dockerignore
 COPY build.gradle settings.gradle ./
 COPY src src
 
-# Устанавливаем права на выполнение для Gradle Wrapper
 RUN chmod +x gradlew
-
-# Выполняем сборку проекта
 RUN ./gradlew build -x test
 
-# Этап выполнения
 FROM openjdk:17-jdk-slim
 
-# Указываем рабочую директорию для приложения
 WORKDIR /app
 
-# Копируем собранный JAR из этапа сборки
+RUN apt-get update && apt-get install -y \
+    libfreetype6 \
+    fontconfig \
+    libx11-6 \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY --from=build /app/build/libs/*.jar app.jar
 
 EXPOSE 9091
 
-# Указываем команду запуска
 ENTRYPOINT ["java", "-jar", "app.jar"]

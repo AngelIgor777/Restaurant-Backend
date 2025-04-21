@@ -14,7 +14,11 @@ import java.util.UUID;
 public interface OrderRepository extends JpaRepository<Order, Integer> {
     List<Order> findAllByPaymentMethod(Order.PaymentMethod paymentMethod);
 
-    List<Order> findAllByStatus(Order.OrderStatus status);
+    Optional<Order> findByOtp(String otp);
+
+    List<Order> findAllByStatusAndCreatedAtBetween(Order.OrderStatus status, LocalDateTime from, LocalDateTime to, Pageable pageable);
+
+    List<Order> findAllByStatusAndCreatedAtBetween(Order.OrderStatus status, LocalDateTime from, LocalDateTime to);
 
     Optional<Order> findOrderByTable_Number(Integer tableNumber);
 
@@ -22,7 +26,7 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
 
     List<Order> findAllByCreatedAtBetweenAndStatus(LocalDateTime from, LocalDateTime to, Order.OrderStatus status);
 
-    List<Order> findOrdersByUser_Uuid(UUID userUUID, Pageable pageable);
+    List<Order> findByUser_UuidOrderByCreatedAtDesc(UUID userUUID, Pageable pageable);
 
     Integer countAllByUser_Uuid(UUID userUUID);
 
@@ -31,4 +35,6 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     void deleteAllByStatusAndCreatedAtBetween(Order.OrderStatus status, LocalDateTime from, LocalDateTime to);
 
     boolean existsByOtp(String otp);
+
+    int countAllByCreatedAtBetweenAndStatus(LocalDateTime from, LocalDateTime to, Order.OrderStatus status);
 }

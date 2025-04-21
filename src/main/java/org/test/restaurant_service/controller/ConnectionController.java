@@ -9,7 +9,6 @@ import org.test.restaurant_service.service.UserService;
 import org.test.restaurant_service.telegram.handling.TelegramBot;
 import org.test.restaurant_service.telegram.util.TextUtil;
 
-import javax.validation.Valid;
 import javax.validation.constraints.*;
 import java.util.List;
 

@@ -4,6 +4,7 @@ package org.test.restaurant_service.security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
@@ -25,7 +26,7 @@ public class SecurityConfig {
 
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, StringRedisTemplate redisTemplate) throws Exception {
         http
                 .cors().and()
                 .csrf().disable()
@@ -42,6 +43,7 @@ public class SecurityConfig {
                         "/api/v1/orders/**",
                         "/ws-orders/**",
                         "/topic/orders/**",
+                        "/ws-orders-print/**",
                         "/api/v1/users/**",
                         "/api/v1/addresses/**",
                         "/api/v1/productHistory/**",
@@ -51,17 +53,20 @@ public class SecurityConfig {
                         "/api/v1/product-type-translations/**",
                         "/api/v1/connection/**",
                         "/api/v1/tg/**",
+                        "/api/v1/auth/**",
+                        "/api/v1/statistics/**",
+                        "/api/v1/exportOrders/**",
+                        "/api/v1/jwt/**",
+                        "/api/v1/waiter-calls/**",
                         "/actuator/**",
                         "/api/v1/shared-buckets/**",
                         "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html"
                 ).permitAll()
                 .anyRequest().authenticated()
                 .and()
-                .addFilterBefore(authFilter(), UsernamePasswordAuthenticationFilter.class); // Проверка JWT
-
+                .addFilterBefore(authFilter(), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
-
 
     @Bean
     public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {

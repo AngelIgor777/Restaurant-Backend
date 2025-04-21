@@ -5,7 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
-import org.test.restaurant_service.dto.request.OrderProductRequestWithPayloadDto;
+import org.test.restaurant_service.dto.request.order.OrderProductWithPayloadAndPrintRequestDto;
+import org.test.restaurant_service.dto.request.order.OrderProductWithPayloadRequestDto;
 import org.test.restaurant_service.service.OrderProductAndUserService;
 import com.rabbitmq.client.Channel;
 
@@ -14,19 +15,21 @@ import com.rabbitmq.client.Channel;
 public class RabbitMQConsumer {
 
     private final OrderProductAndUserService orderProductAndUserService;
+    private final ObjectMapper objectMapper;
 
-    public RabbitMQConsumer( OrderProductAndUserService orderProductAndUserService) {
+    public RabbitMQConsumer(OrderProductAndUserService orderProductAndUserService, ObjectMapper objectMapper) {
         this.orderProductAndUserService = orderProductAndUserService;
+        this.objectMapper = objectMapper;
     }
 
     @RabbitListener(queues = "#{rabbitMQConfig.getOrderSavingQueue()}", ackMode = "MANUAL")
-    public void consumeUserRegistration(Message message, Channel channel) {
+    public void consumeOrderCreation(Message message, Channel channel) {
         try {
-            OrderProductRequestWithPayloadDto orderProductRequestWithPayloadDto = deserializeUserRegistrationDTOMessage(message);
+            OrderProductWithPayloadRequestDto orderProductWithPayloadRequestDto = objectMapper.readValue(message.getBody(), OrderProductWithPayloadRequestDto.class);
 
-            log.info("Consumed User message: {}", orderProductRequestWithPayloadDto);
+            log.debug("Consumed message: {}", orderProductWithPayloadRequestDto);
 
-            orderProductAndUserService.createBulk(orderProductRequestWithPayloadDto);
+            orderProductAndUserService.createBulk(orderProductWithPayloadRequestDto);
             channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
         } catch (Exception e) {
             log.error("Error processing message: {}", e.getMessage(), e);
@@ -39,12 +42,24 @@ public class RabbitMQConsumer {
         }
     }
 
-    private OrderProductRequestWithPayloadDto deserializeUserRegistrationDTOMessage(Message message) {
+    @RabbitListener(queues = "#{rabbitMQConfig.getOrderBulkFromAdminQueue()}", ackMode = "MANUAL")
+    public void consumeUserRegistration(Message message, Channel channel) {
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            return objectMapper.readValue(message.getBody(), OrderProductRequestWithPayloadDto.class);
+            OrderProductWithPayloadAndPrintRequestDto orderProductWithPayloadRequestDto = objectMapper.readValue(message.getBody(), OrderProductWithPayloadAndPrintRequestDto.class);
+
+            log.debug("Consumed message: {}", orderProductWithPayloadRequestDto);
+
+            orderProductAndUserService.createBulk(orderProductWithPayloadRequestDto);
+            channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to deserialize message");
+            log.error("Error processing message: {}", e.getMessage(), e);
+            try {
+                // Отклоняем сообщение и удаляем его из очереди
+                channel.basicReject(message.getMessageProperties().getDeliveryTag(), false);
+            } catch (Exception ex) {
+                log.error("Failed to reject message: {}", ex.getMessage(), ex);
+            }
         }
     }
+
 }

@@ -1,17 +1,13 @@
 package org.test.restaurant_service.service.impl;
 
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Bean;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.test.restaurant_service.entity.Discount;
 import org.test.restaurant_service.entity.ProductDiscount;
@@ -28,14 +24,12 @@ import java.util.concurrent.*;
 public class SendingUsersServiceImpl implements SendingUsersService {
 
     private static final Logger log = LoggerFactory.getLogger(SendingUsersServiceImpl.class);
-    private static final int THREAD_POOL_SIZE = 10;
     private static final int PAGE_SIZE = 50;
     private static final int DELAY_SECONDS = 10;
 
     private final UserService userService;
     private final TextUtil textUtil;
     private final TelegramBot telegramBot;
-    private final ExecutorService executorService = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
 
     private final TaskExecutor taskExecutor;
 
@@ -67,6 +61,7 @@ public class SendingUsersServiceImpl implements SendingUsersService {
     }
 
     private void sendMessageToUsers(MessageFormatter messageFormatter) {
+        int allUserSending = 0;
         int page = 0;
         Page<User> userPage;
         do {
@@ -77,11 +72,13 @@ public class SendingUsersServiceImpl implements SendingUsersService {
             if (!currentBatchUsers.isEmpty()) {
                 for (User user : currentBatchUsers) {
                     taskExecutor.execute(() -> sendTelegramMessage(user, messageFormatter));
+                    allUserSending++;
                 }
                 asyncDelay();
             }
             page++;
         } while (userPage.hasNext());
+        log.debug("Send message to {} users", allUserSending);
     }
 
     private void sendTelegramMessage(User user, MessageFormatter messageFormatter) {

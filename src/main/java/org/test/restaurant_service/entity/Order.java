@@ -15,7 +15,7 @@ import java.util.Objects;
 @Builder
 @Getter
 @Setter
-@ToString(exclude = "table")
+@ToString
 @Entity
 @Table(name = "orders", schema = "restaurant_service")
 public class Order {
@@ -91,7 +91,7 @@ public class Order {
     }
 
     public enum PaymentMethod {
-        CASH, CARD
+        CASH, CARD, YOURSELF
     }
 
     public enum OrderStatus {

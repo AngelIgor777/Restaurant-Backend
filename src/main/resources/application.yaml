@@ -2,8 +2,7 @@ spring:
   cache:
     type: redis
   redis:
-    host: localhost
-
+    host: ${REDIS_HOST}
     port: ${REDIS_PORT}
   application:
     name: Restaurant_Service
@@ -61,6 +60,9 @@ rabbitmq:
       queue2:
         name: product_history_saving_queue
         routingKey: ${RABBITMQ_QUEUES_JSON_QUEUE2_ROUTINGKEY}
+      queue3:
+        name: order_bulk_from_admin_queue
+        routingKey: ${RABBITMQ_QUEUES_JSON_QUEUE3_ROUTINGKEY}
   exchanges:
     exchange:
       name: java_exchange
@@ -71,11 +73,18 @@ server:
 jwt:
   access: ${JWT_ACCESS}
 
-bot:
-  name:
-    ${BOT_NAME}
-  key:
-    ${BOT_KEY}
+telegram:
+  bot:
+    name:
+      ${BOT_NAME}
+    key:
+      ${BOT_KEY}
+  workBot:
+    name:
+      ${WORK_BOT_NAME}
+    key:
+      ${WORK_BOT_KEY}
+
 
 scheduler:
   cron:
@@ -99,20 +108,28 @@ management:
 aws:
   java:
     v1:
-      disableDeprecationAnnouncement: false
+      disableDeprecationAnnouncement: true
   accessKey: ${AWS_ACCESS_KEY}
   secretAccessKey: ${AWS_SECRET_ACCESS_KEY}
   bucketName: ${AWS_BUCKET_NAME}
+
 
 admin:
   code1: ${ADMIN_CODE1}
   code2: ${ADMIN_CODE2}
 
-logging:
-  level:
-    org:
-      test:
-        restaurant_service:
-          telegram: debug
-          service:
-            impl: debug
+disposable:
+  adminKey: ${DISPOSABLE_ADMIN_KEY}
+#logging:
+#  level:
+#    org:
+#      test:
+#        restaurant_service:
+#          controller:
+#            websocket: debug
+#          service:
+#            PrinterService: debug
+#            impl:
+#              OrderServiceImpl: debug
+#    org.test.restaurant_service.service.impl.SendingUsersServiceImpl: debug
+#    org.test.restaurant_service.telegram: debug

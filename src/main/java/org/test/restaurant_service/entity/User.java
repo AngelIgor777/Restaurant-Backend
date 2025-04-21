@@ -37,7 +37,7 @@ public class User {
     )
     private List<Role> roles;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "chat_id", referencedColumnName = "chat_id", unique = true)
     private TelegramUserEntity telegramUserEntity;
 

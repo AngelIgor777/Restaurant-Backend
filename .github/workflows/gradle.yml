@@ -13,10 +13,8 @@ jobs:
     environment: Main
 
     steps:
-      # Шаг 1: Клонируем репозиторий
       - uses: actions/checkout@v4
 
-      # Шаг 3: Создаем .env файл в src/main/resources
       - name: Create .env file in src/main/resources
         run: |
           mkdir -p src/main/resources  # Создаем папку, если ее нет
@@ -39,21 +37,24 @@ jobs:
           echo "AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }}" >> src/main/resources/.env
           echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> src/main/resources/.env
           echo "AWS_BUCKET_NAME=${{ secrets.AWS_BUCKET_NAME }}" >> src/main/resources/.env
-          echo "REDIS_PORT=${{ secrets.REDIS_PORT }}" >> src/main/resources/.env
           echo "RABBITMQ_HOST=${{ secrets.RABBITMQ_HOST }}" >> src/main/resources/.env
           echo "ADMIN_CODE1=${{ secrets.ADMIN_CODE1 }}" >> src/main/resources/.env
           echo "ADMIN_CODE2=${{ secrets.ADMIN_CODE2 }}" >> src/main/resources/.env
           echo "RABBITMQ_QUEUES_JSON_QUEUE1_ROUTINGKEY=${{ secrets.RABBITMQ_QUEUES_JSON_QUEUE1_ROUTINGKEY }}" >> src/main/resources/.env
           echo "RABBITMQ_QUEUES_JSON_QUEUE2_ROUTINGKEY=${{ secrets.RABBITMQ_QUEUES_JSON_QUEUE2_ROUTINGKEY }}" >> src/main/resources/.env
+          echo "REDIS_HOST=${{ secrets.REDIS_HOST }}" >> src/main/resources/.env
+          echo "REDIS_PORT=${{ secrets.REDIS_PORT }}" >> src/main/resources/.env
+          echo "DISPOSABLE_ADMIN_KEY=${{ secrets.DISPOSABLE_ADMIN_KEY }}" >> src/main/resources/.env
+          echo "RABBITMQ_QUEUES_JSON_QUEUE3_ROUTINGKEY=${{ secrets.RABBITMQ_QUEUES_JSON_QUEUE3_ROUTINGKEY }}" >> src/main/resources/.env
+          echo "WORK_BOT_NAME=${{ secrets.WORK_BOT_NAME }}" >> src/main/resources/.env
+          echo "WORK_BOT_KEY=${{ secrets.WORK_BOT_KEY }}" >> src/main/resources/.env
 
-        # Шаг 4: Логинимся в Docker Hub
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Шаг 5: Собираем Docker-образ и пушим в Docker Hub
       - name: Build and push Docker image
         run: |
           TAG=$(date +%Y%m%d%H%M%S)  # Generate a timestamp-based tag

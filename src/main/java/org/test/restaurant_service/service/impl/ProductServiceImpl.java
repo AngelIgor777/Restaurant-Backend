@@ -150,7 +150,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "products", key = "#typeId == null ? 'all' : #typeId")
+    @Cacheable(value = "products", key = "T(java.util.Objects).hash(#typeId, #pageable.pageNumber, #pageable.pageSize, #pageable.sort.toString())")
     @Override
     public Page<ProductResponseDTO> getAll(Integer typeId, Pageable pageable) {
         Page<Product> products;
@@ -191,7 +191,6 @@ public class ProductServiceImpl implements ProductService {
         return productRepository.existsByName(name);
     }
 
-    @Transactional(readOnly = true)
     public Page<Product> searchProducts(String searchTerm, int page, int size) {
         return productRepository.searchProducts(searchTerm, PageRequest.of(page, size));
     }

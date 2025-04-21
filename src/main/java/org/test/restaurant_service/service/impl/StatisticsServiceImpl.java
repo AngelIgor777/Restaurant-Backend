@@ -1,17 +1,13 @@
 package org.test.restaurant_service.service.impl;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
 import org.test.restaurant_service.dto.response.StatisticsResultResponseDto;
 import org.test.restaurant_service.entity.Order;
 import org.test.restaurant_service.mapper.ProductMapper;
-import org.test.restaurant_service.mapper.ProductMapperImpl;
 import org.test.restaurant_service.service.OrderProductService;
 import org.test.restaurant_service.service.OrderService;
-import org.test.restaurant_service.service.ProductService;
 import org.test.restaurant_service.service.StatisticsService;
 import javax.ws.rs.BadRequestException;
 import java.math.BigDecimal;
@@ -26,12 +22,10 @@ import java.util.stream.Collectors;
 @Service
 public class StatisticsServiceImpl implements StatisticsService {
 
-    private final ProductService productService;
     private final OrderService orderService;
     private final OrderProductService orderProductService;
 
-    public StatisticsServiceImpl(@Qualifier("productServiceImpl") ProductService productService, OrderService orderService, OrderProductService orderProductService) {
-        this.productService = productService;
+    public StatisticsServiceImpl(OrderService orderService, OrderProductService orderProductService) {
         this.orderService = orderService;
         this.orderProductService = orderProductService;
     }

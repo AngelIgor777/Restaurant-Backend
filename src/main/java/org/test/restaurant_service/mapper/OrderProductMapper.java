@@ -22,7 +22,7 @@ public interface OrderProductMapper {
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "order", ignore = true)
     @Mapping(target = "product", ignore = true)
-    @Mapping(target = "id", ignore = true) // Игнорирование id при маппинге
-    @Mapping(target = "priceWithDiscount", ignore = true) // Игнорирование id при маппинге
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "priceWithDiscount", ignore = true)
     void updateEntityFromRequestDTO(OrderProductRequestDTO requestDTO, @MappingTarget OrderProduct orderProduct);
 }

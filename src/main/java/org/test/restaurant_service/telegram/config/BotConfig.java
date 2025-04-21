@@ -1,16 +1,21 @@
 package org.test.restaurant_service.telegram.config;
 
-import lombok.Data;
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 
-@Configuration
-@Data
+@Component
+@Getter
 public class BotConfig {
-    @Value("${bot.name}")
+    @Value("${telegram.bot.name}")
     String botName;
 
-    @Value("${bot.key}")
+    @Value("${telegram.bot.key}")
     String botKey;
 
+    @Value("${telegram.workBot.name}")
+    private String workBotName;
+
+    @Value("${telegram.workBot.key}")
+    private String workBotKey;
 }
