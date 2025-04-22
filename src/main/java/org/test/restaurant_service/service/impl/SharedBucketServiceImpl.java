@@ -92,7 +92,7 @@ public class SharedBucketServiceImpl implements SharedBucketService {
                             .map(SharedBucketProductMapper.INSTANCE::toResponseForSharedBucketResponseDto).toList();
 
                     UserBucketResponseDto userBucketResponseDto = new UserBucketResponseDto();
-                    userBucketResponseDto.setUuid(user.getUuid());
+                    userBucketResponseDto.setUserUUID(user.getUuid());
                     userBucketResponseDto.setFirstName(user.getTelegramUserEntity().getFirstname());
                     userBucketResponseDto.setPhotoUrl(user.getTelegramUserEntity().getPhotoUrl());
                     userBucketResponseDto.setProductsResponseDto(userProducts);

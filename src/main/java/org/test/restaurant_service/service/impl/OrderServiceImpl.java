@@ -142,7 +142,6 @@ public class OrderServiceImpl implements OrderService {
         webSocketSender.sendPendingOrderIncrement(-1);
     }
 
-    //todo
     @Override
     public void confirmOrder(Integer orderId, UUID sessionUUID) {
         Order orderById = getOrderById(orderId);

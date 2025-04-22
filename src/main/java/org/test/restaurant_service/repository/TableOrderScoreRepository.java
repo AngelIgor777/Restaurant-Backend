@@ -19,7 +19,7 @@ public interface TableOrderScoreRepository extends JpaRepository<TableOrderScore
     @Query(value = "SELECT CAST(session_uuid AS TEXT) " +
             "FROM restaurant_service.tables_order_score " +
             "GROUP BY session_uuid " +
-            "ORDER BY MIN(created_at) DESC", nativeQuery = true)
+            "ORDER BY MIN(created_at) ASC", nativeQuery = true)
     List<String> findUniqueSessionUUIDsOrderedByFirstCreatedAtDesc();
 
 }

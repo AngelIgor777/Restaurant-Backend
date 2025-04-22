@@ -7,7 +7,7 @@ import java.util.UUID;
 
 @Data
 public class UserBucketResponseDto {
-    private UUID uuid;
+    private UUID userUUID;
     private String firstName;
     private String photoUrl;
     private boolean confirmed;
