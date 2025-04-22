@@ -26,6 +26,7 @@ public class TableService {
     private final TableCacheService tableCacheService;
     private final WebSocketSender webSocketSender;
 
+
     public List<TableResponseDTO> getAll(Pageable pageable) {
         OpenTables closedTables = tableCacheService.getOpenTables();
         Set<Integer> ids = closedTables.getIds();
