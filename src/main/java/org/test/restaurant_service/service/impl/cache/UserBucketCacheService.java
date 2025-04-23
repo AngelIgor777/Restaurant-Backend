@@ -1,5 +1,7 @@
 package org.test.restaurant_service.service.impl.cache;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -15,6 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @RequiredArgsConstructor
 public class UserBucketCacheService {
     private final RedisTemplate<String, Object> redisTemplate;
+    private final ObjectMapper jacksonObjectMapper;
 
     public void saveProductToBucket(Long chatId, Integer productId, Integer quantity) {
         List<OrderProductRequestDTO> productsId = getProductsInBucket(chatId);
@@ -45,7 +48,12 @@ public class UserBucketCacheService {
 
 
     public List<OrderProductRequestDTO> getProductsInBucket(Long chatId) {
-        return (List<OrderProductRequestDTO>) redisTemplate.opsForValue().get("bucket:" + chatId);
+        Object data = redisTemplate.opsForValue().get("bucket:" + chatId);
+        if (data == null) {
+            return new ArrayList<>();
+        }
+        return jacksonObjectMapper.convertValue(data, new TypeReference<List<OrderProductRequestDTO>>() {
+        });
     }
 
     public void deleteBucket(Long chatId) {
@@ -57,7 +65,8 @@ public class UserBucketCacheService {
     }
 
     public OrderProductWithPayloadRequestDto getOrder(Long chatId) {
-        return (OrderProductWithPayloadRequestDto) redisTemplate.opsForValue().get("tgBucketOrder:" + chatId);
+        return jacksonObjectMapper.convertValue(redisTemplate.opsForValue().get("tgBucketOrder:" + chatId), OrderProductWithPayloadRequestDto.class);
+
     }
 
     public void deleteOrder(Long chatId) {

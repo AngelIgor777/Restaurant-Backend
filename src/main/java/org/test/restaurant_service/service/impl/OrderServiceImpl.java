@@ -88,7 +88,6 @@ public class OrderServiceImpl implements OrderService {
     public Order getOrderById(Integer id) {
         return orderRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Order not found with id " + id));
-
     }
 
     @Override
