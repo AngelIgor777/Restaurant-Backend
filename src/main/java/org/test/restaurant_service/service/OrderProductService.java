@@ -10,8 +10,6 @@ import java.util.List;
 
 public interface OrderProductService {
 
-    OrderResponseDTO createBulk(List<OrderProductRequestDTO> requestDTOs, Integer tableNumber, Order.PaymentMethod paymentMethod);
-
     List<OrderProduct> getOrderProductsByOrderId(Integer orderId);
 
     OrderProductResponseDTO update(Integer id, OrderProductRequestDTO requestDTO, Integer orderId);

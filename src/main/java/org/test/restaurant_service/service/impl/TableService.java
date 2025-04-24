@@ -54,6 +54,7 @@ public class TableService {
         return (byte) tableRepository.count();
     }
 
+
     public TableResponseDTO getById(Integer id) {
         Table table = tableRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Table not found with id: " + id));

@@ -6,6 +6,5 @@ import java.util.List;
 
 @Data
 public class TableStateOrders {
-    private int count;
-    private List<OrderProductResponseWithPayloadDto> orders;
+    private List<Integer> ordersId;
 }

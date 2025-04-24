@@ -1,16 +1,14 @@
 package org.test.restaurant_service.dto.response;
 
 import lombok.Data;
-import org.test.restaurant_service.dto.request.table.OpenTables;
 import org.test.restaurant_service.dto.request.table.TableOrderInfo;
+import org.test.restaurant_service.dto.response.order.OrderId;
+import org.test.restaurant_service.dto.response.order.TotalOrders;
 
 import java.util.List;
 
 @Data
 public class OrdersStatesCount {
-    private int pendingOrders;
-    private int completedOrders;
-    private int confirmedOrders;
-    private OpenTables openTables;
-    List<TableOrderInfo> tableOrderInfos;
+    private TotalOrders totalOrders;
+    private List<TableOrderInfo> tablesOrderInfo;
 }

@@ -72,15 +72,17 @@ public class OrderController {
 
     @PostMapping("/complete/{orderId}")
     @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
-    public void completeOrder(@PathVariable Integer orderId) {
-        orderService.completeOrder(orderId);
+    public void completeOrder(@PathVariable Integer orderId,
+                              @RequestParam(required = false) Integer tableId) {
+        orderService.completeOrder(orderId, tableId);
     }
 
     @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
     @PostMapping("/confirm/{orderId}")
     public void confirmOrder(@PathVariable Integer orderId,
-                             @RequestParam(required = false) UUID sessionUUID) {
-        orderService.confirmOrder(orderId, sessionUUID);
+                             @RequestParam(required = false) UUID sessionUUID,
+                             @RequestParam Order.OrderStatus from) {
+        orderService.confirmOrder(orderId, sessionUUID, from);
     }
 
     @GetMapping("/user")
@@ -91,8 +93,9 @@ public class OrderController {
     @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
     @DeleteMapping("/{id}")
     public void delete(@PathVariable int id,
+                       @RequestParam Order.OrderStatus status,
                        @RequestParam(required = false) Integer tableId) {
-        orderService.delete(id, tableId);
+        orderService.delete(id, tableId, status);
     }
 
     @PostMapping("/count/{tableId}")

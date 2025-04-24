@@ -10,10 +10,12 @@ import org.test.restaurant_service.dto.request.order.OrderProductWithPayloadAndP
 import org.test.restaurant_service.dto.request.order.OrderProductWithPayloadRequestDto;
 import org.test.restaurant_service.dto.request.table.TableOrderInfo;
 import org.test.restaurant_service.dto.response.*;
+import org.test.restaurant_service.dto.response.order.TotalOrders;
 import org.test.restaurant_service.entity.*;
 import org.test.restaurant_service.mapper.*;
 import org.test.restaurant_service.service.*;
 import org.test.restaurant_service.service.impl.cache.TableCacheService;
+import org.test.restaurant_service.service.impl.cache.TotalOrdersCacheService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -47,8 +49,9 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
     private final WebSocketSender webSocketSender;
     private final TableCacheService tableCacheService;
     private final TableService tableService;
+    private final TotalOrdersCacheService totalOrdersCacheService;
 
-    public OrderProductAndUserServiceImpl(OrderService orderService, OrderProductServiceImpl orderProductService, UserService userService, ProductDiscountService productDiscountService, DiscountService discountService, OrderProductMapper orderProductMapper, ProductMapper productMapper, @Qualifier("productServiceImpl") ProductService productService, AddressService addressService, OrderMapper orderMapper, AddressMapper addressMapper, TableMapper tableMapper, OrderDiscountService orderDiscountService, UserAddressService userAddressService, PrinterService printerService, WebSocketSender webSocketSender, TableCacheService tableCacheService, TableService tableService) {
+    public OrderProductAndUserServiceImpl(OrderService orderService, OrderProductServiceImpl orderProductService, UserService userService, ProductDiscountService productDiscountService, DiscountService discountService, OrderProductMapper orderProductMapper, ProductMapper productMapper, @Qualifier("productServiceImpl") ProductService productService, AddressService addressService, OrderMapper orderMapper, AddressMapper addressMapper, TableMapper tableMapper, OrderDiscountService orderDiscountService, UserAddressService userAddressService, PrinterService printerService, WebSocketSender webSocketSender, TableCacheService tableCacheService, TableService tableService, TotalOrdersCacheService totalOrdersCacheService) {
         this.orderService = orderService;
         this.orderProductService = orderProductService;
         this.userService = userService;
@@ -67,6 +70,7 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
         this.webSocketSender = webSocketSender;
         this.tableCacheService = tableCacheService;
         this.tableService = tableService;
+        this.totalOrdersCacheService = totalOrdersCacheService;
     }
 
     //1 check the user is register
@@ -77,7 +81,7 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
     //5 return all data info
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public <T extends OrderProductWithPayloadRequestDto> OrderProductResponseWithPayloadDto createBulk(T requestDto) {
+    public <T extends OrderProductWithPayloadRequestDto> void createOrder(T requestDto) {
         Order.PaymentMethod paymentMethod = requestDto.getPaymentMethod();
         boolean orderInRestaurant = requestDto.isOrderInRestaurant();
         boolean existDiscountCodes = requestDto.isExistDiscountCodes();
@@ -133,20 +137,21 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
 
         Order savedOrder = orderService.create(order);
 
+        TableOrderInfo tableOrderInfo = null;
         if (isInRestaurant) {
             Set<Integer> ids = tableCacheService.getOpenTables().getIds();
             if (ids != null) {
                 Table table = tableService.getByNumber(requestDto.getTableRequestDTO().getNumber());
                 Integer tableId = table.getId();
                 if (ids.contains(tableId)) {
-                    tableCacheService.addOrderIdToTable(savedOrder.getId(), tableId);
-                    TableOrderInfo tableOrderInfo = new TableOrderInfo();
-                    tableOrderInfo.setTableId(tableId);
-                    orderService.setTableMetaData(tableOrderInfo);
-                    webSocketSender.sendTablesOrderInfo(tableOrderInfo);
+                    // update Redis sets
+                    tableOrderInfo = tableCacheService.addOrderIdToTable(savedOrder.getId(),
+                            savedOrder.getStatus(),
+                            tableId);
                 }
             }
         }
+
 
         if (orderDiscount != null) {
             orderDiscountService.save(orderDiscount);
@@ -159,15 +164,23 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
 
         orderProductService.sendOrdersFromWebsocket(orderProductResponseWithPayloadDto);
 
+        TotalOrders totalOrders = null;
         if (orderStatus != null) {
             if (orderStatus.equals(Order.OrderStatus.COMPLETED)) {
-                printerService.sendOrderToPrinter(savedOrder.getId(), requestDtoForPrint.getProductsIdForPrint());
+                totalOrders = totalOrdersCacheService.addCompletedOrder(savedOrder::getId);
+                printerService.sendOrderToPrinter(savedOrder.getId(), requestDtoForPrint.getProductsIdForPrint(), order);
             }
+        } else {
+            totalOrders = totalOrdersCacheService.addPendingOrder(savedOrder::getId);
         }
-        if (savedOrder.getStatus().equals(Order.OrderStatus.PENDING)) {
-            webSocketSender.sendPendingOrderIncrement(1);
+
+        OrdersStatesCount ordersStatesCount = new OrdersStatesCount();
+        if (tableOrderInfo != null) {
+            ordersStatesCount.setTablesOrderInfo(List.of(tableOrderInfo));
         }
-        return orderProductResponseWithPayloadDto;
+        ordersStatesCount.setTotalOrders(totalOrders);
+
+        webSocketSender.sendTablesOrderInfo(ordersStatesCount);
     }
 
     private OrderResponseDTO handleOrderResponse(Order savedOrder, AtomicReference<LocalTime> totalCookingTime, AtomicReference<BigDecimal> totalPrice, List<ProductResponseDTO> productResponseDTOS) {
@@ -196,7 +209,6 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
 
                 BigDecimal globalDiscountPercentage = discountByCode.getDiscount();
 
-                // Calculate the global discount amount
                 globalDiscountAmount = totalPrice.get()
                         .multiply(globalDiscountPercentage)
                         .divide(new BigDecimal(100), RoundingMode.HALF_UP); // (total price * discount%) / 100
@@ -221,13 +233,10 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
     }
 
     private BigDecimal handleProductDiscountCode(String productDiscountCode, BigDecimal productDiscountAmount, OrderProductResponseWithPayloadDto orderProductResponseWithPayloadDto, List<ProductResponseDTO> productResponseDTOS) {
-        // Retrieve the product and global discount details
         ProductDiscount productDiscountByCode = productDiscountService.getProductDiscountByCode(productDiscountCode);
 
-        // Calculate the product discount percentage
         BigDecimal productDiscountPercentage = productDiscountByCode.getDiscount();
 
-        // Apply product-specific discounts (e.g., per applicable product)
         productDiscountAmount = addToProductDiscountAmount(productResponseDTOS, productDiscountPercentage, productDiscountAmount);
 
         orderProductResponseWithPayloadDto.setProductDiscountCode(productDiscountCode);
@@ -349,13 +358,13 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
     }
 
 
-    private LocalTime countTotalCookingTime(AtomicReference<LocalTime> totalCookingTime, Product product) {
-        return totalCookingTime.updateAndGet(t -> t.plusMinutes(product.getCookingTime().getMinute())
+    private void countTotalCookingTime(AtomicReference<LocalTime> totalCookingTime, Product product) {
+        totalCookingTime.updateAndGet(t -> t.plusMinutes(product.getCookingTime().getMinute())
                 .plusSeconds(product.getCookingTime().getSecond()));
     }
 
-    private BigDecimal countTotalPrice(AtomicReference<BigDecimal> totalPrice, Product product, Integer quantity) {
-        return totalPrice.updateAndGet(v -> v.add(product.getPrice().multiply(new BigDecimal(quantity))));
+    private void countTotalPrice(AtomicReference<BigDecimal> totalPrice, Product product, Integer quantity) {
+        totalPrice.updateAndGet(v -> v.add(product.getPrice().multiply(new BigDecimal(quantity))));
     }
 
     private void countQuantity(OrderProductRequestDTO requestDTO, ProductResponseDTO productResponseDTO) {

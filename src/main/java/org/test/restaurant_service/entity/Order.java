@@ -4,7 +4,6 @@ import javax.persistence.Table;
 import javax.persistence.*;
 
 import lombok.*;
-import org.test.restaurant_service.service.OrderDiscountService;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -77,11 +76,11 @@ public class Order {
         return user != null;
     }
 
-    public boolean isOrderInRestaurant() {
+    public boolean orderInRestaurant() {
         return table != null;
     }
 
-    public boolean isOrderOutRestaurant() {
+    public boolean orderOutRestaurant() {
         return address != null;
     }
 

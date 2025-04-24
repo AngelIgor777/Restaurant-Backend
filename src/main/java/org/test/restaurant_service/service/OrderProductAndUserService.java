@@ -4,6 +4,5 @@ import org.test.restaurant_service.dto.request.order.OrderProductWithPayloadRequ
 import org.test.restaurant_service.dto.response.OrderProductResponseWithPayloadDto;
 
 public interface OrderProductAndUserService {
-    <T extends OrderProductWithPayloadRequestDto> OrderProductResponseWithPayloadDto createBulk(T orderRequestDtoWithPayloadDto);
-
+    <T extends OrderProductWithPayloadRequestDto> void createOrder(T orderRequestDtoWithPayloadDto);
 }

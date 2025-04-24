@@ -25,7 +25,7 @@ public interface OrderService {
 
     Order getOrderById(Integer id);
 
-    void delete(int id, Integer tableId);
+    void delete(int id, Integer tableId, Order.OrderStatus status);
 
     List<OrderProductResponseWithPayloadDto> getAllOrdersProductResponseWithPayloadDto(Order.OrderStatus status, LocalDateTime from, LocalDateTime to, Pageable pageable);
 
@@ -35,9 +35,9 @@ public interface OrderService {
 
     List<Order> getAllOrdersByPeriod(LocalDateTime from, LocalDateTime to);
 
-    void completeOrder(Integer orderId);
+    void completeOrder(Integer orderId, Integer tableId);
 
-    void confirmOrder(Integer orderId, UUID sessionUUID);
+    void confirmOrder(Integer orderId, UUID sessionUUID, Order.OrderStatus from);
 
     List<OrderProductResponseWithPayloadDto> getAllUserOrdersProductResponseWithPayloadDto(UUID userUUID, Pageable pageable);
 
@@ -53,5 +53,4 @@ public interface OrderService {
 
     TableOrdersPriceInfo countPriceForTable(Integer tableId);
 
-    void setTableMetaData(TableOrderInfo tableOrderInfo);
 }

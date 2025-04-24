@@ -29,7 +29,7 @@ public class RabbitMQConsumer {
 
             log.debug("Consumed message: {}", orderProductWithPayloadRequestDto);
 
-            orderProductAndUserService.createBulk(orderProductWithPayloadRequestDto);
+            orderProductAndUserService.createOrder(orderProductWithPayloadRequestDto);
             channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
         } catch (Exception e) {
             log.error("Error processing message: {}", e.getMessage(), e);
@@ -49,7 +49,7 @@ public class RabbitMQConsumer {
 
             log.debug("Consumed message: {}", orderProductWithPayloadRequestDto);
 
-            orderProductAndUserService.createBulk(orderProductWithPayloadRequestDto);
+            orderProductAndUserService.createOrder(orderProductWithPayloadRequestDto);
             channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
         } catch (Exception e) {
             log.error("Error processing message: {}", e.getMessage(), e);

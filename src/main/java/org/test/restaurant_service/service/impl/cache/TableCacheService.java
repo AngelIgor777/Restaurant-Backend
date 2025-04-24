@@ -7,6 +7,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.test.restaurant_service.dto.request.table.OpenTables;
 import org.test.restaurant_service.dto.request.table.TableOrderInfo;
+import org.test.restaurant_service.dto.response.order.TableOrderState;
+import org.test.restaurant_service.entity.Order;
 
 import java.util.*;
 
@@ -72,13 +74,45 @@ public class TableCacheService {
         }
     }
 
-    public void addOrderIdToTable(Integer orderId, Integer tableId) {
-        Set<Integer> tableOrders = getTableOrders(tableId);
-        if (tableOrders == null) {
-            tableOrders = new HashSet<>();
+    public TableOrderInfo addOrderIdToTable(Integer orderId, Order.OrderStatus orderStatus, Integer tableId) {
+        TableOrderInfo tableOrders = getTableOrders(tableId);
+
+        tableOrders.setTableId(tableId);
+
+        if (orderStatus.equals(Order.OrderStatus.COMPLETED)) {
+            tableOrders.getCompletedOrders().add(orderId);
+        } else if (orderStatus.equals(Order.OrderStatus.PENDING)) {
+            tableOrders.getPendingOrders().add(orderId);
+        } else if (orderStatus.equals(Order.OrderStatus.CONFIRMED)) {
+            tableOrders.getConfirmedOrders().add(orderId);
         }
-        tableOrders.add(orderId);
+
+        saveTableOrders(tableId, tableOrders);
+        return tableOrders;
+    }
+
+    private void saveTableOrders(Integer tableId, TableOrderInfo tableOrders) {
         redisTemplate.opsForValue().set("tableOrders:" + tableId, tableOrders);
+    }
+
+    public TableOrderInfo changeOrderStateForTable(Integer orderId, Integer tableId, Order.OrderStatus currentStatus, Order.OrderStatus changeStatus) {
+        TableOrderInfo tableOrders = getTableOrders(tableId);
+        if (currentStatus.equals(Order.OrderStatus.COMPLETED)) {
+            tableOrders.getCompletedOrders().remove(orderId);
+            if (changeStatus.equals(Order.OrderStatus.CONFIRMED)) {
+                tableOrders.getConfirmedOrders().add(orderId);
+            }
+        } else if (currentStatus.equals(Order.OrderStatus.PENDING)) {
+            tableOrders.getPendingOrders().remove(orderId);
+            if (changeStatus.equals(Order.OrderStatus.COMPLETED)) {
+                tableOrders.getCompletedOrders().add(orderId);
+            } else if (changeStatus.equals(Order.OrderStatus.CONFIRMED)) {
+                tableOrders.getConfirmedOrders().add(orderId);
+            }
+        }
+        saveTableOrders(tableId, tableOrders);
+
+        return tableOrders;
     }
 
     public List<TableOrderInfo> getAllTableOrderInfos() {
@@ -93,11 +127,8 @@ public class TableCacheService {
             String tableIdStr = key.replace("tableOrders:", "");
             Integer tableId = Integer.valueOf(tableIdStr);
 
-            Set<Integer> orderIds = getTableOrders(tableId);
-
-            if (orderIds != null && !orderIds.isEmpty()) {
-                TableOrderInfo tableOrderInfo = new TableOrderInfo();
-                tableOrderInfo.setTableId(tableId);
+            TableOrderInfo tableOrderInfo = getTableOrders(tableId);
+            if (tableOrderInfo != null) {
                 tableOrderInfos.add(tableOrderInfo);
             }
         }
@@ -105,19 +136,27 @@ public class TableCacheService {
     }
 
 
-    public Set<Integer> getTableOrders(Integer tableId) {
+    public TableOrderInfo getTableOrders(Integer tableId) {
         Object object = redisTemplate.opsForValue().get("tableOrders:" + tableId);
         if (object == null) {
-            return new HashSet<>();
+            return new TableOrderInfo(
+                    tableId,
+                    new ArrayList<>(),
+                    new ArrayList<>(),
+                    new ArrayList<>()
+            );
         }
-        return jacksonObjectMapper.convertValue(object, new TypeReference<Set<Integer>>() {
-        });
+        return jacksonObjectMapper.convertValue(object, TableOrderInfo.class);
     }
 
-    public void deleteOrderIdFromTable(Integer tableId, Integer orderId) {
-        Set<Integer> tableOrders = getTableOrders(tableId);
-        if (tableOrders != null) {
-            tableOrders.remove(orderId);
+    public void deleteOrderIdFromTable(Integer tableId, Integer orderId, Order.OrderStatus orderStatus) {
+        TableOrderInfo tableOrders = getTableOrders(tableId);
+        if (orderStatus.equals(Order.OrderStatus.COMPLETED)) {
+            tableOrders.getCompletedOrders().remove(orderId);
+        } else if (orderStatus.equals(Order.OrderStatus.PENDING)) {
+            tableOrders.getPendingOrders().remove(orderId);
+        } else if (orderStatus.equals(Order.OrderStatus.CONFIRMED)) {
+            tableOrders.getConfirmedOrders().remove(orderId);
         }
         redisTemplate.opsForValue().set("tableOrders:" + tableId, tableOrders);
     }

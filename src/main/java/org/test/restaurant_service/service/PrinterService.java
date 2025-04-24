@@ -28,11 +28,16 @@ public class PrinterService {
     private final WebSocketSender webSocketSender;
     private final ObjectMapper jacksonObjectMapper;
 
-    public void sendOrderToPrinter(Integer orderId, @Nullable ProductsForPrintRequest productsId) {
-        Order order = orderService.getOrderById(orderId);
+    public void sendOrderToPrinter(Integer orderId, @Nullable ProductsForPrintRequest productsId, @Nullable Order inputOrder) {
+        Order order = inputOrder != null ? inputOrder : orderService.getOrderById(orderId);
+        if (order == null) {
+            log.warn("Order not found for ID: {}", orderId);
+            return;
+        }
+
         OrderForPrintDto orderForPrintDto = new OrderForPrintDto();
         orderForPrintDto.setCreatedAt(order.getCreatedAt().toString());
-        if (order.isOrderInRestaurant()) {
+        if (order.orderInRestaurant()) {
             orderForPrintDto.setTable(order.getTable().getNumber());
         }
         List<ProductItem> productItems;
@@ -49,22 +54,23 @@ public class PrinterService {
         } catch (JsonProcessingException e) {
             log.error("Failed to convert order to json", e);
         }
-        orderService.completeOrder(orderId);
+
+        if (!order.getStatus().equals(Order.OrderStatus.COMPLETED)) {
+            orderService.completeOrder(orderId, order.getTable().getId());
+        }
     }
 
     private List<ProductItem> getProductItems(Integer orderId, ProductsForPrintRequest productsId) {
-        List<ProductItem> productItems = orderProductService.getOrderProductsByOrderId(orderId)
+        return orderProductService.getOrderProductsByOrderId(orderId)
                 .stream()
                 .filter(orderProduct -> productsId.getProducts().contains(orderProduct.getProduct().getId()))
                 .map(getOrderProductProductItem()).toList();
-        return productItems;
     }
 
     private List<ProductItem> getProductItems(Integer orderId) {
-        List<ProductItem> productItems = orderProductService.getOrderProductsByOrderId(orderId)
+        return orderProductService.getOrderProductsByOrderId(orderId)
                 .stream()
                 .map(getOrderProductProductItem()).toList();
-        return productItems;
     }
 
     private Function<OrderProduct, ProductItem> getOrderProductProductItem() {

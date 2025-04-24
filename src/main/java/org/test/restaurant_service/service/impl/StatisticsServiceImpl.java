@@ -77,9 +77,9 @@ public class StatisticsServiceImpl implements StatisticsService {
         ConcurrentHashMap<ProductResponseDTO, Integer> productSales = new ConcurrentHashMap<>();
 
         orders.forEach(order -> {
-            if (order.isOrderInRestaurant()) {
+            if (order.orderInRestaurant()) {
                 inRestaurant.incrementAndGet();
-            } else if (order.isOrderOutRestaurant()) {
+            } else if (order.orderOutRestaurant()) {
                 outRestaurant.incrementAndGet();
             }
 

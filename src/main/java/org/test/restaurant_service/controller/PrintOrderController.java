@@ -18,6 +18,6 @@ public class PrintOrderController {
     @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
     public void sendToPrinter(@PathVariable Integer orderId,
                               @RequestBody ProductsForPrintRequest productsId) {
-        printerService.sendOrderToPrinter(orderId, productsId);
+        printerService.sendOrderToPrinter(orderId, productsId, null);
     }
 }

@@ -2,7 +2,10 @@ package org.test.restaurant_service.repository;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.test.restaurant_service.dto.response.order.OrderId;
 import org.test.restaurant_service.entity.Order;
 
 import java.time.LocalDateTime;
@@ -36,5 +39,18 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
 
     boolean existsByOtp(String otp);
 
-    int countAllByCreatedAtBetweenAndStatus(LocalDateTime from, LocalDateTime to, Order.OrderStatus status);
+    @Query(
+            value = """
+                      SELECT id
+                        FROM restaurant_service.orders
+                       WHERE created_at BETWEEN :from AND :to
+                         AND status       = :status
+                    """,
+            nativeQuery = true
+    )
+    List<OrderId> findAllIdsByCreatedAtBetweenAndStatus(
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to,
+            @Param("status") String status
+    );
 }

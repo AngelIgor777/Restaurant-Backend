@@ -2,7 +2,6 @@ package org.test.restaurant_service.service.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,18 +10,20 @@ import org.test.restaurant_service.dto.request.table.OpenTables;
 import org.test.restaurant_service.dto.request.table.TableOrderInfo;
 import org.test.restaurant_service.dto.request.table.TableOrdersPriceInfo;
 import org.test.restaurant_service.dto.response.*;
+import org.test.restaurant_service.dto.response.order.ConcreteOrderId;
+import org.test.restaurant_service.dto.response.order.OrderId;
+import org.test.restaurant_service.dto.response.order.TotalOrders;
 import org.test.restaurant_service.entity.*;
 import org.test.restaurant_service.mapper.AddressMapperImpl;
 import org.test.restaurant_service.mapper.OrderMapper;
 import org.test.restaurant_service.mapper.ProductMapperImpl;
 import org.test.restaurant_service.mapper.TableMapperImpl;
 import org.test.restaurant_service.repository.OrderRepository;
-import org.test.restaurant_service.repository.TableRepository;
 import org.test.restaurant_service.service.OrderDiscountService;
 import org.test.restaurant_service.service.OrderProductService;
 import org.test.restaurant_service.service.OrderService;
-import org.test.restaurant_service.service.PhotoService;
 import org.test.restaurant_service.service.impl.cache.TableCacheService;
+import org.test.restaurant_service.service.impl.cache.TotalOrdersCacheService;
 
 import javax.persistence.EntityNotFoundException;
 import java.math.BigDecimal;
@@ -47,8 +48,9 @@ public class OrderServiceImpl implements OrderService {
     private final WebSocketSender webSocketSender;
     private final TableCacheService tableCacheService;
     private final TableOrderScoreService tableOrderScoreService;
+    private final TotalOrdersCacheService totalOrdersCacheService;
 
-    public OrderServiceImpl(OrderRepository orderRepository, OrderMapper orderMapper, OrderDiscountService orderDiscountService, OrderProductService orderProductService, AddressMapperImpl addressMapperImpl, ProductMapperImpl productMapperImpl, TableMapperImpl tableMapperImpl, WebSocketSender webSocketSender, TableCacheService tableCacheService, TableOrderScoreService tableOrderScoreService) {
+    public OrderServiceImpl(OrderRepository orderRepository, OrderMapper orderMapper, OrderDiscountService orderDiscountService, OrderProductService orderProductService, AddressMapperImpl addressMapperImpl, ProductMapperImpl productMapperImpl, TableMapperImpl tableMapperImpl, WebSocketSender webSocketSender, TableCacheService tableCacheService, TableOrderScoreService tableOrderScoreService, TotalOrdersCacheService totalOrdersCacheService, TotalOrdersCacheService totalOrdersCacheService1) {
         this.orderRepository = orderRepository;
         this.orderMapper = orderMapper;
         this.orderDiscountService = orderDiscountService;
@@ -59,6 +61,7 @@ public class OrderServiceImpl implements OrderService {
         this.webSocketSender = webSocketSender;
         this.tableCacheService = tableCacheService;
         this.tableOrderScoreService = tableOrderScoreService;
+        this.totalOrdersCacheService = totalOrdersCacheService1;
     }
 
     @Override
@@ -91,13 +94,13 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public void delete(int id, Integer tableId) {
+    public void delete(int id, Integer tableId, Order.OrderStatus status) {
         if (!orderRepository.existsById(id)) {
             throw new EntityNotFoundException("Order not found with id " + id);
         }
         orderRepository.deleteById(id);
         if (tableId != null) {
-            tableCacheService.deleteOrderIdFromTable(tableId, id);
+            tableCacheService.deleteOrderIdFromTable(tableId, id, status);
         }
     }
 
@@ -105,21 +108,19 @@ public class OrderServiceImpl implements OrderService {
     @Transactional(readOnly = true)
     @Override
     public List<OrderProductResponseWithPayloadDto> getAllOrdersProductResponseWithPayloadDto(Order.OrderStatus status, LocalDateTime from, LocalDateTime to, Pageable pageable) {
-        List<OrderProductResponseWithPayloadDto> list = orderRepository.findAllByStatusAndCreatedAtBetween(status, from, to, pageable)
+        return orderRepository.findAllByStatusAndCreatedAtBetween(status, from, to, pageable)
                 .stream()
                 .map(order -> getOrderProductResponseWithPayloadDto(order, false))
                 .toList();
-        return list;
     }
 
     @Transactional(readOnly = true)
     @Override
     public List<OrderProductResponseWithPayloadDto> getAllOrdersProductResponseWithPayloadDto(Order.OrderStatus status, LocalDateTime from, LocalDateTime to) {
-        List<OrderProductResponseWithPayloadDto> list = orderRepository.findAllByStatusAndCreatedAtBetween(status, from, to)
+        return orderRepository.findAllByStatusAndCreatedAtBetween(status, from, to)
                 .stream()
                 .map(order -> getOrderProductResponseWithPayloadDto(order, false))
                 .toList();
-        return list;
     }
 
     @Override
@@ -134,36 +135,53 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public void completeOrder(Integer orderId) {
+    public void completeOrder(Integer orderId, Integer tableId) {
         Order orderById = getOrderById(orderId);
         orderById.setStatus(Order.OrderStatus.COMPLETED);
         orderRepository.save(orderById);
-        webSocketSender.sendPendingOrderIncrement(-1);
+        OrdersStatesCount ordersStatesCount = new OrdersStatesCount();
+        TableOrderInfo tableOrderInfo;
+        if (tableId != null) {
+            tableOrderInfo = tableCacheService.
+                    changeOrderStateForTable(orderId, tableId, Order.OrderStatus.PENDING, Order.OrderStatus.COMPLETED);
+            ordersStatesCount.setTablesOrderInfo(List.of(tableOrderInfo));
+        }
+        TotalOrders totalOrders = totalOrdersCacheService.updateOrderStatus(() -> orderId, Order.OrderStatus.PENDING, Order.OrderStatus.COMPLETED);
+        ordersStatesCount.setTotalOrders(totalOrders);
+
+        webSocketSender.sendTablesOrderInfo(ordersStatesCount);
     }
 
     @Override
-    public void confirmOrder(Integer orderId, UUID sessionUUID) {
+    public void confirmOrder(Integer orderId, UUID sessionUUID, Order.OrderStatus from) {
         Order orderById = getOrderById(orderId);
         orderById.setStatus(Order.OrderStatus.CONFIRMED);
         orderById.setOtp(null);
         orderRepository.save(orderById);
-        webSocketSender.sendPendingOrderIncrement(-1);
+        TableOrderInfo tableOrderInfo = null;
         if (sessionUUID != null) {
             tableOrderScoreService.save(orderById.getTable(), orderById, sessionUUID);
+            tableOrderInfo = tableCacheService.changeOrderStateForTable(orderId, orderById.getTable().getId(), from, Order.OrderStatus.CONFIRMED);
         }
+        TotalOrders totalOrders = totalOrdersCacheService.updateOrderStatus(() -> orderId, from, Order.OrderStatus.CONFIRMED);
+        OrdersStatesCount ordersStatesCount = new OrdersStatesCount();
+        ordersStatesCount.setTotalOrders(totalOrders);
+        if(tableOrderInfo != null) {
+            ordersStatesCount.setTablesOrderInfo(List.of(tableOrderInfo));
+        }
+
+        webSocketSender.sendTablesOrderInfo(ordersStatesCount);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<OrderProductResponseWithPayloadDto> getAllUserOrdersProductResponseWithPayloadDto(UUID userUUID, Pageable pageable) {
         List<Order> ordersByUserUuid = orderRepository.findByUser_UuidOrderByCreatedAtDesc(userUUID, pageable);
-        List<OrderProductResponseWithPayloadDto> list = new java.util.ArrayList<>(ordersByUserUuid.stream()
+        return new ArrayList<>(ordersByUserUuid.stream()
                 .map(order -> {
-                    OrderProductResponseWithPayloadDto response = getOrderProductResponseWithPayloadDto(order, true);
-                    return response;
+                    return getOrderProductResponseWithPayloadDto(order, true);
                 })
                 .toList());
-        return list;
     }
 
     @Override
@@ -197,63 +215,32 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrdersStatesCount getOrdersStatesCount() {
         LocalDate today = LocalDate.now();
-        LocalDateTime startOfWorkDay = today.atTime(LocalTime.of(7, 0));
+        LocalDateTime startOfWorkDay = today.atTime(LocalTime.of(0, 0));
 
         LocalDateTime endOfWorkDay = today.atTime(LocalTime.of(23, 59));
-        int pendingCount = orderRepository.countAllByCreatedAtBetweenAndStatus(startOfWorkDay, endOfWorkDay, Order.OrderStatus.PENDING);
-        int confirmedCount = orderRepository.countAllByCreatedAtBetweenAndStatus(startOfWorkDay, endOfWorkDay, Order.OrderStatus.CONFIRMED);
-        int completedCount = orderRepository.countAllByCreatedAtBetweenAndStatus(startOfWorkDay, endOfWorkDay, Order.OrderStatus.COMPLETED);
+        List<OrderId> pending = orderRepository.findAllIdsByCreatedAtBetweenAndStatus(startOfWorkDay, endOfWorkDay, Order.OrderStatus.PENDING.name());
+        List<OrderId> confirmed = orderRepository.findAllIdsByCreatedAtBetweenAndStatus(startOfWorkDay, endOfWorkDay, Order.OrderStatus.CONFIRMED.name());
+        List<OrderId> completed = orderRepository.findAllIdsByCreatedAtBetweenAndStatus(startOfWorkDay, endOfWorkDay, Order.OrderStatus.COMPLETED.name());
+
+        List<ConcreteOrderId> pendingConverted = pending.stream().map(id -> new ConcreteOrderId(id.getId())).collect(Collectors.toList());
+        List<ConcreteOrderId> confirmedConverted = confirmed.stream().map(id -> new ConcreteOrderId(id.getId())).collect(Collectors.toList());
+        List<ConcreteOrderId> completedConverted = completed.stream().map(id -> new ConcreteOrderId(id.getId())).collect(Collectors.toList());
+
         OrdersStatesCount ordersStatesCount = new OrdersStatesCount();
-        ordersStatesCount.setPendingOrders(pendingCount);
-        ordersStatesCount.setConfirmedOrders(confirmedCount);
-        ordersStatesCount.setCompletedOrders(completedCount);
-        ordersStatesCount.setOpenTables(tableCacheService.getOpenTables());
+
+        TotalOrders totalOrders = new TotalOrders();
+        totalOrders.setTotalPendingOrdersId(pendingConverted);
+        totalOrders.setTotalConfirmedOrdersId(confirmedConverted);
+        totalOrders.setTotalCompletedOrdersId(completedConverted);
+
+        totalOrdersCacheService.setTotalOrders(totalOrders);
+
         List<TableOrderInfo> allTableOrderInfos = tableCacheService.getAllTableOrderInfos();
 
-        for (TableOrderInfo tableOrderInfo : allTableOrderInfos) {
-            if (tableOrderInfo != null) {
-                setTableMetaData(tableOrderInfo);
-            }
-        }
-        ordersStatesCount.setTableOrderInfos(allTableOrderInfos);
+        ordersStatesCount.setTablesOrderInfo(allTableOrderInfos);
+        ordersStatesCount.setTotalOrders(totalOrders);
+
         return ordersStatesCount;
-    }
-
-    @Override
-    public void setTableMetaData(TableOrderInfo tableOrderInfo) {
-        TableStateOrders pendingOrders = new TableStateOrders();
-        List<OrderProductResponseWithPayloadDto> pendingOrdersList = new ArrayList<>();
-        TableStateOrders completedOrders = new TableStateOrders();
-        List<OrderProductResponseWithPayloadDto> completedOrdersList = new ArrayList<>();
-        TableStateOrders confirmedOrders = new TableStateOrders();
-        List<OrderProductResponseWithPayloadDto> confirmedOrdersList = new ArrayList<>();
-
-        int tableId = tableOrderInfo.getTableId();
-        Set<Integer> tableOrders = tableCacheService.getTableOrders(tableId);
-        if (tableOrders != null && !tableOrders.isEmpty()) {
-            for (Integer orderId : tableOrders) {
-                Order order = getOrderById(orderId);
-                OrderProductResponseWithPayloadDto orderWithPayload = getOrderProductResponseWithPayloadDto(order, false);
-                if (order.getStatus().equals(Order.OrderStatus.PENDING)) {
-                    pendingOrdersList.add(orderWithPayload);
-                    pendingOrders.setCount(pendingOrders.getCount() + 1);
-                } else if (order.getStatus().equals(Order.OrderStatus.COMPLETED)) {
-                    completedOrdersList.add(orderWithPayload);
-                    completedOrders.setCount(confirmedOrders.getCount() + 1);
-                } else if (order.getStatus().equals(Order.OrderStatus.CONFIRMED)) {
-                    confirmedOrdersList.add(orderWithPayload);
-                    confirmedOrders.setCount(confirmedOrders.getCount() + 1);
-                }
-            }
-        }
-
-        pendingOrders.setOrders(pendingOrdersList);
-        completedOrders.setOrders(completedOrdersList);
-        confirmedOrders.setOrders(confirmedOrdersList);
-
-        tableOrderInfo.setPendingOrders(pendingOrders);
-        tableOrderInfo.setCompletedOrders(completedOrders);
-        tableOrderInfo.setConfirmedOrders(confirmedOrders);
     }
 
     public OrderProductResponseWithPayloadDto getOrderProductResponseWithPayloadDto(Order order, boolean useProductPhoto) {
@@ -288,13 +275,13 @@ public class OrderServiceImpl implements OrderService {
         if (order.hasUser()) {
             response.setUserUUID(order.getUser().getUuid());
         }
-        if (order.isOrderInRestaurant()) {
+        if (order.orderInRestaurant()) {
             response.setOrderInRestaurant(true);
             Table table = order.getTable();
             TableResponseDTO responseDTO = tableMapperImpl.toResponseDTO(table);
             response.setTableResponseDTO(responseDTO);
 
-        } else if (order.isOrderOutRestaurant()) {
+        } else if (order.orderOutRestaurant()) {
             Address address = order.getAddress();
             AddressResponseDTO responseDto = addressMapperImpl.toResponseDto(address);
             response.setAddressResponseDTO(responseDto);
@@ -310,11 +297,10 @@ public class OrderServiceImpl implements OrderService {
     }
 
     public TableOrdersPriceInfo countPriceForTable(Integer tableId) {
-        Set<Integer> tableOrders = tableCacheService.getTableOrders(tableId);
-        BigDecimal totalPrice = tableOrders.stream()
+        TableOrderInfo orders = tableCacheService.getTableOrders(tableId);
+        BigDecimal totalPrice = orders.getConfirmedOrders().stream()
                 .map(this::getOrderById)
                 .filter(Objects::nonNull)
-                .filter(order -> order.getStatus() == Order.OrderStatus.CONFIRMED)
                 .map(Order::getTotalPrice)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
