@@ -21,16 +21,14 @@ public class TableCacheService {
 
     public UUID addTableToOpen(Integer tableId) {
         OpenTables openTables = getOpenTables();
-        if (openTables == null) {
-            openTables = new OpenTables();
-            openTables.setIds(new HashSet<>());
-        }
         Set<Integer> ids = openTables.getIds();
         if (ids.contains(tableId)) {
             return getSessionUUID(tableId);
         } else {
             ids.add(tableId);
             saveOpenTables(openTables);
+            TableOrderInfo tableOrders = getTableOrders(tableId);
+            saveTableOrders(tableId, tableOrders);
             return generateSessionUUID(tableId);
         }
     }
@@ -110,6 +108,7 @@ public class TableCacheService {
                 tableOrders.getConfirmedOrders().add(orderId);
             }
         }
+
         saveTableOrders(tableId, tableOrders);
 
         return tableOrders;
