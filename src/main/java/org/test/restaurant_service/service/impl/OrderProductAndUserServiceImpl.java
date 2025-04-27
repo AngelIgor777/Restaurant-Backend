@@ -162,7 +162,6 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
 
         orderProductService.createAll(orderProducts);
 
-        orderProductService.sendOrdersFromWebsocket(orderProductResponseWithPayloadDto);
 
         TotalOrders totalOrders = null;
         if (orderStatus != null) {

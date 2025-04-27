@@ -1,6 +1,7 @@
 package org.test.restaurant_service.entity;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 import javax.persistence.*;
@@ -24,5 +25,6 @@ public class Language {
     private String name;
 
     @OneToMany(mappedBy = "language",fetch = FetchType.LAZY,cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<TelegramUserEntity> telegramUserEntity;
 }

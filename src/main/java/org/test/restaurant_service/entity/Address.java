@@ -36,10 +36,6 @@ public class Address {
     @JoinColumn(name = "user_uuid", referencedColumnName = "uuid", foreignKey = @ForeignKey(name = "fk_address_user"))
     private User user;
 
-    public boolean addressHaveUser() {
-        return user != null;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

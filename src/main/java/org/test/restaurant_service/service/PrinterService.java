@@ -13,6 +13,7 @@ import org.test.restaurant_service.dto.response.printer.ProductItem;
 import org.test.restaurant_service.entity.Order;
 import org.test.restaurant_service.entity.OrderProduct;
 import org.test.restaurant_service.entity.Product;
+import org.test.restaurant_service.entity.Table;
 
 import javax.annotation.Nullable;
 import java.math.BigDecimal;
@@ -56,7 +57,12 @@ public class PrinterService {
         }
 
         if (!order.getStatus().equals(Order.OrderStatus.COMPLETED)) {
-            orderService.completeOrder(orderId, order.getTable().getId());
+            Table table = order.getTable();
+            if (table != null) {
+                orderService.completeOrder(orderId, table.getId());
+            } else {
+                orderService.completeOrder(orderId, null);
+            }
         }
     }
 

@@ -2,10 +2,8 @@ package org.test.restaurant_service.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.test.restaurant_service.controller.websocket.WebSocketSender;
 import org.test.restaurant_service.dto.request.OrderProductRequestDTO;
 import org.test.restaurant_service.dto.response.OrderProductResponseDTO;
-import org.test.restaurant_service.dto.response.OrderProductResponseWithPayloadDto;
 import org.test.restaurant_service.entity.*;
 import org.test.restaurant_service.mapper.OrderProductMapper;
 import org.test.restaurant_service.repository.*;
@@ -22,16 +20,11 @@ public class OrderProductServiceImpl implements OrderProductService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final OrderProductMapper orderProductMapper;
-    private final WebSocketSender webSocketSender;
-
 
     public void createAll(List<OrderProduct> orderProducts) {
         orderProductRepository.saveAll(orderProducts);
     }
 
-    public void sendOrdersFromWebsocket(OrderProductResponseWithPayloadDto payloadDto) {
-        webSocketSender.sendOrdersFromWebsocket(payloadDto);
-    }
 
     @Override
     public List<OrderProduct> getOrderProductsByOrderId(Integer orderId) {

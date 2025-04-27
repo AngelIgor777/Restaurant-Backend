@@ -14,7 +14,7 @@ public interface AddressMapper {
     @Mapping(target = "id", ignore = true)
     AddressResponseDTO toAddressResponseDTO(AddressRequestDTO addressRequestDTO);
 
-    @Mapping(target = "userUUID", ignore = true)
+    @Mapping(target = "userUUID", source = "user.uuid")
     AddressResponseDTO toResponseDto(Address address);
 
     @Mapping(target = "user", ignore = true)

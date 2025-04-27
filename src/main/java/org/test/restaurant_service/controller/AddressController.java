@@ -2,6 +2,7 @@ package org.test.restaurant_service.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.test.restaurant_service.dto.request.AddressRequestDTO;
 import org.test.restaurant_service.dto.response.AddressResponseDTO;
@@ -21,24 +22,6 @@ public class AddressController {
     private final AddressService addressService;
     private final AddressMapper addressMapper;
     private final UserAddressService userAddressService;
-
-    @GetMapping("/{id}")
-    public ResponseEntity<Address> getAddressById(@PathVariable Integer id) {
-        Address address = addressService.findById(id);
-        return ResponseEntity.ok(address);
-    }
-
-    @GetMapping
-    public ResponseEntity<List<Address>> getAllAddresses() {
-        List<Address> addresses = addressService.findAll();
-        return ResponseEntity.ok(addresses);
-    }
-
-    @GetMapping("/city/{city}")
-    public ResponseEntity<List<Address>> getAddressesByCity(@PathVariable String city) {
-        List<Address> addresses = addressService.findByCity(city);
-        return ResponseEntity.ok(addresses);
-    }
 
     @PatchMapping("/{id}")
     public ResponseEntity<AddressResponseDTO> updateAddress(@PathVariable Integer id, @RequestBody AddressRequestDTO addressRequestDTO) {
