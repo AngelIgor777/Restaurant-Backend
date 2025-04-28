@@ -36,7 +36,7 @@ public class OrderController {
     @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
     public ResponseEntity<List<OrderProductResponseWithPayloadDto>> getAllPendingOrders(@RequestParam Order.OrderStatus status) {
         LocalDate today = LocalDate.now();
-        LocalDateTime startOfWorkDay = today.atTime(LocalTime.of(7, 0));
+        LocalDateTime startOfWorkDay = today.atTime(LocalTime.of(0, 1));
         LocalDateTime endOfWorkDay = today.atTime(LocalTime.of(23, 59));
         List<OrderProductResponseWithPayloadDto> orders = orderService.getAllOrdersProductResponseWithPayloadDto(status, startOfWorkDay, endOfWorkDay);
         return ResponseEntity.ok(orders);

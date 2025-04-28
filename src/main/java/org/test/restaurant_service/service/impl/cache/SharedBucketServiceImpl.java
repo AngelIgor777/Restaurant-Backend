@@ -1,4 +1,4 @@
-package org.test.restaurant_service.service.impl;
+package org.test.restaurant_service.service.impl.cache;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -7,7 +7,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.test.restaurant_service.dto.request.SharedBucketProductRequestDTO;
 import org.test.restaurant_service.dto.request.SharedBucketRequestDTO;
-import org.test.restaurant_service.dto.response.sharedBucket.*;
+import org.test.restaurant_service.dto.response.sharedBucket.ProductsForSharedBucketResponseDto;
+import org.test.restaurant_service.dto.response.sharedBucket.SharedBucketProductPayloadResponseDto;
+import org.test.restaurant_service.dto.response.sharedBucket.SharedBucketResponseDTO;
+import org.test.restaurant_service.dto.response.sharedBucket.UserBucketResponseDto;
 import org.test.restaurant_service.entity.Product;
 import org.test.restaurant_service.entity.SharedBucket;
 import org.test.restaurant_service.entity.SharedBucketProduct;
@@ -66,7 +69,6 @@ public class SharedBucketServiceImpl implements SharedBucketService {
         return sharedBucketMapper.toResponseDto(savedBucket);
     }
 
-    //todo
     @Transactional(readOnly = true)
     @Override
     public SharedBucketProductPayloadResponseDto getSharedBucketById(Integer id, UUID userUUID) {

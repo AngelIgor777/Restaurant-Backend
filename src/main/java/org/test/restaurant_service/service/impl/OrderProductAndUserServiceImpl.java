@@ -162,7 +162,6 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
 
         orderProductService.createAll(orderProducts);
 
-
         TotalOrders totalOrders = null;
         if (orderStatus != null) {
             if (orderStatus.equals(Order.OrderStatus.COMPLETED)) {
