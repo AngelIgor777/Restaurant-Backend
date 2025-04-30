@@ -15,6 +15,7 @@ import org.test.restaurant_service.mapper.ProductMapper;
 import org.test.restaurant_service.service.ProductAndPhotoService;
 import org.test.restaurant_service.service.ProductAndProductHistoryService;
 import org.test.restaurant_service.service.ProductService;
+import org.test.restaurant_service.service.impl.ProductReadService;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Max;
@@ -28,11 +29,13 @@ public class ProductController {
     private final ProductService productService;
     private final ProductAndPhotoService productAndPhotoService;
     private final ProductAndProductHistoryService productAndProductHistoryService;
+    private final ProductReadService productReadService;
 
-    public ProductController(@Qualifier("productServiceWithS3Impl") ProductService productService, @Qualifier("productAndAndPhotoServiceWithSaveInS3Impl") ProductAndPhotoService productAndPhotoService, ProductAndProductHistoryService productAndProductHistoryService) {
+    public ProductController(@Qualifier("productServiceWithS3Impl") ProductService productService, @Qualifier("productAndAndPhotoServiceWithSaveInS3Impl") ProductAndPhotoService productAndPhotoService, ProductAndProductHistoryService productAndProductHistoryService, ProductReadService productReadService) {
         this.productService = productService;
         this.productAndPhotoService = productAndPhotoService;
         this.productAndProductHistoryService = productAndProductHistoryService;
+        this.productReadService = productReadService;
     }
 
     @PostMapping
@@ -76,18 +79,25 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public ProductAndPhotosResponseDTO getById(@PathVariable Integer id) {
-        return productService.getById(id);
+    public ProductResponseDTO getById(@PathVariable Integer id,
+                                      @RequestHeader(name = "Accept-Language",
+                                              defaultValue = "ru") String lang) {
+        return productReadService.one(id, lang);
     }
 
     @GetMapping
-    public Page<ProductResponseDTO> getAll(@RequestParam(required = false) Integer typeId, Pageable pageable) {
-        return productService.getAll(typeId, pageable);
+    public Page<ProductResponseDTO> getAll(@RequestParam(required = false) Integer typeId,
+                                           @RequestHeader(name = "Accept-Language",
+                                                   defaultValue = "ru") String lang,
+                                           Pageable pageable) {
+        return productReadService.list(typeId, lang, pageable);
     }
 
     @GetMapping("/top-weekly")
-    public List<ProductResponseDTO> getTop10WeekProducts(Pageable pageable) {
-        return productService.getTop10WeekProducts(pageable);
+    public List<ProductResponseDTO> getTop10WeekProducts(
+            @RequestHeader(name = "Accept-Language", defaultValue = "ru") String lang,
+            Pageable pageable) {
+        return productReadService.topWeek(lang, pageable);
     }
 
     @GetMapping("/search")

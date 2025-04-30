@@ -6,7 +6,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.test.restaurant_service.dto.request.ProductTypeTranslationRequestDTO;
-import org.test.restaurant_service.dto.response.ProductTypeTranslationResponseDTO;
+import org.test.restaurant_service.dto.response.ProductTypeTranslResponseDTO;
 import org.test.restaurant_service.service.ProductTypeTranslationService;
 
 import javax.validation.Valid;
@@ -20,7 +20,7 @@ public class ProductTypeTranslationController {
     private final ProductTypeTranslationService productTypeTranslationService;
 
     @GetMapping("/{productTypeId}")
-    public ProductTypeTranslationResponseDTO getProductTypeTranslation(
+    public ProductTypeTranslResponseDTO getProductTypeTranslation(
             @PathVariable Integer productTypeId,
             @RequestParam String lang) {
         return productTypeTranslationService.getTranslation(productTypeId, lang);
@@ -28,18 +28,18 @@ public class ProductTypeTranslationController {
 
     @PostMapping
     @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
-    public ResponseEntity<ProductTypeTranslationResponseDTO> createTranslation(
+    public ResponseEntity<ProductTypeTranslResponseDTO> createTranslation(
             @Valid @RequestBody ProductTypeTranslationRequestDTO requestDTO) {
-        ProductTypeTranslationResponseDTO createdTranslation = productTypeTranslationService.createTranslation(requestDTO);
+        ProductTypeTranslResponseDTO createdTranslation = productTypeTranslationService.createTranslation(requestDTO);
         return ResponseEntity.status(201).body(createdTranslation);
     }
 
     @PatchMapping("/{id}")
     @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
-    public ResponseEntity<ProductTypeTranslationResponseDTO> updateTranslation(
+    public ResponseEntity<ProductTypeTranslResponseDTO> updateTranslation(
             @PathVariable Integer id,
             @Valid @RequestBody ProductTypeTranslationRequestDTO requestDTO) {
-        ProductTypeTranslationResponseDTO updatedTranslation = productTypeTranslationService.updateTranslation(id, requestDTO);
+        ProductTypeTranslResponseDTO updatedTranslation = productTypeTranslationService.updateTranslation(id, requestDTO);
         return ResponseEntity.ok(updatedTranslation);
     }
 

@@ -139,9 +139,8 @@ public class ProductServiceImpl implements ProductService {
     }
 
     protected Product get(Integer id) {
-        Product product = productRepository.findByIdWithPhotos(id)
+        return productRepository.findByIdWithPhotos(id)
                 .orElseThrow(() -> new EntityNotFoundException("Product not found with id " + id));
-        return product;
     }
 
     @Override

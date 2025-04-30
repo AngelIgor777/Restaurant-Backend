@@ -6,6 +6,7 @@ import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 import org.test.restaurant_service.dto.request.ProductRequestDTO;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
+import org.test.restaurant_service.dto.view.ProductLocalizedView;
 import org.test.restaurant_service.entity.Photo;
 import org.test.restaurant_service.entity.Product;
 import org.test.restaurant_service.entity.ProductHistory;
@@ -56,4 +57,7 @@ public interface ProductMapper {
     default String mapPhotoUrl(java.util.List<Photo> photos) {
         return (photos != null && !photos.isEmpty()) ? photos.get(0).getUrl() : null;
     }
+
+    /* НОВЫЙ маппинг из локализованного projection */
+    ProductResponseDTO fromProjection(ProductLocalizedView view);
 }

@@ -22,6 +22,7 @@ public class Language {
     private Integer id;
 
     private String code;
+
     private String name;
 
     @OneToMany(mappedBy = "language",fetch = FetchType.LAZY,cascade = CascadeType.ALL)

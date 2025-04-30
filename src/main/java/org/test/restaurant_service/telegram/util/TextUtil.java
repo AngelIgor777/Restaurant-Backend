@@ -5,7 +5,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
-import org.test.restaurant_service.dto.response.ProductTypeTranslationResponseDTO;
+import org.test.restaurant_service.dto.response.ProductTypeTranslResponseDTO;
 import org.test.restaurant_service.entity.*;
 import org.test.restaurant_service.service.OrderService;
 import org.test.restaurant_service.service.ProductService;
@@ -148,13 +148,13 @@ class TextUtil {
         return productText;
     }
 
-    public StringBuilder getProductTranslationRoText(ProductTranslation productTranslation, ProductTypeTranslationResponseDTO productTypeTranslationResponseDTO) {
+    public StringBuilder getProductTranslationRoText(ProductTranslation productTranslation, ProductTypeTranslResponseDTO productTypeTranslResponseDTO) {
         LocalTime cookingTime = productTranslation.getProduct().getCookingTime();
         BigDecimal price = productTranslation.getProduct().getPrice();
         StringBuilder productText = new StringBuilder();
         productText.append("🍴 <b>Fel de mâncare:</b> ").append(productTranslation.getName()).append("\n");
         productText.append("✨ <i>Descriere:</i> ").append(productTranslation.getDescription()).append("\n");
-        productText.append("📂 <i>Categorie:</i> ").append(productTypeTranslationResponseDTO.getName()).append("\n");
+        productText.append("📂 <i>Categorie:</i> ").append(productTypeTranslResponseDTO.getName()).append("\n");
         productText.append("💰 <b>Preț:</b> ").append(price).append(" lei\n");
         if (cookingTime != null) {
             productText.append("⏱️ <b>Timp de preparare:</b> ")
