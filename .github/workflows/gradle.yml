@@ -74,11 +74,11 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            bash -lc "
-              pkill -f 'java.*Restaurant_Service-0.0.1-SNAPSHOT.jar' || true
-              nohup java -jar /java/app/build/libs/Restaurant_Service-0.0.1-SNAPSHOT.jar \
-                > /var/log/Restaurant_Service-INFO.log \
-                2> /var/log/Restaurant_Service-ERROR.log \
-                < /dev/null &
-              disown
-            "
+            # 1) Stop any old process (ignore errors)
+            pkill -f 'java.*Restaurant_Service-0.0.1-SNAPSHOT.jar' || true
+      
+            # 2) Launch new process in its own session so it outlives this SSH
+            nohup setsid java -jar /java/app/build/libs/Restaurant_Service-0.0.1-SNAPSHOT.jar \
+              >  /var/log/Restaurant_Service-INFO.log \
+              2> /var/log/Restaurant_Service-ERROR.log \
+              <  /dev/null &
