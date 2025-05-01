@@ -24,7 +24,7 @@ public class AmazonS3Config {
         return AmazonS3ClientBuilder
                 .standard()
                 .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
-                .withEndpointConfiguration(new AmazonS3ClientBuilder.EndpointConfiguration("https://s3.timeweb.cloud", "ru-1"))
+                .withEndpointConfiguration(new AmazonS3ClientBuilder.EndpointConfiguration(KeyUtil.getS3URL(), KeyUtil.getS3Region()))
                 .withPathStyleAccessEnabled(true)
                 .build();
     }

@@ -40,6 +40,7 @@ import org.test.restaurant_service.service.impl.cache.UserCacheService;
 import org.test.restaurant_service.service.impl.cache.WaiterCallCacheService;
 import org.test.restaurant_service.telegram.config.BotConfig;
 import org.test.restaurant_service.telegram.util.TextUtil;
+import org.test.restaurant_service.util.KeyUtil;
 
 import java.math.BigDecimal;
 import java.time.LocalTime;
@@ -150,7 +151,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private ArrayList<BotCommand> getCommands(String langCode) {
         ArrayList<BotCommand> botCommands = new ArrayList<>();
-        if ("ro".equals(langCode)) {
+        if ("ro" .equals(langCode)) {
             botCommands.add(new BotCommand("/menu", "Afișați meniul"));
             botCommands.add(new BotCommand("/website", "Accesați site-ul web"));
             botCommands.add(new BotCommand("/help", "Lista comenzilor disponibile"));
@@ -1004,7 +1005,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     String fileUrl = "https://api.telegram.org/file/bot" + getBotToken() + "/" + file.getFilePath();
 
                     String fileName = fileId + ".jpg";
-                    String fileUrlInS3 = "https://s3.timeweb.cloud/cf1b889c-51893717-bc35-4427-a93b-2be350132697/uploads/images/" + fileName;
+                    String fileUrlInS3 = KeyUtil.getS3URL() + "/" + KeyUtil.getBucketName() + "/uploads/images/" + fileName;
 
                     s3Service.upload(fileUrl, fileName);
                     return fileUrlInS3;
@@ -1024,7 +1025,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         User user = userService.findByChatId(chatId);
         String langCode = data.substring(5);
         languageService.setLanguage(chatId, langCode);
-        String confirmationMessage = "ro".equals(langCode) ? "Limba a fost setată ✅" : "Язык установлен ✅";
+        String confirmationMessage = "ro" .equals(langCode) ? "Limba a fost setată ✅" : "Язык установлен ✅";
         sendMessageWithHTML(chatId, confirmationMessage);
         updateBotCommands(langCode);
 

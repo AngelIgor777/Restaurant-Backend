@@ -7,6 +7,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.test.restaurant_service.entity.Photo;
 import org.test.restaurant_service.entity.Product;
 import org.test.restaurant_service.service.*;
+import org.test.restaurant_service.util.KeyUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,7 +47,7 @@ public class ProductAndProductHistoryServiceImpl implements ProductAndProductHis
             photos = new ArrayList<>();
             photos.add(Photo.builder()
                     .product(product)
-                    .url("https://s3.timeweb.cloud/cf1b889c-51893717-bc35-4427-a93b-2be350132697/uploads/images/" + fileName)
+                    .url(KeyUtil.getS3URL() + "/" + KeyUtil.getBucketName() + "/uploads/images/" + fileName)
                     .image(photoFile)
                     .build());
         }

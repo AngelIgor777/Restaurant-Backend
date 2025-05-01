@@ -2,12 +2,15 @@ package org.test.restaurant_service.util;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import lombok.Getter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 
 @Component
 public class KeyUtil {
 
+    private static final Logger log = LoggerFactory.getLogger(KeyUtil.class);
     @Getter
     private static String accessSecret = "";
 
@@ -16,6 +19,12 @@ public class KeyUtil {
 
     @Getter
     private static String bucketName;
+
+    @Getter
+    private static String s3URL;
+
+    @Getter
+    private static String s3Region;
 
     @Getter
     private static String accessKey;
@@ -65,6 +74,15 @@ public class KeyUtil {
             }
             if (entry.getKey().equals("DISPOSABLE_ADMIN_KEY")) {
                 disposableAdminKey = value;
+            }
+            if (entry.getKey().equals("AWS_URL")) {
+                s3URL = value;
+            }
+            if (entry.getKey().equals("AWS_REGION")) {
+                s3Region = value;
+            }
+            if (entry.getKey().equals("REDIS_PASSWORD")) {
+                log.info("REDIS PASS:{}", value);
             }
         });
     }

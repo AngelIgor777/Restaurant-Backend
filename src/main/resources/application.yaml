@@ -4,6 +4,8 @@ spring:
   redis:
     host: ${REDIS_HOST}
     port: ${REDIS_PORT}
+    username: default
+    password: ${REDIS_PASSWORD}
   application:
     name: Restaurant_Service
   datasource:
@@ -112,6 +114,8 @@ aws:
   accessKey: ${AWS_ACCESS_KEY}
   secretAccessKey: ${AWS_SECRET_ACCESS_KEY}
   bucketName: ${AWS_BUCKET_NAME}
+  url: ${AWS_URL}
+  region: ${AWS_REGION}
 
 
 admin:

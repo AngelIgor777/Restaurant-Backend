@@ -35,8 +35,17 @@ services:
     container_name: redis_cache
     restart: always
     ports:
-      - "${REDIS_PORT}:${REDIS_PORT}"
-    command: redis-server --appendonly yes
+      # на хосте порт REDIS_PORT (обычно 6379) проксируется на 6379 внутри контейнера
+      - "${REDIS_PORT:-6379}:6379"
+    environment:
+      # для удобства можно передавать пароль внутрь
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    command:
+      - redis-server
+      - --appendonly
+      - yes
+      - --requirepass
+      - "${REDIS_PASSWORD}"
     volumes:
       - redis_data:/data
     networks:

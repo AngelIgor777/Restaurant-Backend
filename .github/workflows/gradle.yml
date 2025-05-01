@@ -44,28 +44,35 @@ jobs:
           echo "RABBITMQ_QUEUES_JSON_QUEUE2_ROUTINGKEY=${{ secrets.RABBITMQ_QUEUES_JSON_QUEUE2_ROUTINGKEY }}" >> src/main/resources/.env
           echo "REDIS_HOST=${{ secrets.REDIS_HOST }}" >> src/main/resources/.env
           echo "REDIS_PORT=${{ secrets.REDIS_PORT }}" >> src/main/resources/.env
+          echo "REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}" >> src/main/resources/.env
           echo "DISPOSABLE_ADMIN_KEY=${{ secrets.DISPOSABLE_ADMIN_KEY }}" >> src/main/resources/.env
           echo "RABBITMQ_QUEUES_JSON_QUEUE3_ROUTINGKEY=${{ secrets.RABBITMQ_QUEUES_JSON_QUEUE3_ROUTINGKEY }}" >> src/main/resources/.env
           echo "WORK_BOT_NAME=${{ secrets.WORK_BOT_NAME }}" >> src/main/resources/.env
           echo "WORK_BOT_KEY=${{ secrets.WORK_BOT_KEY }}" >> src/main/resources/.env
+          echo "AWS_URL=${{ secrets.AWS_URL }}" >> src/main/resources/.env
+          echo "AWS_REGION=${{ secrets.AWS_REGION }}" >> src/main/resources/.env
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
+      - name: Make Gradle wrapper executable
+        run: chmod +x gradlew
+
+      - name: Build Spring Boot JAR
+        run: ./gradlew clean bootJar --no-daemon
+
+      - name: Copy JAR to remote server
+        uses: appleboy/scp-action@v0.1.1
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: build/libs/*.jar
+          target: ${{ secrets.DEPLOY_PATH }}      # например: /opt/app/
 
-      - name: Build and push Docker image
-        run: |
-          TAG=$(date +%Y%m%d%H%M%S)  # Generate a timestamp-based tag
-          echo "Building Docker image with tag: $TAG"
-        
-          # Build the image with both a timestamped tag and latest tag
-          docker build --no-cache -t default666/restaurant:$TAG -t default666/restaurant:latest .
-        
-          # Verify the built images
-          docker images | grep default666/restaurant
-        
-          # Push both the timestamped and latest tags
-          docker push default666/restaurant:$TAG
-          docker push default666/restaurant:latest
+      - name: Restart application on remote server
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            pkill -f 'java.Restaurant_Service-0.0.1-SNAPSHOT.jar' || true
+            nohup java -jar /java/app/Restaurant_Service-0.0.1-SNAPSHOT.jar > /var/log/Restaurant_Service-INFO.log 2> /var/log/Restaurant_Service-ERROR.log &

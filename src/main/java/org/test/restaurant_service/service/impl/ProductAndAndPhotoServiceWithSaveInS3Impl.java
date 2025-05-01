@@ -11,6 +11,7 @@ import org.test.restaurant_service.service.ProductAndPhotoService;
 import org.test.restaurant_service.service.ProductAndProductHistoryService;
 import org.test.restaurant_service.service.ProductService;
 import org.test.restaurant_service.service.S3Service;
+import org.test.restaurant_service.util.KeyUtil;
 
 import javax.transaction.Transactional;
 import java.util.ArrayList;
@@ -54,7 +55,7 @@ public class ProductAndAndPhotoServiceWithSaveInS3Impl implements ProductAndPhot
         StringBuilder fileName = new StringBuilder().append(UUID.randomUUID())
                 .append(photoFile.getOriginalFilename().substring(photoFile.getOriginalFilename().lastIndexOf(".")));
         Photo photo = Photo.builder()
-                .url("https://s3.timeweb.cloud/cf1b889c-51893717-bc35-4427-a93b-2be350132697/uploads/images/" + fileName)
+                .url(KeyUtil.getS3URL() + "/" + KeyUtil.getBucketName() + "/uploads/images/" + fileName)
                 .product(product)
                 .image(photoFile)
                 .build();
