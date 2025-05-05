@@ -28,11 +28,12 @@ import org.test.restaurant_service.dto.response.*;
 import org.test.restaurant_service.entity.*;
 import org.test.restaurant_service.entity.User;
 import org.test.restaurant_service.mapper.ProductMapper;
-import org.test.restaurant_service.mapper.ProductTypeTranslationMapper;
-import org.test.restaurant_service.mapper.ProductTypeTranslationMapperImpl;
+import org.test.restaurant_service.mapper.ProductTypeTransMapper;
+import org.test.restaurant_service.mapper.ProductTypeTransMapperImpl;
 import org.test.restaurant_service.mapper.TelegramUserMapper;
 import org.test.restaurant_service.rabbitmq.producer.RabbitMQJsonProducer;
 import org.test.restaurant_service.service.*;
+import org.test.restaurant_service.service.ProductTypeTranslationService;
 import org.test.restaurant_service.service.impl.*;
 import org.test.restaurant_service.service.impl.cache.OrderCacheService;
 import org.test.restaurant_service.service.impl.cache.UserBucketCacheService;
@@ -62,7 +63,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final LanguageService languageService;
     private final ProductTranslationService productTranslationService;
     private final ProductTypeTranslationService productTypeTranslationService;
-    private final ProductTypeTranslationMapper productTypeTranslationMapper;
+    private final ProductTypeTransMapper productTypeTransMapper;
     private final TableService tableService;
     private final RabbitMQJsonProducer rabbitMQJsonProducer;
     private final UserCacheService userCacheService;
@@ -114,7 +115,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final WorkTelegramBot workTelegramBot;
     private final StaffSendingOrderService staffSendingOrderService;
 
-    public TelegramBot(TelegramUserServiceImpl telegramUserService, ProductTypeServiceImpl productTypeService, @Qualifier("productServiceImpl") ProductServiceImpl productService, BotConfig botConfig, TextUtil textUtil, UserService userService, S3Service s3Service, LanguageService languageService, ProductTranslationService productTranslationService, ProductTypeTranslationService productTypeTranslationService, ProductTypeTranslationMapperImpl productTypeTranslationMapper, TableService tableService, RabbitMQJsonProducer rabbitMQJsonProducer, UserCacheService userCacheService, UserBucketCacheService userBucketCacheService, OrderCacheService orderCacheService, WebSocketSender webSocketSender, WorkTelegramBot workTelegramBot, StaffSendingOrderService staffSendingOrderService, WaiterCallCacheService waiterCallCacheService, WaiterCallCacheService waiterCallCacheService1) {
+    public TelegramBot(TelegramUserServiceImpl telegramUserService, ProductTypeServiceImpl productTypeService, @Qualifier("productServiceImpl") ProductServiceImpl productService, BotConfig botConfig, TextUtil textUtil, UserService userService, S3Service s3Service, LanguageService languageService, ProductTranslationService productTranslationService, ProductTypeTranslationService productTypeTranslationService, ProductTypeTransMapperImpl productTypeTranslationMapper, TableService tableService, RabbitMQJsonProducer rabbitMQJsonProducer, UserCacheService userCacheService, UserBucketCacheService userBucketCacheService, OrderCacheService orderCacheService, WebSocketSender webSocketSender, WorkTelegramBot workTelegramBot, StaffSendingOrderService staffSendingOrderService, WaiterCallCacheService waiterCallCacheService, WaiterCallCacheService waiterCallCacheService1) {
         this.telegramUserService = telegramUserService;
         this.productTypeService = productTypeService;
         this.productService = productService;
@@ -136,7 +137,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         } catch (TelegramApiException e) {
             log.error(e.getMessage());
         }
-        this.productTypeTranslationMapper = productTypeTranslationMapper;
+        this.productTypeTransMapper = productTypeTranslationMapper;
         this.orderCacheService = orderCacheService;
         this.webSocketSender = webSocketSender;
         this.workTelegramBot = workTelegramBot;
@@ -1042,13 +1043,13 @@ public class TelegramBot extends TelegramLongPollingBot {
         ProductResponseDTO productResponse = ProductMapper.INSTANCE.toResponseDTO(productService.getSimpleById(Integer.parseInt(productId)));
         String photoUrl = productResponse.getPhotoUrl();
         StringBuilder productText;
-        ProductTypeTranslationResponseDTO productTypeTranslationResponseDTO = null;
+        ProductTypeTranslResponseDTO productTypeTranslResponseDTO = null;
 
         if (langCode.equals("ro")) {
             ProductTranslation productTranslation = productTranslationService.getTranslationByProductId(Integer.parseInt(productId));
-            ProductTypeTranslation translation = productTypeTranslationService.getTranslation(productResponse.getTypeName(), "ro");
-            productTypeTranslationResponseDTO = productTypeTranslationMapper.toTranslationDTO(translation);
-            productText = textUtil.getProductTranslationRoText(productTranslation, productTypeTranslationResponseDTO);
+            ProductTypeTransl translation = productTypeTranslationService.getTranslation(productResponse.getTypeName(), "ro");
+            productTypeTranslResponseDTO = productTypeTransMapper.toTranslationDTO(translation);
+            productText = textUtil.getProductTranslationRoText(productTranslation, productTypeTranslResponseDTO);
         } else {
             productText = textUtil.getProductText(productResponse);
         }
@@ -1070,7 +1071,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         InlineKeyboardButton inlineBackKeyboardButton = new InlineKeyboardButton();
         InlineKeyboardButton inlineQuickOrderButton = new InlineKeyboardButton();
         InlineKeyboardButton inlineAddToBucketButton = new InlineKeyboardButton();
-        formatButtons(langCode, productResponse, productTypeTranslationResponseDTO, inlineBackKeyboardButton, inlineQuickOrderButton, inlineAddToBucketButton);
+        formatButtons(langCode, productResponse, productTypeTranslResponseDTO, inlineBackKeyboardButton, inlineQuickOrderButton, inlineAddToBucketButton);
 
         inlineKeyboardButtons.add(inlineBackKeyboardButton);
         rowsInLine.add(inlineKeyboardButtons);
@@ -1089,7 +1090,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void formatButtons(String langCode,
                                ProductResponseDTO productResponse,
-                               ProductTypeTranslationResponseDTO productTypeTranslationResponseDTO,
+                               ProductTypeTranslResponseDTO productTypeTranslResponseDTO,
                                InlineKeyboardButton backToTypesButton,
                                InlineKeyboardButton quickOrderButton,
                                InlineKeyboardButton addToBucketButton) {
@@ -1105,7 +1106,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             addToBucketButton.setCallbackData(ADD_TO_BUCKET_SUFFIX + productResponse.getId().toString());
         } else {
             backToTypesButton.setText("Înapoi ✨");
-            backToTypesButton.setCallbackData(productTypeTranslationResponseDTO.getName());
+            backToTypesButton.setCallbackData(productTypeTranslResponseDTO.getName());
         }
     }
 
@@ -1344,7 +1345,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         if (langCode.equals("ro")) {
             for (ProductTypeResponseDTO productTypeResponseDTO : all) {
-                ProductTypeTranslationResponseDTO ro = productTypeTranslationService.getTranslation(productTypeResponseDTO.getId(), "ro");
+                ProductTypeTranslResponseDTO ro = productTypeTranslationService.getTranslation(productTypeResponseDTO.getId(), "ro");
                 productTypes.add(ro.getName());
             }
         } else {

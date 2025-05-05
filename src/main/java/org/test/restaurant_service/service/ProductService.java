@@ -4,6 +4,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.test.restaurant_service.dto.request.ProductRequestDTO;
 import org.test.restaurant_service.dto.response.ProductAndPhotosResponseDTO;
+import org.test.restaurant_service.dto.response.ProductIdsResponse;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
 import org.test.restaurant_service.entity.Photo;
 import org.test.restaurant_service.entity.Product;
@@ -39,4 +40,6 @@ public interface ProductService {
     boolean existByName(String name);
 
     Page<Product> searchProducts(String searchTerm, int page, int size);
+
+    List<ProductIdsResponse> getAllProductsId();
 }

@@ -5,10 +5,15 @@ import org.mapstruct.*;
 
 import org.mapstruct.factory.Mappers;
 import org.test.restaurant_service.dto.request.ProductRequestDTO;
+import org.test.restaurant_service.dto.response.ProductIdsResponse;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
+import org.test.restaurant_service.dto.view.ProductIdsView;
+import org.test.restaurant_service.dto.view.ProductLocalizedView;
 import org.test.restaurant_service.entity.Photo;
 import org.test.restaurant_service.entity.Product;
 import org.test.restaurant_service.entity.ProductHistory;
+
+import java.util.List;
 
 @Mapper(componentModel = "spring", uses = ProductTypeMapper.class)
 public interface ProductMapper {
@@ -56,4 +61,8 @@ public interface ProductMapper {
     default String mapPhotoUrl(java.util.List<Photo> photos) {
         return (photos != null && !photos.isEmpty()) ? photos.get(0).getUrl() : null;
     }
+
+    ProductResponseDTO fromProjection(ProductLocalizedView view);
+
+    ProductIdsResponse toProductIds(ProductIdsView allProductIds);
 }

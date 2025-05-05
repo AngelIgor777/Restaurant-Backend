@@ -19,9 +19,12 @@ public class Language {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Integer id;
 
+    @EqualsAndHashCode.Include
     private String code;
+
     private String name;
 
     @OneToMany(mappedBy = "language",fetch = FetchType.LAZY,cascade = CascadeType.ALL)

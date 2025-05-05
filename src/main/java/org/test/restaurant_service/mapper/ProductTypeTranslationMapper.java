@@ -1,20 +1,13 @@
 package org.test.restaurant_service.mapper;
 
-import org.mapstruct.*;
-import org.test.restaurant_service.dto.request.ProductTypeTranslationRequestDTO;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.test.restaurant_service.dto.response.ProductTypeTranslationResponseDTO;
-import org.test.restaurant_service.entity.ProductTypeTranslation;
+import org.test.restaurant_service.entity.translations.ProductTypeI18n;
 
 @Mapper(componentModel = "spring")
 public interface ProductTypeTranslationMapper {
-
     @Mapping(source = "productType.id", target = "productTypeId")
-    ProductTypeTranslationResponseDTO toTranslationDTO(ProductTypeTranslation productTypeTranslation);
-
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "productType.id", source = "productTypeId")
-    ProductTypeTranslation toEntity(ProductTypeTranslationRequestDTO requestDTO);
-
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    void updateEntityFromRequestDTO(ProductTypeTranslationRequestDTO requestDTO, @MappingTarget ProductTypeTranslation entity);
+    @Mapping(source = "language.id",    target = "langId")
+    ProductTypeTranslationResponseDTO toDto(ProductTypeI18n e);
 }

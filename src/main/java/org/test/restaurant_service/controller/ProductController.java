@@ -8,13 +8,13 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.test.restaurant_service.dto.response.ProductAndPhotosResponseDTO;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
 import org.test.restaurant_service.entity.Product;
 import org.test.restaurant_service.mapper.ProductMapper;
 import org.test.restaurant_service.service.ProductAndPhotoService;
 import org.test.restaurant_service.service.ProductAndProductHistoryService;
 import org.test.restaurant_service.service.ProductService;
+import org.test.restaurant_service.service.impl.ProductTranslReadService;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Max;
@@ -28,11 +28,13 @@ public class ProductController {
     private final ProductService productService;
     private final ProductAndPhotoService productAndPhotoService;
     private final ProductAndProductHistoryService productAndProductHistoryService;
+    private final ProductTranslReadService productTranslReadService;
 
-    public ProductController(@Qualifier("productServiceWithS3Impl") ProductService productService, @Qualifier("productAndAndPhotoServiceWithSaveInS3Impl") ProductAndPhotoService productAndPhotoService, ProductAndProductHistoryService productAndProductHistoryService) {
+    public ProductController(@Qualifier("productServiceWithS3Impl") ProductService productService, @Qualifier("productAndAndPhotoServiceWithSaveInS3Impl") ProductAndPhotoService productAndPhotoService, ProductAndProductHistoryService productAndProductHistoryService, ProductTranslReadService productTranslReadService) {
         this.productService = productService;
         this.productAndPhotoService = productAndPhotoService;
         this.productAndProductHistoryService = productAndProductHistoryService;
+        this.productTranslReadService = productTranslReadService;
     }
 
     @PostMapping
@@ -76,18 +78,25 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public ProductAndPhotosResponseDTO getById(@PathVariable Integer id) {
-        return productService.getById(id);
+    public ProductResponseDTO getById(@PathVariable Integer id,
+                                      @RequestHeader(name = "Accept-Language",
+                                              defaultValue = "ru") String lang) {
+        return productTranslReadService.one(id, lang);
     }
 
     @GetMapping
-    public Page<ProductResponseDTO> getAll(@RequestParam(required = false) Integer typeId, Pageable pageable) {
-        return productService.getAll(typeId, pageable);
+    public Page<ProductResponseDTO> getAll(@RequestParam(required = false) Integer typeId,
+                                           @RequestHeader(name = "Accept-Language",
+                                                   defaultValue = "ru") String lang,
+                                           Pageable pageable) {
+        return productTranslReadService.list(typeId, lang, pageable);
     }
 
     @GetMapping("/top-weekly")
-    public List<ProductResponseDTO> getTop10WeekProducts(Pageable pageable) {
-        return productService.getTop10WeekProducts(pageable);
+    public List<ProductResponseDTO> getTop10WeekProducts(
+            @RequestHeader(name = "Accept-Language", defaultValue = "ru") String lang,
+            Pageable pageable) {
+        return productTranslReadService.topWeek(lang, pageable);
     }
 
     @GetMapping("/search")

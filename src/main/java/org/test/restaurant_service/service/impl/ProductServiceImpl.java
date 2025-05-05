@@ -13,7 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.test.restaurant_service.dto.request.ProductRequestDTO;
 import org.test.restaurant_service.dto.response.PhotoResponseDTO;
 import org.test.restaurant_service.dto.response.ProductAndPhotosResponseDTO;
+import org.test.restaurant_service.dto.response.ProductIdsResponse;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
+import org.test.restaurant_service.dto.view.ProductIdsView;
 import org.test.restaurant_service.entity.Photo;
 import org.test.restaurant_service.entity.Product;
 import org.test.restaurant_service.entity.ProductType;
@@ -134,14 +136,12 @@ public class ProductServiceImpl implements ProductService {
                 .map(photoMapper::toResponseDTO).toList();
 
         ProductResponseDTO productResponseDTO = productMapper.toResponseDTO(product);
-        ProductAndPhotosResponseDTO productAndPhotosResponseDTO = new ProductAndPhotosResponseDTO(productResponseDTO, photoResponseDTOS);
-        return productAndPhotosResponseDTO;
+        return new ProductAndPhotosResponseDTO(productResponseDTO, photoResponseDTOS);
     }
 
     protected Product get(Integer id) {
-        Product product = productRepository.findByIdWithPhotos(id)
+        return productRepository.findByIdWithPhotos(id)
                 .orElseThrow(() -> new EntityNotFoundException("Product not found with id " + id));
-        return product;
     }
 
     @Override
@@ -191,8 +191,16 @@ public class ProductServiceImpl implements ProductService {
         return productRepository.existsByName(name);
     }
 
+    @Override
     public Page<Product> searchProducts(String searchTerm, int page, int size) {
         return productRepository.searchProducts(searchTerm, PageRequest.of(page, size));
+    }
+
+
+    @Override
+    public List<ProductIdsResponse> getAllProductsId() {
+        return productRepository.getAllProductIds()
+                .stream().map(productMapper::toProductIds).toList();
     }
 
 }

@@ -47,9 +47,13 @@ public class ProductTypeServiceImpl implements ProductTypeService {
 
     @Override
     public ProductTypeResponseDTO getById(Integer id) {
-        ProductType productType = productTypeRepository.findById(id)
+        return mapper.toResponseDTO(getSimpleId(id));
+    }
+
+    @Override
+    public ProductType getSimpleId(Integer id) {
+        return productTypeRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("ProductType not found with id " + id));
-        return mapper.toResponseDTO(productType);
     }
 
     @Override

@@ -12,7 +12,7 @@ import javax.persistence.Table;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ProductTypeTranslation {
+public class ProductTypeTransl {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
