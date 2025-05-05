@@ -11,6 +11,7 @@ import org.test.restaurant_service.dto.response.LanguageResponseDTO;
 import org.test.restaurant_service.entity.Language;
 import org.test.restaurant_service.mapper.LanguageMapper;
 import org.test.restaurant_service.service.LanguageService;
+import org.test.restaurant_service.service.impl.AvailableLanguageService;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -23,13 +24,19 @@ import java.util.stream.Collectors;
 public class LanguageController {
 
     private final LanguageService languageService;
-    private final LanguageMapper  languageMapper;
+    private final LanguageMapper languageMapper;
+    private final AvailableLanguageService availableLanguageService;
 
     @GetMapping
     public List<LanguageResponseDTO> getAll() {
         return languageService.getAll().stream()
                 .map(languageMapper::toDto)
                 .collect(Collectors.toList());
+    }
+
+    @PostMapping("/run-check")
+    public void runCheckLanguages() {
+        availableLanguageService.checkAvailableLanguages();
     }
 
     @PostMapping

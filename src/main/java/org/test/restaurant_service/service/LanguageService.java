@@ -9,6 +9,8 @@ import java.util.List;
 public interface LanguageService {
     Language getLanguageByCode(String code);
 
+    Language getById(Integer id);
+
     void setLanguage(Long chatId, String code);
 
     List<Language> getAll();

@@ -19,8 +19,10 @@ public class Language {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Integer id;
 
+    @EqualsAndHashCode.Include
     private String code;
 
     private String name;

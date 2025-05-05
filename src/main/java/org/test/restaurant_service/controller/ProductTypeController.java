@@ -11,7 +11,10 @@ import org.springframework.web.bind.annotation.*;
 import org.test.restaurant_service.dto.request.ProductTypeRequestDTO;
 import org.test.restaurant_service.dto.response.ProductTypeResponseDTO;
 import org.test.restaurant_service.service.ProductTypeService;
+import org.test.restaurant_service.service.ProductTypeTranslReadService;
+
 import javax.validation.Valid;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/product-types")
@@ -20,6 +23,8 @@ public class ProductTypeController {
 
     private static final Logger log = LoggerFactory.getLogger(ProductTypeController.class);
     private final ProductTypeService service;
+    private final ProductTypeTranslReadService readService;
+
 
     @PostMapping
     @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
@@ -42,13 +47,17 @@ public class ProductTypeController {
         service.delete(id);
     }
 
+
     @GetMapping("/{id}")
-    public ProductTypeResponseDTO getById(@PathVariable Integer id) {
-        return service.getById(id);
+    public ProductTypeResponseDTO getById(
+            @PathVariable Integer id,
+            @RequestHeader(name = "Accept-Language", defaultValue = "ru") String lang) {
+        return readService.one(id, lang);
     }
 
     @GetMapping
-    public Page<ProductTypeResponseDTO> getAll(Pageable pageable) {
-        return service.getAll(pageable);
+    public List<ProductTypeResponseDTO> getAll(
+            @RequestHeader(name = "Accept-Language", defaultValue = "ru") String lang) {
+        return readService.list(lang);
     }
 }

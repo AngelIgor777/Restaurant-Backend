@@ -1,13 +1,11 @@
 package org.test.restaurant_service.service.impl.cache;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.test.restaurant_service.dto.request.table.OpenTables;
 import org.test.restaurant_service.dto.request.table.TableOrderInfo;
-import org.test.restaurant_service.dto.response.order.TableOrderState;
 import org.test.restaurant_service.entity.Order;
 
 import java.util.*;
@@ -48,7 +46,6 @@ public class TableCacheService {
         Object object = redisTemplate.opsForValue().getAndDelete(("session:" + tableId));
         return jacksonObjectMapper.convertValue(object, UUID.class);
     }
-
 
     public void saveOpenTables(OpenTables openTables) {
         redisTemplate.opsForValue().set("openTables", openTables);

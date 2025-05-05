@@ -13,7 +13,6 @@ public interface SharedBucketProductMapper {
 
     SharedBucketProductMapper INSTANCE = Mappers.getMapper(SharedBucketProductMapper.class);
 
-
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "product", source = "productId", qualifiedByName = "mapProduct")
     @Mapping(target = "sharedBucket", source = "sharedBucketId", qualifiedByName = "mapSharedBucket")
@@ -31,8 +30,6 @@ public interface SharedBucketProductMapper {
     @Mapping(target = "price", source = "product.price")
     @Mapping(target = "name", source = "product.name")
     @Mapping(target = "userUUID", source = "user.uuid")
-//    @Mapping(target = "photoUrl", source = "product.photos", qualifiedByName = "mapPhoto")
     ProductsForSharedBucketResponseDto toResponseForSharedBucketResponseDto(SharedBucketProduct entity);
-
 
 }

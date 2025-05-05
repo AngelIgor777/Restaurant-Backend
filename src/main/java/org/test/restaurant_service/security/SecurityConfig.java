@@ -58,6 +58,8 @@ public class SecurityConfig {
                         "/api/v1/exportOrders/**",
                         "/api/v1/jwt/**",
                         "/api/v1/waiter-calls/**",
+                        "/api/v1/languages/**",
+                        "/api/v1/ui-translations/**",
                         "/actuator/**",
                         "/api/v1/shared-buckets/**",
                         "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html"

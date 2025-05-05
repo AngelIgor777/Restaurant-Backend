@@ -5,11 +5,17 @@ import java.time.LocalTime;
 
 public interface ProductLocalizedView {
 
-    Integer   getId();
-    String    getName();          // локализовано
-    String    getDescription();   // локализовано
-    String    getTypeName();      // локализовано
+    Integer getId();
+
+    String getName();
+
+    String getDescription();
+
+    String getTypeName();
+
     BigDecimal getPrice();
-    LocalTime  getCookingTime();
-    String    getPhotoUrl();      // главная фотка, если нужна
+
+    LocalTime getCookingTime();
+
+    String getPhotoUrl();
 }

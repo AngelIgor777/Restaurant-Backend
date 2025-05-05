@@ -23,7 +23,6 @@ public class ProductTypeTranslationServiceImpl implements ProductTypeTranslation
     private final ProductTranslationRepository productTranslationRepository;
 
     @Override
-    @Cacheable(value = "productTypeTranslationResponseDTO", key = "#productTypeId + '-' + #languageCode")
     public ProductTypeTranslResponseDTO getTranslation(Integer productTypeId, String languageCode) {
         ProductTypeTranslResponseDTO productTypeTranslResponseDTO = productTypeTranslRepository.findByProductTypeIdAndLanguageCode(productTypeId, languageCode)
                 .map(productTypeTransMapper::toTranslationDTO)
@@ -40,13 +39,11 @@ public class ProductTypeTranslationServiceImpl implements ProductTypeTranslation
 
     @Override
     public ProductTypeTransl getByRoTranslation(String productTypeName, String languageCode) {
-        ProductTypeTransl productTypeTransl = productTypeTranslRepository.findByNameAndLanguageCode(productTypeName, languageCode)
+        return productTypeTranslRepository.findByNameAndLanguageCode(productTypeName, languageCode)
                 .orElseThrow(() -> new EntityNotFoundException("Translation not found"));
-        return productTypeTransl;
     }
 
     @Override
-    @CacheEvict(value = "productTypeTranslationResponseDTO", allEntries = true)
     public ProductTypeTranslResponseDTO createTranslation(ProductTypeTranslationRequestDTO requestDTO) {
         ProductTypeTransl entity = productTypeTransMapper.toEntity(requestDTO);
         ProductTypeTransl savedEntity = productTypeTranslRepository.save(entity);
@@ -54,7 +51,6 @@ public class ProductTypeTranslationServiceImpl implements ProductTypeTranslation
     }
 
     @Override
-    @CacheEvict(value = "productTypeTranslationResponseDTO", allEntries = true)
     public ProductTypeTranslResponseDTO updateTranslation(Integer id, ProductTypeTranslationRequestDTO requestDTO) {
         ProductTypeTransl entity = productTypeTranslRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("ProductTypeTranslation not found"));
@@ -65,7 +61,6 @@ public class ProductTypeTranslationServiceImpl implements ProductTypeTranslation
     }
 
     @Override
-    @CacheEvict(value = "productTypeTranslationResponseDTO", allEntries = true)
     public void deleteTranslation(Integer id) {
         if (!productTypeTranslRepository.existsById(id)) {
             throw new EntityNotFoundException("ProductTypeTranslation not found");

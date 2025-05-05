@@ -25,7 +25,6 @@ public class ProductTranslationServiceImpl implements ProductTranslationService 
     private final ProductTranslationRepository productTranslationRepository;
 
     @Override
-    @Cacheable(value = "productTranslationResponseDTO", key = "#productId + '-' + #languageCode")
     public ProductTranslationResponseDTO getTranslation(Integer productId, String languageCode) {
         ProductTranslationResponseDTO productTranslationResponseDTO = translationRepository.findProductTranslationByProduct_IdAndLanguageCode(productId, languageCode)
                 .map(translationMapper::toResponseDTO)
@@ -54,7 +53,6 @@ public class ProductTranslationServiceImpl implements ProductTranslationService 
 
     @Override
     @Transactional
-    @CacheEvict(value = "productTranslationResponseDTO", allEntries = true)
     public ProductTranslationResponseDTO createOrUpdateTranslation(ProductTranslationRequestDTO requestDTO) {
         ProductTranslation translation = translationMapper.toEntity(requestDTO);
         ProductTranslation savedTranslation = translationRepository.save(translation);
@@ -63,7 +61,6 @@ public class ProductTranslationServiceImpl implements ProductTranslationService 
 
     @Override
     @Transactional
-    @CacheEvict(value = "productTranslationResponseDTO", allEntries = true)
     public void deleteTranslation(Integer id) {
         translationRepository.deleteById(id);
     }

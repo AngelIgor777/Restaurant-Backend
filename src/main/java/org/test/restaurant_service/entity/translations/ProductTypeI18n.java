@@ -8,7 +8,7 @@ import javax.persistence.*;
 
 @Entity
 @Table(
-        name = "product_type_translations",
+        name = "product_type_i18n",
         schema = "restaurant_service",
         uniqueConstraints = @UniqueConstraint(columnNames = {"product_type_id", "lang_id"})
 )
@@ -17,7 +17,7 @@ import javax.persistence.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ProductTypeTranslation {
+public class ProductTypeI18n {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
