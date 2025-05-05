@@ -29,15 +29,6 @@ public class ProductTypeI18nController {
                 .body(service.create(typeId, dto));
     }
 
-
-    @PatchMapping("/{id}")
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
-    public ProductTypeTranslationResponseDTO update(@PathVariable Integer id,
-                                                    @Valid @RequestBody ProductTypeTranslationRequestDTO dto) {
-        return service.update(id, dto);
-    }
-
-
     @DeleteMapping("/{id}")
     @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
     @ResponseStatus(HttpStatus.NO_CONTENT)

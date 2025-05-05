@@ -10,9 +10,9 @@ public class UiTranslationUpdateValueDTO {
     @NotBlank
     private String key;
 
-    @NotNull
-    private Integer langId;
-
     @NotBlank
     private String value;
+
+    @NotNull
+    private Integer langId;
 }

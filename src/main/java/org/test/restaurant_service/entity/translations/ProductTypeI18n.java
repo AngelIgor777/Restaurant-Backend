@@ -21,7 +21,7 @@ public class ProductTypeI18n {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_type_id", referencedColumnName = "id")

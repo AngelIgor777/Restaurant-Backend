@@ -16,6 +16,7 @@ import org.test.restaurant_service.service.LanguageService;
 import org.test.restaurant_service.service.ProductTypeService;
 
 import javax.persistence.EntityNotFoundException;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -35,8 +36,11 @@ public class ProductTypeI18nService {
     public ProductTypeTranslationResponseDTO create(Integer typeId, ProductTypeTranslationRequestDTO dto) {
         Language language = languageService.getById(dto.langId());
 
-        boolean exists = existsTranslation(typeId, language.getId());
-        if (exists) throw new IllegalStateException("Translation already exists");
+        Optional<ProductTypeI18n> optional = repo.getByProductType_IdAndLanguage_Id(typeId, language.getId());
+        if (optional.isPresent()) {
+            ProductTypeI18n productTypeI18n1 = optional.get();
+            return update(productTypeI18n1.getId(), dto);
+        }
 
         ProductTypeI18n saved = repo.save(ProductTypeI18n.builder()
                 .productType(typeService.getSimpleId(typeId))
@@ -51,7 +55,6 @@ public class ProductTypeI18nService {
         return repo.existsByProductType_IdAndLanguage_Id(typeId, langId);
     }
 
-    @Transactional
     public ProductTypeTranslationResponseDTO update(Integer id, ProductTypeTranslationRequestDTO dto) {
         ProductTypeI18n entity = repo.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Translation not found"));
