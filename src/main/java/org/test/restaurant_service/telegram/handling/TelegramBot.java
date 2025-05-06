@@ -35,10 +35,7 @@ import org.test.restaurant_service.rabbitmq.producer.RabbitMQJsonProducer;
 import org.test.restaurant_service.service.*;
 import org.test.restaurant_service.service.ProductTypeTranslationService;
 import org.test.restaurant_service.service.impl.*;
-import org.test.restaurant_service.service.impl.cache.OrderCacheService;
-import org.test.restaurant_service.service.impl.cache.UserBucketCacheService;
-import org.test.restaurant_service.service.impl.cache.UserCacheService;
-import org.test.restaurant_service.service.impl.cache.WaiterCallCacheService;
+import org.test.restaurant_service.service.impl.cache.*;
 import org.test.restaurant_service.telegram.config.BotConfig;
 import org.test.restaurant_service.telegram.util.TextUtil;
 import org.test.restaurant_service.util.KeyUtil;
@@ -69,6 +66,8 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final UserCacheService userCacheService;
     private final UserBucketCacheService userBucketCacheService;
     private final WaiterCallCacheService waiterCallCacheService;
+    private final AvailableLanguagesCacheService languagesCache;
+
 
     private final String QUICK_ORDER_SUFFIX = "QO:";
     private final String LANG_SUFFIX = "LANG_";
@@ -115,7 +114,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final WorkTelegramBot workTelegramBot;
     private final StaffSendingOrderService staffSendingOrderService;
 
-    public TelegramBot(TelegramUserServiceImpl telegramUserService, ProductTypeServiceImpl productTypeService, @Qualifier("productServiceImpl") ProductServiceImpl productService, BotConfig botConfig, TextUtil textUtil, UserService userService, S3Service s3Service, LanguageService languageService, ProductTranslationService productTranslationService, ProductTypeTranslationService productTypeTranslationService, ProductTypeTransMapperImpl productTypeTranslationMapper, TableService tableService, RabbitMQJsonProducer rabbitMQJsonProducer, UserCacheService userCacheService, UserBucketCacheService userBucketCacheService, OrderCacheService orderCacheService, WebSocketSender webSocketSender, WorkTelegramBot workTelegramBot, StaffSendingOrderService staffSendingOrderService, WaiterCallCacheService waiterCallCacheService, WaiterCallCacheService waiterCallCacheService1) {
+    public TelegramBot(TelegramUserServiceImpl telegramUserService, ProductTypeServiceImpl productTypeService, @Qualifier("productServiceImpl") ProductServiceImpl productService, BotConfig botConfig, TextUtil textUtil, UserService userService, S3Service s3Service, LanguageService languageService, ProductTranslationService productTranslationService, ProductTypeTranslationService productTypeTranslationService, ProductTypeTransMapperImpl productTypeTranslationMapper, TableService tableService, RabbitMQJsonProducer rabbitMQJsonProducer, UserCacheService userCacheService, UserBucketCacheService userBucketCacheService, OrderCacheService orderCacheService, WebSocketSender webSocketSender, WorkTelegramBot workTelegramBot, StaffSendingOrderService staffSendingOrderService, WaiterCallCacheService waiterCallCacheService, WaiterCallCacheService waiterCallCacheService1, AvailableLanguagesCacheService languagesCache) {
         this.telegramUserService = telegramUserService;
         this.productTypeService = productTypeService;
         this.productService = productService;
@@ -131,6 +130,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         this.userCacheService = userCacheService;
         this.userBucketCacheService = userBucketCacheService;
         this.waiterCallCacheService = waiterCallCacheService1;
+        this.languagesCache = languagesCache;
         ArrayList<BotCommand> botCommands = getCommands("ru");
         try {
             this.execute(new SetMyCommands(botCommands, new BotCommandScopeDefault(), null));
@@ -152,22 +152,13 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private ArrayList<BotCommand> getCommands(String langCode) {
         ArrayList<BotCommand> botCommands = new ArrayList<>();
-        if ("ro" .equals(langCode)) {
-            botCommands.add(new BotCommand("/menu", "Afișați meniul"));
-            botCommands.add(new BotCommand("/website", "Accesați site-ul web"));
-            botCommands.add(new BotCommand("/help", "Lista comenzilor disponibile"));
-            botCommands.add(new BotCommand("/info", "Informații despre bot"));
-            botCommands.add(new BotCommand("/about", "Afișați informațiile mele"));
-            botCommands.add(new BotCommand("/lang", "Schimbați limba"));
-        } else {
-            botCommands.add(new BotCommand("/menu", "Показать меню"));
-            botCommands.add(new BotCommand("/website", "Зайти на сайт"));
-            botCommands.add(new BotCommand("/basket", "Посмотреть корзину"));
-            botCommands.add(new BotCommand("/help", "Список доступных команд"));
-            botCommands.add(new BotCommand("/info", "Информация о боте"));
-            botCommands.add(new BotCommand("/about", "Показать мою информацию"));
-            botCommands.add(new BotCommand("/lang", "Изменить язык"));
-        }
+        botCommands.add(new BotCommand("/menu", "Показать меню"));
+        botCommands.add(new BotCommand("/website", "Зайти на сайт"));
+        botCommands.add(new BotCommand("/basket", "Посмотреть корзину"));
+        botCommands.add(new BotCommand("/help", "Список доступных команд"));
+        botCommands.add(new BotCommand("/info", "Информация о боте"));
+        botCommands.add(new BotCommand("/about", "Показать мою информацию"));
+        botCommands.add(new BotCommand("/lang", "Изменить язык"));
         return botCommands;
     }
 
@@ -961,16 +952,20 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void sendLanguageSelection(Long chatId) {
         SendMessage message = new SendMessage();
-        message.setChatId(String.valueOf(chatId));
-        message.setText("Чтобы продолжить - выберите язык / Pentru a continua, selectați o limbă:");
+        message.setChatId(chatId.toString());
+        message.setText("Чтобы продолжить — выберите язык / To continue, select a language:");
 
+        List<Language> langs = languagesCache.getLanguagesAvailable();
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> buttons = new ArrayList<>();
 
-        buttons.add(List.of(createLangButton("Русский", "ru")));
-        buttons.add(List.of(createLangButton("Română", "ro")));
+        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+        for (Language lang : langs) {
+            rows.add(Collections.singletonList(
+                    createLangButton(lang.getName(), lang.getCode())
+            ));
+        }
 
-        markup.setKeyboard(buttons);
+        markup.setKeyboard(rows);
         message.setReplyMarkup(markup);
         executeMessage(message);
     }
@@ -1026,7 +1021,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         User user = userService.findByChatId(chatId);
         String langCode = data.substring(5);
         languageService.setLanguage(chatId, langCode);
-        String confirmationMessage = "ro" .equals(langCode) ? "Limba a fost setată ✅" : "Язык установлен ✅";
+        String confirmationMessage = "ro".equals(langCode) ? "The language is set ✅" : "Язык установлен ✅";
         sendMessageWithHTML(chatId, confirmationMessage);
         updateBotCommands(langCode);
 
@@ -1045,14 +1040,9 @@ public class TelegramBot extends TelegramLongPollingBot {
         StringBuilder productText;
         ProductTypeTranslResponseDTO productTypeTranslResponseDTO = null;
 
-        if (langCode.equals("ro")) {
-            ProductTranslation productTranslation = productTranslationService.getTranslationByProductId(Integer.parseInt(productId));
-            ProductTypeTransl translation = productTypeTranslationService.getTranslation(productResponse.getTypeName(), "ro");
-            productTypeTranslResponseDTO = productTypeTransMapper.toTranslationDTO(translation);
-            productText = textUtil.getProductTranslationRoText(productTranslation, productTypeTranslResponseDTO);
-        } else {
-            productText = textUtil.getProductText(productResponse);
-        }
+
+        productText = textUtil.getProductText(productResponse);
+
 
         // Creating a SendPhoto message instead of EditMessageText
         SendPhoto sendPhoto = new SendPhoto();
@@ -1094,22 +1084,16 @@ public class TelegramBot extends TelegramLongPollingBot {
                                InlineKeyboardButton backToTypesButton,
                                InlineKeyboardButton quickOrderButton,
                                InlineKeyboardButton addToBucketButton) {
-        if (langCode.equals("ru")) {
-            backToTypesButton.setText("Назад ✨");
-            String productTypeCallbackData = PRODUCT_TYPE_WHEN_PRODUCT_SUFFIX + productResponse.getTypeName();
-            backToTypesButton.setCallbackData(productTypeCallbackData);
-            callbackProductTypesDataWithDeleting.add(productTypeCallbackData);
-            quickOrderButton.setText("Быстрый заказ 🔔");
-            quickOrderButton.setCallbackData(QUICK_ORDER_SUFFIX + productResponse.getId().toString());
+        backToTypesButton.setText("Назад ✨");
+        String productTypeCallbackData = PRODUCT_TYPE_WHEN_PRODUCT_SUFFIX + productResponse.getTypeName();
+        backToTypesButton.setCallbackData(productTypeCallbackData);
+        callbackProductTypesDataWithDeleting.add(productTypeCallbackData);
+        quickOrderButton.setText("Быстрый заказ 🔔");
+        quickOrderButton.setCallbackData(QUICK_ORDER_SUFFIX + productResponse.getId().toString());
 
-            addToBucketButton.setText("Добавить в корзину 📥");
-            addToBucketButton.setCallbackData(ADD_TO_BUCKET_SUFFIX + productResponse.getId().toString());
-        } else {
-            backToTypesButton.setText("Înapoi ✨");
-            backToTypesButton.setCallbackData(productTypeTranslResponseDTO.getName());
-        }
+        addToBucketButton.setText("Добавить в корзину 📥");
+        addToBucketButton.setCallbackData(ADD_TO_BUCKET_SUFFIX + productResponse.getId().toString());
     }
-
 
     private EditMessageText setEditMessageTextProperties(Update update) {
         CallbackQuery callbackQuery = update.getCallbackQuery();
@@ -1143,37 +1127,19 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         String responseText = textUtil.getProductTypeTextByType(productType, user.getTelegramUserEntity().getLanguage().getCode());
 
-        if (langCode.equals("ro")) {
-            String productNameRu = productTypeTranslationService.getByRoTranslation(productType, "ro").getProductType().getName();
 
-            List<ProductResponseDTO> products = productService.getByTypeName(productNameRu);
+        List<ProductResponseDTO> products = productService.getByTypeName(productType);
+        List<ProductTelegramResponseDto> strings = products
+                .stream()
+                .map(productResponseDTO -> {
+                    ProductTelegramResponseDto productTelegramResponseDto = new ProductTelegramResponseDto();
+                    productTelegramResponseDto.setProductId(productResponseDTO.getId());
+                    productTelegramResponseDto.setProductName(productResponseDTO.getName());
+                    return productTelegramResponseDto;
+                })
+                .toList();
+        editMessageProductsByType(responseText, chatId, messageId, strings, langCode);
 
-            List<ProductTelegramResponseDto> list = products
-                    .stream()
-                    .map(productResponseDTO -> {
-                        ProductTranslationResponseDTO productTranslationResponseDTO = productTranslationService.getTranslation(productResponseDTO.getId(), "ro");
-                        ProductTelegramResponseDto productTelegramResponseDto = new ProductTelegramResponseDto();
-                        productTelegramResponseDto.setProductId(productTranslationResponseDTO.getProductId());
-                        productTelegramResponseDto.setProductName(productTranslationResponseDTO.getName());
-                        return productTelegramResponseDto;
-                    })
-                    .toList();
-
-            editMessageProductsByType(responseText, chatId, messageId, list, langCode);
-
-        } else {
-            List<ProductResponseDTO> products = productService.getByTypeName(productType);
-            List<ProductTelegramResponseDto> strings = products
-                    .stream()
-                    .map(productResponseDTO -> {
-                        ProductTelegramResponseDto productTelegramResponseDto = new ProductTelegramResponseDto();
-                        productTelegramResponseDto.setProductId(productResponseDTO.getId());
-                        productTelegramResponseDto.setProductName(productResponseDTO.getName());
-                        return productTelegramResponseDto;
-                    })
-                    .toList();
-            editMessageProductsByType(responseText, chatId, messageId, strings, langCode);
-        }
     }
 
     private void handleProductTypeCallbackWithSendingNewMessage(CallbackQuery callbackQuery, String data) {
@@ -1187,37 +1153,19 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         String responseText = textUtil.getProductTypeTextByType(productType, user.getTelegramUserEntity().getLanguage().getCode());
 
-        if (langCode.equals("ro")) {
-            String productNameRu = productTypeTranslationService.getByRoTranslation(productType, "ro").getProductType().getName();
 
-            List<ProductResponseDTO> products = productService.getByTypeName(productNameRu);
+        List<ProductResponseDTO> products = productService.getByTypeName(productType);
+        List<ProductTelegramResponseDto> strings = products
+                .stream()
+                .map(productResponseDTO -> {
+                    ProductTelegramResponseDto productTelegramResponseDto = new ProductTelegramResponseDto();
+                    productTelegramResponseDto.setProductId(productResponseDTO.getId());
+                    productTelegramResponseDto.setProductName(productResponseDTO.getName());
+                    return productTelegramResponseDto;
+                })
+                .toList();
+        editMessageProductsByTypeWithSendingNewMessage(responseText, chatId, messageId, strings, langCode);
 
-            List<ProductTelegramResponseDto> list = products
-                    .stream()
-                    .map(productResponseDTO -> {
-                        ProductTranslationResponseDTO productTranslationResponseDTO = productTranslationService.getTranslation(productResponseDTO.getId(), "ro");
-                        ProductTelegramResponseDto productTelegramResponseDto = new ProductTelegramResponseDto();
-                        productTelegramResponseDto.setProductId(productTranslationResponseDTO.getProductId());
-                        productTelegramResponseDto.setProductName(productTranslationResponseDTO.getName());
-                        return productTelegramResponseDto;
-                    })
-                    .toList();
-
-            editMessageProductsByTypeWithSendingNewMessage(responseText, chatId, messageId, list, langCode);
-
-        } else {
-            List<ProductResponseDTO> products = productService.getByTypeName(productType);
-            List<ProductTelegramResponseDto> strings = products
-                    .stream()
-                    .map(productResponseDTO -> {
-                        ProductTelegramResponseDto productTelegramResponseDto = new ProductTelegramResponseDto();
-                        productTelegramResponseDto.setProductId(productResponseDTO.getId());
-                        productTelegramResponseDto.setProductName(productResponseDTO.getName());
-                        return productTelegramResponseDto;
-                    })
-                    .toList();
-            editMessageProductsByTypeWithSendingNewMessage(responseText, chatId, messageId, strings, langCode);
-        }
     }
 
     private void editMessageProductsByType(String text, long chatId, long messageId, List<ProductTelegramResponseDto> productTelegramResponseDtoList, String langCode) {
@@ -1316,11 +1264,9 @@ public class TelegramBot extends TelegramLongPollingBot {
         List<InlineKeyboardButton> row = new ArrayList<>();
 
         InlineKeyboardButton button = createOneLineButton();
-        if (langCode.equals("ru")) {
-            button.setText("Назад ✨");
-        } else {
-            button.setText("Înapoi ✨");
-        }
+
+        button.setText("Назад ✨");
+
         button.setCallbackData(CallBackButton.BACK_TO_MENU.toString());
         row.add(button);
         rowsInLine.add(row);
@@ -1343,18 +1289,13 @@ public class TelegramBot extends TelegramLongPollingBot {
         List<ProductTypeResponseDTO> all = productTypeService.getAll();
         List<String> productTypes = new ArrayList<>();
 
-        if (langCode.equals("ro")) {
-            for (ProductTypeResponseDTO productTypeResponseDTO : all) {
-                ProductTypeTranslResponseDTO ro = productTypeTranslationService.getTranslation(productTypeResponseDTO.getId(), "ro");
-                productTypes.add(ro.getName());
-            }
-        } else {
-            all.stream()
-                    .forEach(productTypeResponseDTO -> {
-                        String name = productTypeResponseDTO.getName();
-                        productTypes.add(name);
-                    });
-        }
+
+        all.stream()
+                .forEach(productTypeResponseDTO -> {
+                    String name = productTypeResponseDTO.getName();
+                    productTypes.add(name);
+                });
+
 
         textUtil.addAllProductsToMenu(menuText, productTypes, langCode);
         return productTypes;
@@ -1534,8 +1475,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void sendSticker(Long chatId, String stickerFileId) {
         SendSticker sendSticker = new SendSticker();
         sendSticker.setChatId(chatId.toString());
-        sendSticker.setSticker(new InputFile(stickerFileId)); // Используем File ID стикера или URL
-
+        sendSticker.setSticker(new InputFile(stickerFileId));
         try {
             execute(sendSticker);
         } catch (TelegramApiException e) {
