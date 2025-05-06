@@ -31,7 +31,7 @@ public class UiTranslationController {
     public UiTranslationDTO upsert(
             @Valid @RequestBody UiTranslationCreateDTO createDTO
     ) {
-        return uiTranslationService.upsert(createDTO);
+        return uiTranslationService.save(createDTO);
     }
 
     @PatchMapping

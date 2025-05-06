@@ -5,6 +5,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.test.restaurant_service.dto.response.ProductIdsResponse;
 import org.test.restaurant_service.dto.response.ProductTypeResponseDTO;
+import org.test.restaurant_service.dto.response.UiTranslationDTO;
 import org.test.restaurant_service.entity.Language;
 import org.test.restaurant_service.service.LanguageService;
 import org.test.restaurant_service.service.ProductService;
@@ -25,26 +26,28 @@ public class AvailableLanguageService {
     private final ProductTypeI18nService productTypeI18nService;
     private final LanguageService languageService;
     private final ProductTypeService typeService;
+    private final UiTranslationService uiTranslationService;
 
-    public AvailableLanguageService(@Qualifier("productServiceWithS3Impl") ProductService productService, ProductI18nService productI18nService, AvailableLanguagesCacheService availableLanguagesCacheService, ProductTypeI18nService productTypeI18nService, LanguageService languageService, ProductTypeServiceImpl typeService) {
+    public AvailableLanguageService(@Qualifier("productServiceWithS3Impl") ProductService productService, ProductI18nService productI18nService, AvailableLanguagesCacheService availableLanguagesCacheService, ProductTypeI18nService productTypeI18nService, LanguageService languageService, ProductTypeServiceImpl typeService, UiTranslationService uiTranslationService) {
         this.productService = productService;
         this.productI18nService = productI18nService;
         this.availableLanguagesCacheService = availableLanguagesCacheService;
         this.productTypeI18nService = productTypeI18nService;
         this.languageService = languageService;
         this.typeService = typeService;
+        this.uiTranslationService = uiTranslationService;
     }
 
 
     @Scheduled(cron = "0 0 5 * * *")
     public void checkAvailableLanguages() {
 
-        List<Language> all = languageService.getAll();
+        List<Language> allLangs = languageService.getAll();
         HashMap<Language, Boolean> langs = new HashMap<>();
 
         List<ProductIdsResponse> allProductsId = productService.getAllProductsId();
         List<ProductTypeResponseDTO> types = typeService.getAll();
-        for (Language language : all) {
+        for (Language language : allLangs) {
             boolean existTranslates = true;
 
             for (ProductIdsResponse productIdsResponse : allProductsId) {
@@ -66,6 +69,21 @@ public class AvailableLanguageService {
                     existTranslates = false;
                     langs.put(language, false);
                     break;
+                }
+            }
+
+            if (!existTranslates) {
+                break;
+            }
+
+            if (language.getCode().equals("ru")) {
+                List<UiTranslationDTO> allByLangId = uiTranslationService.getAllByLangId(language.getId());
+                for (UiTranslationDTO uiTranslationDTO : allByLangId) {
+                    if (!uiTranslationService.existByKeyAndLanguage(uiTranslationDTO.getKey(), language)) {
+                        existTranslates = false;
+                        langs.put(language, false);
+                        break;
+                    }
                 }
             }
 

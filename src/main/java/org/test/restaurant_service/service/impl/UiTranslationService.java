@@ -32,7 +32,7 @@ public class UiTranslationService {
     }
 
     @Transactional
-    public UiTranslationDTO upsert(UiTranslationCreateDTO dto) {
+    public UiTranslationDTO save(UiTranslationCreateDTO dto) {
         Language lang = languageService.getById(dto.getLangId());
 
         UiTranslation entity = uiTranslationRepository
@@ -70,6 +70,10 @@ public class UiTranslationService {
         UiTranslation entity = uiTranslationRepository.findByKeyAndLanguage(key, lang)
                 .orElseThrow(() -> new IllegalArgumentException("Translation not found for key=" + key + " and langId=" + langId));
         uiTranslationRepository.delete(entity);
+    }
+
+    public boolean existByKeyAndLanguage(String key, Language language) {
+        return uiTranslationRepository.existsByKeyAndLanguage(key, language);
     }
 
 }

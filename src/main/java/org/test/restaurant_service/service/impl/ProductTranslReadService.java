@@ -41,9 +41,28 @@ public class ProductTranslReadService {
     public List<ProductResponseDTO> topWeek(String lang, Pageable pageable) {
         Integer langId = languageService.getLanguageByCode(lang).getId();
 
-        return repo.getTop10ProductsWeek(pageable).stream()
+        return repo.getTopProducts(pageable).stream()
                 .map(p -> mapper.fromProjection(
                         repo.findOneLocalized(p.getId(), langId)))
+                .toList();
+    }
+
+    public Page<ProductResponseDTO> search(String term,
+                                           Integer typeId,
+                                           String lang,
+                                           Pageable pageable) {
+        Integer langId = languageService.getLanguageByCode(lang).getId();
+        return repo.searchLocalized(langId, typeId, term, pageable)
+                .map(mapper::fromProjection);
+    }
+
+    public List<ProductResponseDTO> top(String lang,
+                                        Integer typeId,
+                                        int days,
+                                        int limit) {
+        Integer langId = languageService.getLanguageByCode(lang).getId();
+        return repo.findTopLocalized(langId, typeId, days, limit).stream()
+                .map(mapper::fromProjection)
                 .toList();
     }
 
