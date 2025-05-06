@@ -2,7 +2,6 @@ package org.test.restaurant_service.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.mapstruct.Named;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -15,7 +14,6 @@ import org.test.restaurant_service.dto.response.PhotoResponseDTO;
 import org.test.restaurant_service.dto.response.ProductAndPhotosResponseDTO;
 import org.test.restaurant_service.dto.response.ProductIdsResponse;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
-import org.test.restaurant_service.dto.view.ProductIdsView;
 import org.test.restaurant_service.entity.Photo;
 import org.test.restaurant_service.entity.Product;
 import org.test.restaurant_service.entity.ProductType;
@@ -180,7 +178,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional(readOnly = true)
     public List<ProductResponseDTO> getTop10WeekProducts(Pageable pageable) {
-        return productRepository.getTop10ProductsWeek(pageable)
+        return productRepository.getTopProducts(pageable)
                 .stream()
                 .map(productMapper::toResponseDTO)
                 .toList();

@@ -10,4 +10,6 @@ import java.util.Optional;
 public interface UiTranslationRepository extends JpaRepository<UiTranslation, Integer> {
     List<UiTranslation> findAllByLanguage(Language language);
     Optional<UiTranslation> findByKeyAndLanguage(String key, Language language);
+
+    boolean existsByKeyAndLanguage(String key, Language language);
 }

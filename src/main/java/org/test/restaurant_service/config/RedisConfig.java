@@ -39,7 +39,6 @@ public class RedisConfig {
         cfg.setPort(redisPort);
         if (!redisPassword.isEmpty()) {
             cfg.setPassword(RedisPassword.of(redisPassword));
-            log.info("password: {}", redisPassword);
         }
         return new LettuceConnectionFactory(cfg);
     }

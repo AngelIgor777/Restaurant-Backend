@@ -3,6 +3,7 @@ package org.test.restaurant_service.controller;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +19,7 @@ import org.test.restaurant_service.service.impl.ProductTranslReadService;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -92,19 +94,25 @@ public class ProductController {
         return productTranslReadService.list(typeId, lang, pageable);
     }
 
-    @GetMapping("/top-weekly")
-    public List<ProductResponseDTO> getTop10WeekProducts(
+
+    @GetMapping("/top")
+    public List<ProductResponseDTO> getTopWeekly(
             @RequestHeader(name = "Accept-Language", defaultValue = "ru") String lang,
-            Pageable pageable) {
-        return productTranslReadService.topWeek(lang, pageable);
+            @RequestParam(name = "days", defaultValue = "7") @Min(1) int days,
+            @RequestParam(name = "limit", defaultValue = "10") @Min(1) int limit
+    ) {
+        return productTranslReadService.top(lang, null, days, limit);
     }
+
 
     @GetMapping("/search")
     @Transactional(readOnly = true)
-    public Page<ProductResponseDTO> searchProducts(@RequestParam String query,
-                                                   @RequestParam(defaultValue = "0") int page,
-                                                   @RequestParam(defaultValue = "10") @Valid @Max(30) int size) {
-        Page<Product> products = productService.searchProducts(query, page, size);
-        return products.map(ProductMapper.INSTANCE::toResponseDTO);
+    public Page<ProductResponseDTO> searchProducts(
+            @RequestHeader(name = "Accept-Language", defaultValue = "ru") String lang,
+            @RequestParam String query,
+            @RequestParam(required = false) Integer typeId,
+            @PageableDefault(size = 10, page = 0) Pageable pageable
+    ) {
+        return productTranslReadService.search(query, typeId, lang, pageable);
     }
 }
