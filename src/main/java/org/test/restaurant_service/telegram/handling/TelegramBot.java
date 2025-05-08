@@ -21,6 +21,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMar
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import org.test.restaurant_service.controller.websocket.CodeService;
 import org.test.restaurant_service.controller.websocket.WebSocketSender;
 import org.test.restaurant_service.dto.request.*;
 import org.test.restaurant_service.dto.request.order.OrderProductWithPayloadRequestDto;
@@ -28,18 +29,16 @@ import org.test.restaurant_service.dto.response.*;
 import org.test.restaurant_service.entity.*;
 import org.test.restaurant_service.entity.User;
 import org.test.restaurant_service.mapper.ProductMapper;
-import org.test.restaurant_service.mapper.ProductTypeTransMapper;
-import org.test.restaurant_service.mapper.ProductTypeTransMapperImpl;
 import org.test.restaurant_service.mapper.TelegramUserMapper;
 import org.test.restaurant_service.rabbitmq.producer.RabbitMQJsonProducer;
 import org.test.restaurant_service.service.*;
-import org.test.restaurant_service.service.ProductTypeTranslationService;
 import org.test.restaurant_service.service.impl.*;
 import org.test.restaurant_service.service.impl.cache.*;
 import org.test.restaurant_service.telegram.config.BotConfig;
 import org.test.restaurant_service.telegram.util.TextUtil;
 import org.test.restaurant_service.util.KeyUtil;
 
+import javax.annotation.Nullable;
 import java.math.BigDecimal;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -57,10 +56,6 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final BotConfig botConfig;
     private final UserService userService;
     private final S3Service s3Service;
-    private final LanguageService languageService;
-    private final ProductTranslationService productTranslationService;
-    private final ProductTypeTranslationService productTypeTranslationService;
-    private final ProductTypeTransMapper productTypeTransMapper;
     private final TableService tableService;
     private final RabbitMQJsonProducer rabbitMQJsonProducer;
     private final UserCacheService userCacheService;
@@ -100,6 +95,9 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final String TABLE_SUFFIX = "T:";
 
 
+    private final String CODE_SUFFIX = "CODE:";
+
+
     private final String PRODUCT_TYPE_SUFFIX = "PT:";
     private final String PRODUCT_TYPE_WHEN_PRODUCT_SUFFIX = "WP:";
 
@@ -113,8 +111,10 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final WebSocketSender webSocketSender;
     private final WorkTelegramBot workTelegramBot;
     private final StaffSendingOrderService staffSendingOrderService;
+    private final CodeCacheService codeCacheService;
+    private final CodeService codeService;
 
-    public TelegramBot(TelegramUserServiceImpl telegramUserService, ProductTypeServiceImpl productTypeService, @Qualifier("productServiceImpl") ProductServiceImpl productService, BotConfig botConfig, TextUtil textUtil, UserService userService, S3Service s3Service, LanguageService languageService, ProductTranslationService productTranslationService, ProductTypeTranslationService productTypeTranslationService, ProductTypeTransMapperImpl productTypeTranslationMapper, TableService tableService, RabbitMQJsonProducer rabbitMQJsonProducer, UserCacheService userCacheService, UserBucketCacheService userBucketCacheService, OrderCacheService orderCacheService, WebSocketSender webSocketSender, WorkTelegramBot workTelegramBot, StaffSendingOrderService staffSendingOrderService, WaiterCallCacheService waiterCallCacheService, WaiterCallCacheService waiterCallCacheService1, AvailableLanguagesCacheService languagesCache) {
+    public TelegramBot(TelegramUserServiceImpl telegramUserService, ProductTypeServiceImpl productTypeService, @Qualifier("productServiceImpl") ProductServiceImpl productService, BotConfig botConfig, TextUtil textUtil, UserService userService, S3Service s3Service, TableService tableService, RabbitMQJsonProducer rabbitMQJsonProducer, UserCacheService userCacheService, UserBucketCacheService userBucketCacheService, OrderCacheService orderCacheService, WebSocketSender webSocketSender, WorkTelegramBot workTelegramBot, StaffSendingOrderService staffSendingOrderService, WaiterCallCacheService waiterCallCacheService1, AvailableLanguagesCacheService languagesCache, CodeCacheService codeCacheService, CodeService codeService) {
         this.telegramUserService = telegramUserService;
         this.productTypeService = productTypeService;
         this.productService = productService;
@@ -122,9 +122,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         this.textUtil = textUtil;
         this.userService = userService;
         this.s3Service = s3Service;
-        this.languageService = languageService;
-        this.productTranslationService = productTranslationService;
-        this.productTypeTranslationService = productTypeTranslationService;
         this.tableService = tableService;
         this.rabbitMQJsonProducer = rabbitMQJsonProducer;
         this.userCacheService = userCacheService;
@@ -137,11 +134,12 @@ public class TelegramBot extends TelegramLongPollingBot {
         } catch (TelegramApiException e) {
             log.error(e.getMessage());
         }
-        this.productTypeTransMapper = productTypeTranslationMapper;
         this.orderCacheService = orderCacheService;
         this.webSocketSender = webSocketSender;
         this.workTelegramBot = workTelegramBot;
         this.staffSendingOrderService = staffSendingOrderService;
+        this.codeCacheService = codeCacheService;
+        this.codeService = codeService;
     }
 
     private Set<String> callbackProductTypesData = new HashSet<>();
@@ -153,22 +151,15 @@ public class TelegramBot extends TelegramLongPollingBot {
     private ArrayList<BotCommand> getCommands(String langCode) {
         ArrayList<BotCommand> botCommands = new ArrayList<>();
         botCommands.add(new BotCommand("/menu", "Показать меню"));
+        botCommands.add(new BotCommand("/waiter", "Вызвать официанта"));
         botCommands.add(new BotCommand("/website", "Зайти на сайт"));
         botCommands.add(new BotCommand("/basket", "Посмотреть корзину"));
         botCommands.add(new BotCommand("/help", "Список доступных команд"));
         botCommands.add(new BotCommand("/info", "Информация о боте"));
         botCommands.add(new BotCommand("/about", "Показать мою информацию"));
-        botCommands.add(new BotCommand("/lang", "Изменить язык"));
         return botCommands;
     }
 
-    private void updateBotCommands(String langCode) {
-        try {
-            this.execute(new SetMyCommands(getCommands(langCode), new BotCommandScopeDefault(), null));
-        } catch (TelegramApiException e) {
-            log.error("Failed to update bot commands: {}", e.getMessage());
-        }
-    }
 
     @Override
     public String getBotUsername() {
@@ -236,9 +227,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                 case "/about":
                     sendUserInfo(update);
                     break;
-                case "/lang":
-                    sendLanguageSelection(message.getChatId());
-                    break;
                 default:
                     user = userService.findByChatId(chatId);
                     sendMessageWithMarkdown(chatId, textUtil.getDefaultMessage(user.getUuid(), user.getTelegramUserEntity().getLanguage().getCode()));
@@ -250,10 +238,8 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void handleCallbackQuery(Update update) {
         CallbackQuery callbackQuery = update.getCallbackQuery();
         String data = callbackQuery.getData();
-        Long chatId = update.getCallbackQuery().getMessage().getChatId();
         log.debug("Recieved callbackQuery: {}", data);
 
-        boolean langCallback = data.startsWith(LANG_SUFFIX);
         boolean quickOrderCallback = data.startsWith(QUICK_ORDER_SUFFIX);
         boolean quickOrderTypeCallback = data.startsWith("O"); //orders type always start with "O"
         boolean tableCallback = data.startsWith(TABLE_SUFFIX);
@@ -272,6 +258,8 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         boolean bucketPaymentMethodCardCallBack = data.startsWith(BUCKET_PAYMENT_CARD);
         boolean bucketPaymentMethodCashCallBack = data.startsWith(BUCKET_PAYMENT_CASH);
+
+        boolean codeCallBack = data.startsWith(CODE_SUFFIX);
 
         boolean addToBucketProductQuantityCallBack = data.startsWith(ADD_TO_BUCKET_PRODUCT_QUANTITY_SUFFIX);
         boolean anyMatchProductTypes = callbackProductTypesData.stream()
@@ -299,10 +287,10 @@ public class TelegramBot extends TelegramLongPollingBot {
             handleTableCallback(update);
         } else if (bucketPaymentMethodCardCallBack) {
             handleBucketPaymentMethodCardCallBack(update);
-        } else if (bucketDeleteProductCallBack) {
-            handleDeleteProductFromBucket(update);
         } else if (bucketPaymentMethodCashCallBack) {
             handleBucketPaymentMethodCashCallBack(update);
+        } else if (bucketDeleteProductCallBack) {
+            handleDeleteProductFromBucket(update);
         } else if (bucketOrderTypeToTableCallBack) {
             handleBucketOrderToTableCallBack(update);
         } else if (bucketShowCallBack) {
@@ -319,18 +307,115 @@ public class TelegramBot extends TelegramLongPollingBot {
             handleAddToBucketProductQuantityCallBack(update);
         } else if (addToBucketCallBack) {
             handleAddToBucketCallBack(update);
-        } else if (langCallback) {
-            handleLanguageCallback(data, chatId);
+        } else if (codeCallBack) {
+            handleCodeCallBack(update);
+        }
+    }
+
+    private void handleCodeCallBack(Update update) {
+        CallbackQuery callbackQuery = update.getCallbackQuery();
+        Long chatId = callbackQuery.getMessage().getChatId();
+
+        if (codeCacheService.isBlacklisted(chatId)) {
+            sendMessage(chatId, "🚫 Вы временно заблокированы из-за многократных неверных попыток. Попробуйте снова чуть позже");
+            return;
+        }
+
+        String data = callbackQuery.getData();
+        Integer code = Integer.parseInt(data.replace(CODE_SUFFIX, "").substring(0, 2));
+
+        CallbackType callbackType = null;
+        String callBackTypeType = data.substring(CODE_SUFFIX.length() + 2, CODE_SUFFIX.length() + 4);
+
+        boolean equalsQKType = callBackTypeType.equals(CallbackType.QK.name());
+        boolean equalsBTType = callBackTypeType.equals(CallbackType.BT.name());
+        boolean equalsWRType = callBackTypeType.equals(CallbackType.WR.name());
+        if (codeCacheService.isValidCode(code)) {
+
+            if (equalsQKType) {
+                Integer productId = Integer.parseInt(data.substring(CODE_SUFFIX.length() + 2 + callBackTypeType.length()));
+
+                setMessageToOrderSubType(update, productId);
+
+            } else {
+                if (equalsBTType) {
+                    createAndEditMessage(update, "Выберите тип заказа", getOrderTypeKeyboard(CallbackType.BT));
+                } else {
+                    if (equalsWRType) {
+                        sendTablesForChoose(update);
+                    }
+                }
+            }
+            codeCacheService.clearIncorrectInput(chatId);
+            codeCacheService.activateUser(chatId);
+        } else {
+
+            if (equalsQKType) {
+                callbackType = CallbackType.QK;
+            } else {
+                if (equalsBTType) {
+                    callbackType = CallbackType.BT;
+                } else {
+                    if (equalsWRType) {
+                        callbackType = CallbackType.WR;
+                    }
+                }
+            }
+
+            int i = codeCacheService.incorrectInput(chatId);
+            if (i < 2) {
+                String text = """
+                        ❗ Неверный код. Осталась 1 попытка.
+                        
+                        🔍 Убедитесь, что вы ввели код, отображаемый в правом верхнем углу экрана над зоной заказа и оплаты.
+                        
+                        Пожалуйста, попробуйте снова 😊""";
+                String orderType = data.substring(CODE_SUFFIX.length() + 2);//2 because code is two digit number
+
+                String productIdStr = data.substring(CODE_SUFFIX.length() + 2 + orderType.length());
+                if (!productIdStr.isEmpty()) {
+                    Integer productId = Integer.parseInt(productIdStr);
+                    sendActivationCode(update, text, callbackType, productId);
+                }
+                sendActivationCode(update, text, callbackType, null);
+
+            } else {
+                codeService.rotateCodes();
+
+                codeCacheService.blacklistUser(chatId);
+
+                UUID userUUID = userService.findByChatId(chatId).getUuid();
+                sendMessageWithMarkdown(chatId, textUtil.getBlacklistText(userUUID));
+                orderCacheService.deleteOrder(chatId);
+                codeCacheService.clearIncorrectInput(chatId);
+            }
+        }
+    }
+
+    private void confirmOrder(Update update, Long chatId) {
+        OrderProductWithPayloadRequestDto order = orderCacheService.getOrder(chatId);
+        OtpResponseDto otpResponseDto = rabbitMQJsonProducer.send(order);
+        orderCacheService.deleteOrder(chatId);
+        String text = getMessageAfterOrderPending(otpResponseDto, order);
+        EditMessageText editMessageText = getEditMessageText(update, text);
+        executeMessageWithMarkDown(editMessageText);
+    }
+
+    private void executeMessageWithMarkDown(EditMessageText editMessageText) {
+        editMessageText.setParseMode("Markdown");
+        try {
+            execute(editMessageText);
+        } catch (TelegramApiException e) {
+            log.error("TelegramApiException Exception");
         }
     }
 
     private void handleCallWaiterTableCallback(Update update) {
         CallbackQuery callbackQuery = update.getCallbackQuery();
-        String data = callbackQuery.getData();
         Long chatId = callbackQuery.getMessage().getChatId();
 
         // Extract table number
-        String tableNumber = data.replace(CALL_WAITER_TABLE_SUFFIX, "");
+        String tableNumber = callbackQuery.getData().replace(CALL_WAITER_TABLE_SUFFIX, "");
 
         // 1. Confirm to the user
         String text = "✅ Официант был вызван к столику №" + tableNumber;
@@ -393,6 +478,20 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void sendTableSelection(Update update) {
+        if (!codeCacheService.isUserActive(update.getMessage().getChatId())) {
+            String text = """
+                    Чтобы вызвать официанта, выберите код активации:
+                    Он отображается на экране в правом верхнем углу, непосредственно над зоной заказа и оплаты.
+                    
+                    Это нужно, чтобы мы точно знали, что вы на месте и ваш заказ действительно активен 😊""";
+
+            sendActivationCode(update, text, CallbackType.WR, null);
+        } else {
+            sendTablesForChoose(update);
+        }
+    }
+
+    private void sendTablesForChoose(Update update) {
         String text = "Пожалуйста, выберите номер столика, к которому должен подойти официант:";
 
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
@@ -470,7 +569,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         EditMessageText editMessageText = getEditMessageText(update, messageAfterOrderPending);
 
-        sendMessageWithMarkdown(editMessageText);
+        editMessageWithMarkdown(editMessageText);
         userBucketCacheService.deleteBucket(chatId);
         userBucketCacheService.deleteOrder(chatId);
     }
@@ -491,7 +590,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         orderDto.setTableRequestDTO(new TableRequestDTO(tableNumber));
         orderDto.setOrderInRestaurant(true);
         userBucketCacheService.saveOrder(chatId, orderDto);
-        createAndEditMessage(update, "Выберите метод оплаты", getInlineKeyboardMarkupForPayment(OrderType.BUCKET));
+        createAndEditMessage(update, "Выберите метод оплаты", getInlineKeyboardMarkupForPayment(CallbackType.BT));
     }
 
     private void createAndEditMessage(Update update, String text, InlineKeyboardMarkup keyboard) {
@@ -530,7 +629,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         EditMessageText editMessageText = getEditMessageText(update, "Выберите столик:");
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> buttons = new ArrayList<>();
-        setButtonsToTablesData(buttons, OrderType.BUCKET);
+        setButtonsToTablesData(buttons, CallbackType.BT);
         markup.setKeyboard(buttons);
         editMessageText.setReplyMarkup(markup);
         executeMessage(editMessageText);
@@ -545,26 +644,32 @@ public class TelegramBot extends TelegramLongPollingBot {
         executeMessage(editMessageText);
     }
 
-
     private void handlePlaceOrderCallBack(Update update) {
-        CallbackQuery callbackQuery = update.getCallbackQuery();
-        String data = callbackQuery.getData();
-        createAndEditMessage(update, "Выберите тип заказа", getOrderTypeKeyboard(OrderType.BUCKET));
+        if (!codeCacheService.isUserActive(update.getCallbackQuery().getMessage().getChatId())) {
+            String text = """
+                    Чтобы подтвердить заказ, выберите код активации:
+                    Он отображается на экране в правом верхнем углу, непосредственно над зоной заказа и оплаты.
+                    
+                    Это нужно, чтобы мы точно знали, что вы на месте и ваш заказ действительно активен 😊""";
+
+            sendActivationCode(update, text, CallbackType.BT, null);
+        } else {
+            createAndEditMessage(update, "Выберите тип заказа", getOrderTypeKeyboard(CallbackType.BT));
+        }
     }
 
-    private InlineKeyboardMarkup getOrderTypeKeyboard(OrderType orderType) {
+    private InlineKeyboardMarkup getOrderTypeKeyboard(CallbackType callbackType) {
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
 
         List<List<InlineKeyboardButton>> buttons = new ArrayList<>();
 
-        if (orderType.equals(OrderType.QUICK)) {
+        if (callbackType.equals(CallbackType.QK)) {
             buttons.add(List.of(createOneLineButton("На столик 🍽", ORDER_TO_TABLE)));
             buttons.add(List.of(createOneLineButton("Домой 🏠", ORDER_HOME)));
-        } else if (orderType.equals(OrderType.BUCKET)) {
+        } else if (callbackType.equals(CallbackType.BT)) {
             buttons.add(List.of(createOneLineButton("На столик 🍽", BUCKET_ORDER_TYPE_TO_TABLE_SUFFIX)));
             buttons.add(List.of(createOneLineButton("Домой 🏠", BUCKET_ORDER_TYPE_HOME_SUFFIX)));
         }
-
 
         markup.setKeyboard(buttons);
         return markup;
@@ -684,21 +789,59 @@ public class TelegramBot extends TelegramLongPollingBot {
         } else if (data.startsWith(PAYMENT_CASH)) {
             order.setPaymentMethod(Order.PaymentMethod.CASH);
         }
+        confirmOrder(update, chatId);
 
-        OtpResponseDto otpResponseDto = rabbitMQJsonProducer.send(order);
-        orderCacheService.deleteOrder(chatId);
-        String text = getMessageAfterOrderPending(otpResponseDto, order);
+    }
 
-        EditMessageText editMessageText = getEditMessageText(update, text);
+    private void sendActivationCode(Update update, String text, CallbackType callbackType, @Nullable Integer productId) {
+        Codes codes = codeCacheService.getOrderCode();
+
+        ArrayList<Integer> integers = new ArrayList<>();
+        integers.add(codes.getTrueCode());
+        integers.add(codes.getFalseCode1());
+        integers.add(codes.getFalseCode2());
+        Collections.shuffle(integers);
+
+        SendMessage editMessageText = getSendMessage(update, text);
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> buttons = new ArrayList<>();
+        List<InlineKeyboardButton> inlineKeyboardButtons1 = new ArrayList<>();
+        List<InlineKeyboardButton> inlineKeyboardButtons2 = new ArrayList<>();
+        List<InlineKeyboardButton> inlineKeyboardButtons3 = new ArrayList<>();
+
+        Integer text1 = integers.get(0);
+        Integer text2 = integers.get(1);
+        Integer text3 = integers.get(2);
+
+        String suffix = callbackType.name() + productId;
+        inlineKeyboardButtons1.add(createInlineKeyboardButton(text1, CODE_SUFFIX + text1 + suffix));
+        inlineKeyboardButtons2.add(createInlineKeyboardButton(text2, CODE_SUFFIX + text2 + suffix));
+        inlineKeyboardButtons3.add(createInlineKeyboardButton(text3, CODE_SUFFIX + text3 + suffix));
+
+
+        buttons.add(inlineKeyboardButtons1);
+        buttons.add(inlineKeyboardButtons2);
+        buttons.add(inlineKeyboardButtons3);
+
+        markup.setKeyboard(buttons);
+
+        editMessageText.setReplyMarkup(markup);
 
         sendMessageWithMarkdown(editMessageText);
+    }
+
+    private InlineKeyboardButton createInlineKeyboardButton(Object text, Object callBackData) {
+        InlineKeyboardButton inlineKeyboardButton = new InlineKeyboardButton();
+        inlineKeyboardButton.setText(text.toString());
+        inlineKeyboardButton.setCallbackData(callBackData.toString());
+        return inlineKeyboardButton;
     }
 
     private String getMessageAfterOrderPending(OtpResponseDto otpResponseDto, OrderProductWithPayloadRequestDto order) {
         StringBuilder message = new StringBuilder();
 
         message.append("✅ *Ваш заказ принят!*\n\n")
-                .append("*Проверочный код:* ").append(otpResponseDto.getOtp()).append("\n\n");
+                .append("*Код заказа:* ").append(otpResponseDto.getOtp()).append("\n\n");
 
         message.append("*Состав заказа:*\n");
 
@@ -789,7 +932,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         userBucketCacheService.saveOrder(chatId, order);
 
         userCacheService.removeUserState(chatId);
-        createAndSendMessage(update, "Выберите метод оплаты", getInlineKeyboardMarkupForPayment(OrderType.BUCKET));
+        createAndSendMessage(update, "Выберите метод оплаты", getInlineKeyboardMarkupForPayment(CallbackType.BT));
     }
 
     private void sendPaymentMethod(Long chatId) {
@@ -798,19 +941,19 @@ public class TelegramBot extends TelegramLongPollingBot {
         message.setChatId(String.valueOf(chatId));
         message.setText(paymentMethodText);
 
-        InlineKeyboardMarkup markup = getInlineKeyboardMarkupForPayment(OrderType.QUICK);
+        InlineKeyboardMarkup markup = getInlineKeyboardMarkupForPayment(CallbackType.QK);
         message.setReplyMarkup(markup);
         executeMessage(message);
     }
 
-    private InlineKeyboardMarkup getInlineKeyboardMarkupForPayment(OrderType orderType) {
+    private InlineKeyboardMarkup getInlineKeyboardMarkupForPayment(CallbackType callbackType) {
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> buttons = new ArrayList<>();
-        if (orderType.equals(OrderType.QUICK)) {
+        if (callbackType.equals(CallbackType.QK)) {
             buttons.add(List.of(
                     createOneLineButton("Карта", PAYMENT_CARD),
                     createOneLineButton("Наличные", PAYMENT_CASH)));
-        } else if (orderType.equals(OrderType.BUCKET)) {
+        } else if (callbackType.equals(CallbackType.BT)) {
             buttons.add(List.of(
                     createOneLineButton("Карта", BUCKET_PAYMENT_CARD),
                     createOneLineButton("Наличные", BUCKET_PAYMENT_CASH)));
@@ -846,7 +989,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void handleTableCallback(Update update) {
         String paymentMethodText = "Выберите метод оплаты:";
-        createAndEditMessage(update, paymentMethodText, getInlineKeyboardMarkupForPayment(OrderType.QUICK));
+        createAndEditMessage(update, paymentMethodText, getInlineKeyboardMarkupForPayment(CallbackType.QK));
 
         CallbackQuery callbackQuery = update.getCallbackQuery();
         String tableNumber = callbackQuery.getData().substring(TABLE_SUFFIX.length());
@@ -868,7 +1011,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         String data = callbackQuery.getData();
         if (data.equals(ORDER_TO_TABLE)) {
             editMessageText.setText("Выберите столик:");
-            setButtonsToTablesData(buttons, OrderType.QUICK);
+            setButtonsToTablesData(buttons, CallbackType.QK);
         } else if (data.equals(ORDER_HOME)) {
             editMessageText.setText("Отправьте мне в одну строку ваш адрес.\nНапишите город/село, улицу, дом");
             userCacheService.saveUserState(chatId, USER_WAITING_STATE_ADDRESS); // Store in Redis
@@ -879,7 +1022,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
 
-    private void setButtonsToTablesData(List<List<InlineKeyboardButton>> buttons, OrderType orderType) {
+    private void setButtonsToTablesData(List<List<InlineKeyboardButton>> buttons, CallbackType callbackType) {
         byte size = tableService.countAll();
         int buttonsPerRow = 4;
         int rows = (int) Math.ceil((double) size / buttonsPerRow);
@@ -889,9 +1032,9 @@ public class TelegramBot extends TelegramLongPollingBot {
             for (int j = i * buttonsPerRow + 1; j <= Math.min(size, (i + 1) * buttonsPerRow); j++) {
                 String table = String.valueOf(j);
                 String callBack = null;
-                if (orderType.equals(OrderType.QUICK)) {
+                if (callbackType.equals(CallbackType.QK)) {
                     callBack = TABLE_SUFFIX + table;
-                } else if (orderType.equals(OrderType.BUCKET)) {
+                } else if (callbackType.equals(CallbackType.BT)) {
                     callBack = BUCKET_ORDER_TABLE_SUFFIX + table;
                 }
                 InlineKeyboardButton tempOneLineButton
@@ -922,10 +1065,27 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void handleQuickOrderCallback(Update update) {
+        Integer productId = Integer.parseInt(update.getCallbackQuery().getData().substring(QUICK_ORDER_SUFFIX.length()));
+
+        if (!codeCacheService.isUserActive(update.getCallbackQuery().getMessage().getChatId())) {
+            String text = """
+                    Чтобы подтвердить заказ, выберите код активации:
+                    Он отображается на экране в правом верхнем углу, непосредственно над зоной заказа и оплаты.
+                    
+                    Это нужно, чтобы мы точно знали, что вы на месте и ваш заказ действительно активен 😊""";
+
+            sendActivationCode(update, text, CallbackType.QK, productId);
+        } else {
+            setMessageToOrderSubType(update, productId);
+
+        }
+
+    }
+
+    private void setMessageToOrderSubType(Update update, Integer productId) {
         OrderProductWithPayloadRequestDto orderDto = new OrderProductWithPayloadRequestDto();
         CallbackQuery callbackQuery = update.getCallbackQuery();
         String data = callbackQuery.getData();
-        String productId = data.substring(QUICK_ORDER_SUFFIX.length());
         Message message = callbackQuery.getMessage();
         Long chatId = message.getChatId();
         UUID userUUID = userService.findByChatId(chatId).getUuid();
@@ -945,7 +1105,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         orderDto.setUserRegistered(true);
         orderDto.setUserUUID(userUUID);
         orderCacheService.saveOrder(chatId, orderDto);
-        InlineKeyboardMarkup orderTypeKeyboard = getOrderTypeKeyboard(OrderType.QUICK);
+        InlineKeyboardMarkup orderTypeKeyboard = getOrderTypeKeyboard(CallbackType.QK);
         sendMessage.setReplyMarkup(orderTypeKeyboard);
         executeMessage(sendMessage);
     }
@@ -1017,18 +1177,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         return null;
     }
 
-    public void handleLanguageCallback(String data, Long chatId) {
-        User user = userService.findByChatId(chatId);
-        String langCode = data.substring(5);
-        languageService.setLanguage(chatId, langCode);
-        String confirmationMessage = "ro".equals(langCode) ? "The language is set ✅" : "Язык установлен ✅";
-        sendMessageWithHTML(chatId, confirmationMessage);
-        updateBotCommands(langCode);
-
-        sendSticker(chatId, "CAACAgIAAxkBAAOMZ2wCg2GLi8plYN0NGFsVl2NfnMYAAgsBAAL3AsgPxfQ7mJWqcds2BA");
-        String message = textUtil.getMessageAfterRegister(user.getUuid(), langCode);
-        sendMessageWithMarkdown(chatId, message);
-    }
 
     public void setToProduct(Update update, String productId) {
         Long chatId = update.getCallbackQuery().getMessage().getChatId();
@@ -1061,7 +1209,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         InlineKeyboardButton inlineBackKeyboardButton = new InlineKeyboardButton();
         InlineKeyboardButton inlineQuickOrderButton = new InlineKeyboardButton();
         InlineKeyboardButton inlineAddToBucketButton = new InlineKeyboardButton();
-        formatButtons(langCode, productResponse, productTypeTranslResponseDTO, inlineBackKeyboardButton, inlineQuickOrderButton, inlineAddToBucketButton);
+        formatButtonsForProduct(langCode, productResponse, productTypeTranslResponseDTO, inlineBackKeyboardButton, inlineQuickOrderButton, inlineAddToBucketButton);
 
         inlineKeyboardButtons.add(inlineBackKeyboardButton);
         rowsInLine.add(inlineKeyboardButtons);
@@ -1078,12 +1226,12 @@ public class TelegramBot extends TelegramLongPollingBot {
         executeMessage(sendPhoto);
     }
 
-    private void formatButtons(String langCode,
-                               ProductResponseDTO productResponse,
-                               ProductTypeTranslResponseDTO productTypeTranslResponseDTO,
-                               InlineKeyboardButton backToTypesButton,
-                               InlineKeyboardButton quickOrderButton,
-                               InlineKeyboardButton addToBucketButton) {
+    private void formatButtonsForProduct(String langCode,
+                                         ProductResponseDTO productResponse,
+                                         ProductTypeTranslResponseDTO productTypeTranslResponseDTO,
+                                         InlineKeyboardButton backToTypesButton,
+                                         InlineKeyboardButton quickOrderButton,
+                                         InlineKeyboardButton addToBucketButton) {
         backToTypesButton.setText("Назад ✨");
         String productTypeCallbackData = PRODUCT_TYPE_WHEN_PRODUCT_SUFFIX + productResponse.getTypeName();
         backToTypesButton.setCallbackData(productTypeCallbackData);
@@ -1241,7 +1389,11 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private SendMessage getSendMessage(Update update, String text) {
-        return getSendMessage(String.valueOf(update.getMessage().getChatId()), text);
+        Message message = update.getMessage();
+        if (message == null) {
+            message = update.getCallbackQuery().getMessage();
+        }
+        return getSendMessage(String.valueOf(message.getChatId()), text);
     }
 
     private SendMessage getSendMessage(String chatId, String text) {
@@ -1444,13 +1596,11 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     public void sendMessageWithMarkdown(SendMessage sendMessage) {
-        ReplyKeyboardMarkup replyKeyboard = getReplyKeyboard();
-        sendMessage.setReplyMarkup(replyKeyboard);
         sendMessage.setParseMode("Markdown");
         executeMessage(sendMessage);
     }
 
-    public void sendMessageWithMarkdown(EditMessageText sendMessage) {
+    public void editMessageWithMarkdown(EditMessageText sendMessage) {
         sendMessage.setParseMode("Markdown");
         executeMessage(sendMessage);
     }
@@ -1535,8 +1685,9 @@ public class TelegramBot extends TelegramLongPollingBot {
         BACK_TO_MENU;
     }
 
-    private enum OrderType {
-        QUICK, BUCKET
+    private enum CallbackType {
+        QK, BT, WR
+        //QUICK, BUCKET, WAITER
     }
 
 }

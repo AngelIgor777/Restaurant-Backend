@@ -56,7 +56,7 @@ public class TableController {
         tableService.deleteById(id);
     }
 
-    
+
     @GetMapping("/scores")
     public List<String> getScores() {
         List<String> uuiDs = tableOrderScoreService.getUUIDs();

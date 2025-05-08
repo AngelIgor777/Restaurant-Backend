@@ -19,7 +19,6 @@ import java.util.Map;
 @Service
 public class AvailableLanguageService {
 
-
     private final ProductService productService;
     private final ProductI18nService productI18nService;
     private final AvailableLanguagesCacheService availableLanguagesCacheService;

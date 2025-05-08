@@ -81,9 +81,6 @@ public class KeyUtil {
             if (entry.getKey().equals("AWS_REGION")) {
                 s3Region = value;
             }
-            if (entry.getKey().equals("REDIS_PASSWORD")) {
-                log.info("REDIS PASS:{}", value);
-            }
         });
     }
 

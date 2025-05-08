@@ -40,4 +40,8 @@ public class WebSocketSender {
         messagingTemplate.convertAndSend("/topic/call-waiter", callWaiterDTO);
     }
 
+    public void sendCode(int code) {
+        messagingTemplate.convertAndSend("/topic/code", code);
+    }
+
 }
