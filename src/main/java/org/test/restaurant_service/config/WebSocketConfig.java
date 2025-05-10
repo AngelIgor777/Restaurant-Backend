@@ -31,11 +31,14 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 .addInterceptors(jwtHandshakeInterceptor);
 
         registry.addEndpoint("/ws-orders")
-                .addInterceptors(jwtHandshakeInterceptor)   // ← подключили
+                .setAllowedOriginPatterns("http://localhost:63344")
+                .setAllowedOriginPatterns("http://localhost:9092")
+                .addInterceptors(jwtHandshakeInterceptor)
                 .withSockJS();
 
         registry.addEndpoint("/ws-open-tables")
-                .setAllowedOrigins("http://195.133.27.38")
+                .setAllowedOriginPatterns("http://localhost:63344")
+                .setAllowedOriginPatterns("http://localhost:9092")
                 .withSockJS();
     }
 
