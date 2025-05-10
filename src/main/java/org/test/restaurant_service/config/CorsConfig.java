@@ -12,7 +12,7 @@ public class CorsConfig implements WebMvcConfigurer {
         registry.addMapping("/**")
                 .allowedOriginPatterns(
                         "http://127.0.0.1:9092",
-                        "http://195.133.93.67",
+                        "http://195.133.93.67:9091",
                         "http://localhost:9092",
                         "http://localhost:63344",
                         "http://localhost"
