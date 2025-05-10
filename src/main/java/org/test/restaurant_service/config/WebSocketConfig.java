@@ -33,12 +33,15 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.addEndpoint("/ws-orders")
                 .setAllowedOriginPatterns("http://localhost:63344")
                 .setAllowedOriginPatterns("http://localhost:9092")
+                .setAllowedOriginPatterns("http://127.0.0.1:9092")
                 .addInterceptors(jwtHandshakeInterceptor)
                 .withSockJS();
 
         registry.addEndpoint("/ws-open-tables")
                 .setAllowedOriginPatterns("http://localhost:63344")
                 .setAllowedOriginPatterns("http://localhost:9092")
+                .setAllowedOriginPatterns("http://127.0.0.1:9092")
+                .setAllowedOriginPatterns()
                 .withSockJS();
     }
 
