@@ -34,6 +34,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 .setAllowedOriginPatterns("http://localhost:63344")
                 .setAllowedOriginPatterns("http://localhost:9092")
                 .setAllowedOriginPatterns("http://127.0.0.1:9092")
+                .setAllowedOriginPatterns("http://127.0.0.1:63344")
                 .addInterceptors(jwtHandshakeInterceptor)
                 .withSockJS();
 
@@ -41,6 +42,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 .setAllowedOriginPatterns("http://localhost:63344")
                 .setAllowedOriginPatterns("http://localhost:9092")
                 .setAllowedOriginPatterns("http://127.0.0.1:9092")
+                .setAllowedOriginPatterns("http://127.0.0.1:63344")
                 .setAllowedOriginPatterns()
                 .withSockJS();
     }
