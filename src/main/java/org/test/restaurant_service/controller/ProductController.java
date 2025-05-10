@@ -41,7 +41,7 @@ public class ProductController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public ProductResponseDTO create(@RequestParam("name") String name,
                                      @RequestParam("description") String description,
                                      @RequestParam("typeId") Integer typeId,
@@ -57,7 +57,7 @@ public class ProductController {
 
 
     @PatchMapping
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public ProductResponseDTO update(@RequestParam("id") Integer id,
                                      @RequestParam("name") String name,
                                      @RequestParam("description") String description,
@@ -73,7 +73,7 @@ public class ProductController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Integer id) {
         productService.delete(id);

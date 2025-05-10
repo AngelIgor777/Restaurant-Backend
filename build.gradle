@@ -31,15 +31,20 @@ dependencies {
     implementation 'io.github.cdimascio:dotenv-java:3.0.0'
     implementation 'org.mapstruct:mapstruct:1.6.3'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
-    implementation 'org.springframework.boot:spring-boot-starter-websocket'
     implementation 'org.telegram:telegrambots:5.6.0'
     implementation 'org.springframework.boot:spring-boot-starter-security'
+
     implementation 'com.auth0:java-jwt:3.18.1'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'io.micrometer:micrometer-registry-prometheus'
     implementation 'com.github.ben-manes.caffeine:caffeine'
 
     implementation 'org.apache.poi:poi-ooxml:5.2.3'
+
+
+
+    //ws
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
 
 
     // for image formatting

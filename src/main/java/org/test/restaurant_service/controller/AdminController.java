@@ -30,7 +30,7 @@ public class AdminController {
     }
 
     @GetMapping("/staff")
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public List<UserStaffResponseDTO> getStaff() {
         return userService.getStaff()
                 .stream()
@@ -38,7 +38,7 @@ public class AdminController {
                 .toList();
     }
 
-    @PreAuthorize("@securityService.checkPermissions(@jwtServiceImpl.extractToken(), #role)")
+    @PreAuthorize("@securityService.checkPermissions(authentication, #role)")
     @PostMapping("/assignRole")
     public void assignUserRole(@RequestParam Long chatId, @RequestParam RoleName role) {
         if (role != RoleName.ROLE_COOK && role != RoleName.ROLE_MODERATOR) {

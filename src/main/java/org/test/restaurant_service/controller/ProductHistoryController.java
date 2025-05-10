@@ -29,7 +29,7 @@ public class ProductHistoryController {
     }
 
     @GetMapping("{productId}")
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public List<ProductHistoryResponseDTO> getProductHistory(@PathVariable Integer productId) {
         return productHistoryService.getProductHistoryByProductId(productId)
                 .stream()
@@ -38,6 +38,7 @@ public class ProductHistoryController {
     }
 
     @PostMapping("/{productId}/{historyId}")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public ProductResponseDTO revertToProductHistory(@PathVariable Integer productId, @PathVariable Integer historyId) {
         return productHistoryRevertService.revertProductToPickedProductHistory(productId, historyId);
     }

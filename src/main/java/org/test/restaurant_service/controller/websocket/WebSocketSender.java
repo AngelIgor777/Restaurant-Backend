@@ -19,10 +19,6 @@ public class WebSocketSender {
     private static final Logger log = LoggerFactory.getLogger(WebSocketSender.class);
     private final SimpMessagingTemplate messagingTemplate;
 
-    public void sendOrdersFromWebsocket(OrderProductResponseWithPayloadDto orderProducts) {
-        messagingTemplate.convertAndSend("/topic/orders", orderProducts);
-    }
-
     public void sendOrderForLocalPrinter(OrderForPrintDto orderForPrintDto) {
         log.debug("Sending order for print: {}", orderForPrintDto);
         messagingTemplate.convertAndSend("/topic/orders-print", orderForPrintDto);

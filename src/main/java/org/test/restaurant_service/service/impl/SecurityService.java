@@ -1,6 +1,7 @@
 package org.test.restaurant_service.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.test.restaurant_service.entity.Role;
 import org.test.restaurant_service.entity.RoleName;
@@ -29,13 +30,20 @@ public class SecurityService {
     }
 
     public boolean userIsAdminDisposableKeyOwner(String disposableKey) {
+
+
         List<String> rolesFromDisposableToken = jwtService.getRolesFromDisposableToken(disposableKey);
         return isValidRoles(rolesFromDisposableToken);
     }
 
-    public boolean userIsAdminOrModerator(String accessToken) {
-        List<String> roles = jwtService.getRoles(accessToken);
-        return isValidRoles(roles);
+    public boolean userIsAdminOrModerator(Authentication auth) {
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        boolean isMod = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_MODERATOR"));
+
+
+        return isAdmin || isMod;
     }
 
     private boolean isValidRoles(List<String> roles) {
@@ -43,14 +51,18 @@ public class SecurityService {
     }
 
     //need for identify user request for receive his data or admin request
-    public boolean userIsOwnerOrModeratorOrAdmin(String accessToken, UUID userUUID) {
-        Long chatId = jwtService.getChatId(accessToken);
+    public boolean userIsOwnerOrModeratorOrAdmin(Authentication auth, UUID userUUID) {
+        Long chatId = Long.valueOf(auth.getName());
+
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        boolean isMod = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_MODERATOR"));
+
         User user = userService.findByUUID(userUUID);
         Long userChatId = user.getTelegramUserEntity().getChatId();
-        List<String> roles = jwtService.getRoles(accessToken);
-        return roles.contains(RoleName.ROLE_ADMIN.name())
-                || roles.contains(RoleName.ROLE_MODERATOR.name())
-                || (userChatId.equals(chatId));
+
+        return isAdmin || isMod || userChatId.equals(chatId);
     }
 
     public boolean userIsAdmin(Long chatId) {
@@ -65,24 +77,22 @@ public class SecurityService {
 
     private User getUserByAccessToken(String accessToken) {
         Long chatId = jwtService.getChatId(accessToken);
-        User user = userService.findByChatId(chatId);
-        return user;
+        return userService.findByChatId(chatId);
     }
 
     public boolean userIsModerator(Long chatId) {
-        User user = userService.findByChatId(chatId);
-        return user.isModerator();
+        return userService.findByChatId(chatId).isModerator();
     }
 
     //if moderator - his can add role only cook. but if user have admin role he can add all roles
-    public boolean checkPermissions(String accessToken, RoleName roleName) {
-        List<RoleName> roles = getUserByAccessToken(accessToken).getRoles()
-                .stream()
-                .map(Role::getRoleName)
-                .toList();
-        if (roles.contains(RoleName.ROLE_ADMIN)) {
+    public boolean checkPermissions(Authentication auth, RoleName roleName) {
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+
+        if (isAdmin) {
             return true;
-        } else if (!roles.contains(RoleName.ROLE_ADMIN) && roleName.equals(RoleName.ROLE_MODERATOR)) {
+        } else if (!isAdmin && roleName.equals(RoleName.ROLE_MODERATOR)) {
             return false;
         } else {
             return false;

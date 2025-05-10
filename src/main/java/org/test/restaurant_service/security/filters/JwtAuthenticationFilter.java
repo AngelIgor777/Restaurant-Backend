@@ -3,7 +3,9 @@ package org.test.restaurant_service.security.filters;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.google.common.net.HttpHeaders;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,6 +18,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,6 +27,7 @@ import java.util.stream.Collectors;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final String BEARER_PREFIX = "Bearer ";
+    private static final String COOKIE_NAME = "ACCESS_TOKEN";
 
 
     @Override
@@ -43,6 +47,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             try {
                 DecodedJWT decodedJWT = tryVerifyAllTokens(token);
                 setUpAuthentication(decodedJWT);
+                refreshAccessCookie(response, token, false, "Strict");
             } catch (JWTVerificationException e) {
                 SecurityContextHolder.clearContext();
             }
@@ -52,11 +57,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private String extractToken(HttpServletRequest request) {
-        String authorizationHeader = request.getHeader("Authorization");
-        if (authorizationHeader != null && authorizationHeader.startsWith(BEARER_PREFIX)) {
-            return authorizationHeader.substring(BEARER_PREFIX.length());
+        if (request.getCookies() != null) {
+            for (var c : request.getCookies()) {
+                if (COOKIE_NAME.equals(c.getName())) {
+                    return c.getValue();
+                }
+            }
         }
-        return null;
+        // 2) fallback: Authorization Bearer (чтобы не упало у старых клиентов)
+        var h = request.getHeader(HttpHeaders.AUTHORIZATION);
+        return (h != null && h.startsWith(BEARER_PREFIX)) ? h.substring(BEARER_PREFIX.length()) : null;
     }
 
     private DecodedJWT verifyAccessToken(String token) {
@@ -87,6 +97,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
     }
 
+
     private DecodedJWT tryVerifyAllTokens(String token) {
         try {
             return verifyAccessToken(token);
@@ -99,5 +110,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         throw new JWTVerificationException("Invalid token");
+    }
+
+    public static void refreshAccessCookie(HttpServletResponse resp, String jwt,
+                                           boolean secure, String sameSite) {
+        ResponseCookie c = ResponseCookie.from("ACCESS_TOKEN", jwt)
+                .httpOnly(true).secure(secure)
+                .sameSite(sameSite).path("/")
+                .maxAge(Duration.ofMinutes(30))
+                .build();
+        resp.addHeader(HttpHeaders.SET_COOKIE, c.toString());
     }
 }

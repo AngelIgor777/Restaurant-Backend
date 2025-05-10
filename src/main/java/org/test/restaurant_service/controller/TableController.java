@@ -32,25 +32,26 @@ public class TableController {
     }
 
     @PostMapping("/open/{tableId}")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public TableResponseDTO closeTable(@PathVariable Integer tableId) {
         return tableService.openTable(tableId);
     }
 
     @PostMapping
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     @ResponseStatus(HttpStatus.CREATED)
     public TableResponseDTO create(@RequestBody TableRequestDTO tableRequestDTO) {
         return tableService.create(tableRequestDTO);
     }
 
     @PatchMapping("/{id}")
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public TableResponseDTO update(@PathVariable Integer id, @RequestBody TableRequestDTO tableRequestDTO) {
         return tableService.update(id, tableRequestDTO);
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteById(@PathVariable Integer id) {
         tableService.deleteById(id);
@@ -58,6 +59,7 @@ public class TableController {
 
 
     @GetMapping("/scores")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public List<String> getScores() {
         List<String> uuiDs = tableOrderScoreService.getUUIDs();
         return uuiDs;

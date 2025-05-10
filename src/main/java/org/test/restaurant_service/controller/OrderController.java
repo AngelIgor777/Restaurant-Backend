@@ -33,7 +33,7 @@ public class OrderController {
     }
 
     @GetMapping
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public ResponseEntity<List<OrderProductResponseWithPayloadDto>> getAllPendingOrders(@RequestParam Order.OrderStatus status) {
         LocalDate today = LocalDate.now();
         LocalDateTime startOfWorkDay = today.atTime(LocalTime.of(0, 1));
@@ -44,40 +44,41 @@ public class OrderController {
 
     @GetMapping("/countStats")
     @Transactional(readOnly = true)
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public ResponseEntity<OrdersStatesCount> getOrdersStatesCount() {
         OrdersStatesCount orders = orderService.getOrdersStatesCount();
         return ResponseEntity.ok(orders);
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public ResponseEntity<OrderProductResponseWithPayloadDto> getOrder(@PathVariable Integer id) {
         OrderProductResponseWithPayloadDto order = orderService.getOrderProductResponseWithPayloadDto(id);
         return ResponseEntity.ok(order);
     }
 
     @GetMapping("/search")
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public ResponseEntity<OrderProductResponseWithPayloadDto> searchOrderByValidationCode(@RequestParam String query) {
         OrderProductResponseWithPayloadDto order = orderService.searchOrderProductResponseWithPayloadDtoByValidationCode(query);
         return ResponseEntity.ok(order);
     }
 
     @GetMapping("/searchOrders")
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public ResponseEntity<List<OrderProductResponseWithPayloadDto>> searchOrdersById(@RequestParam List<Integer> ids) {
         List<OrderProductResponseWithPayloadDto> order = orderService.searchOrdersWithPayloadDtoById(ids);
         return ResponseEntity.ok(order);
     }
 
     @PostMapping("/complete/{orderId}")
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public void completeOrder(@PathVariable Integer orderId,
                               @RequestParam(required = false) Integer tableId) {
         orderService.completeOrder(orderId, tableId);
     }
 
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     @PostMapping("/confirm/{orderId}")
     public void confirmOrder(@PathVariable Integer orderId,
                              @RequestParam(required = false) UUID sessionUUID,
@@ -86,11 +87,12 @@ public class OrderController {
     }
 
     @GetMapping("/user")
+    @PreAuthorize("@securityService.userIsOwnerOrModeratorOrAdmin(authentication, #userUUID)")
     public List<OrderProductResponseWithPayloadDto> getUserOrders(@RequestParam UUID userUUID, Pageable pageable) {
         return orderService.getAllUserOrdersProductResponseWithPayloadDto(userUUID, pageable);
     }
 
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     @DeleteMapping("/{id}")
     public void delete(@PathVariable int id,
                        @RequestParam Order.OrderStatus status,
@@ -99,11 +101,13 @@ public class OrderController {
     }
 
     @PostMapping("/count/{tableId}")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public TableOrdersPriceInfo countPriceForTable(@PathVariable Integer tableId) {
         return orderService.countPriceForTable(tableId);
     }
 
     @GetMapping("/by-session")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public TableOrderScoreResponseDTO getOrdersBySessionUUID(@RequestParam UUID sessionUUID) {
         return orderTableScoreService.getTableOrderScore(sessionUUID);
     }

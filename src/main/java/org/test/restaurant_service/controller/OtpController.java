@@ -22,7 +22,7 @@ public class OtpController {
     private final UserService userService;
     private final AuthenticationService authenticationService;
 
-    @PreAuthorize("@securityService.userIsAdminOrModerator(#chatId)")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/generate")
     public void generateOtp(@RequestParam Long chatId) {
@@ -31,7 +31,7 @@ public class OtpController {
         otpAdminService.generateAndSendOtp(user);
     }
 
-    @PreAuthorize("@securityService.userIsAdminOrModerator(#chatId)")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/verify")
     public JwtResponse verifyOtp(@RequestParam Long chatId, @RequestParam String otp) {

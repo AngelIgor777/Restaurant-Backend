@@ -26,7 +26,7 @@ public class UiTranslationController {
     }
 
     @PostMapping
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     @ResponseStatus(HttpStatus.CREATED)
     public UiTranslationDTO upsert(
             @Valid @RequestBody UiTranslationCreateDTO createDTO
@@ -36,7 +36,7 @@ public class UiTranslationController {
 
     @PatchMapping
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public UiTranslationDTO updateTranslationValue(
             @Valid @RequestBody UiTranslationUpdateValueDTO updateDTO
     ) {
@@ -44,7 +44,7 @@ public class UiTranslationController {
     }
 
     @DeleteMapping
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteByLangIdAndKey(@RequestParam("key") String key,
                                      @RequestParam("langId") Integer langId) {

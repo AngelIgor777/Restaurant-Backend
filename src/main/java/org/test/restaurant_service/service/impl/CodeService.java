@@ -1,8 +1,9 @@
-package org.test.restaurant_service.controller.websocket;
+package org.test.restaurant_service.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.test.restaurant_service.controller.websocket.WebSocketSender;
 import org.test.restaurant_service.dto.response.Codes;
 import org.test.restaurant_service.service.impl.cache.CodeCacheService;
 

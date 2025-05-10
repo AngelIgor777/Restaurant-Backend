@@ -2,6 +2,7 @@ package org.test.restaurant_service.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.test.restaurant_service.dto.request.AddressRequestDTO;
@@ -24,6 +25,7 @@ public class AddressController {
     private final UserAddressService userAddressService;
 
     @PatchMapping("/{id}")
+    //todo check user update own address or not
     public ResponseEntity<AddressResponseDTO> updateAddress(@PathVariable Integer id, @RequestBody AddressRequestDTO addressRequestDTO) {
         Address existingAddress = addressService.findById(id);
 
@@ -36,6 +38,7 @@ public class AddressController {
     }
 
     @GetMapping("/user/{userUUID}")
+    @PreAuthorize("@securityService.userIsOwnerOrModeratorOrAdmin(authentication, #userUUID)")
     public ResponseEntity<AddressResponseDTO> getAddressesByUserId(@PathVariable UUID userUUID) {
 
         Address address = addressService.findByUserUUID(userUUID);
@@ -46,6 +49,7 @@ public class AddressController {
 
 
     @PostMapping
+    //todo check user save own address or not
     public ResponseEntity<AddressResponseDTO> saveAddress(@RequestBody AddressRequestDTO addressRequestDTO) {
         Address address = addressMapper.toEntity(addressRequestDTO);
         Address savedAddress = userAddressService.saveAddressToUser(address, addressRequestDTO.getUserUUID());

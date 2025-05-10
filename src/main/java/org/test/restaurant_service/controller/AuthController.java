@@ -19,28 +19,28 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/login")
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public ResponseEntity<JwtResponse> login(@RequestBody AdminDataRequest request) {
         JwtResponse login = authService.login(request);
         return ResponseEntity.ok(login);
     }
 
     @PostMapping("/register")
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public ResponseEntity<JwtResponse> register(@RequestBody AdminDataRequest admin, @RequestParam UUID userUUID) {
         JwtResponse register = authService.register(admin, userUUID);
         return ResponseEntity.ok(register);
     }
 
     @GetMapping("/isRegistered")
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public ResponseEntity<Boolean> register(@RequestParam UUID userUUID) {
         boolean isRegisteredUser = authService.isRegistered(userUUID);
         return ResponseEntity.ok(isRegisteredUser);
     }
 
     @PostMapping("/change-password/{userUUID}")
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public ResponseEntity<String> changePassword(
             @PathVariable UUID userUUID,
             @RequestBody PasswordChangeRequest request

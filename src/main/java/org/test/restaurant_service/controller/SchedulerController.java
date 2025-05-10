@@ -17,14 +17,14 @@ public class SchedulerController {
     private final ScheduledTask scheduledTask;
 
     @PostMapping("/update-cron")
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public void updateCron(@RequestParam String cronExpression) {
         scheduledTask.updateCronExpression(cronExpression);
 
     }
 
     @GetMapping
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public CronLocalTimeResponseDto getCron() {
         String cronExpression = scheduledTask.getCronExpression();
         CronLocalTimeResponseDto cronLocalTimeResponseDto = new CronLocalTimeResponseDto();
@@ -34,14 +34,14 @@ public class SchedulerController {
     }
 
     @PostMapping("/start")
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public String startScheduler() {
         scheduledTask.startTask();
         return "Scheduler started.";
     }
 
     @PostMapping("/stop")
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public String stopScheduler() {
         scheduledTask.stopTask();
         return "Scheduler stopped.";

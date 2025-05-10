@@ -21,7 +21,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMar
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import org.test.restaurant_service.controller.websocket.CodeService;
+import org.test.restaurant_service.service.impl.CodeService;
 import org.test.restaurant_service.controller.websocket.WebSocketSender;
 import org.test.restaurant_service.dto.request.*;
 import org.test.restaurant_service.dto.request.order.OrderProductWithPayloadRequestDto;
@@ -352,15 +352,12 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             if (equalsQKType) {
                 callbackType = CallbackType.QK;
-            } else {
-                if (equalsBTType) {
-                    callbackType = CallbackType.BT;
-                } else {
-                    if (equalsWRType) {
-                        callbackType = CallbackType.WR;
-                    }
-                }
+            } else if (equalsBTType) {
+                callbackType = CallbackType.BT;
+            } else if (equalsWRType) {
+                callbackType = CallbackType.WR;
             }
+
 
             int i = codeCacheService.incorrectInput(chatId);
             if (i < 2) {
@@ -370,14 +367,16 @@ public class TelegramBot extends TelegramLongPollingBot {
                         🔍 Убедитесь, что вы ввели код, отображаемый в правом верхнем углу экрана над зоной заказа и оплаты.
                         
                         Пожалуйста, попробуйте снова 😊""";
-                String orderType = data.substring(CODE_SUFFIX.length() + 2);//2 because code is two digit number
+                int codeSuffixLength = CODE_SUFFIX.length();
+                String orderType = data.substring(codeSuffixLength + 2, codeSuffixLength + 4);//2 because code is two digit number
 
-                String productIdStr = data.substring(CODE_SUFFIX.length() + 2 + orderType.length());
+                String productIdStr = data.substring(codeSuffixLength + 2 + orderType.length());
                 if (!productIdStr.isEmpty()) {
                     Integer productId = Integer.parseInt(productIdStr);
                     sendActivationCode(update, text, callbackType, productId);
+                } else {
+                    sendActivationCode(update, text, callbackType, null);
                 }
-                sendActivationCode(update, text, callbackType, null);
 
             } else {
                 codeService.rotateCodes();
@@ -814,9 +813,13 @@ public class TelegramBot extends TelegramLongPollingBot {
         Integer text3 = integers.get(2);
 
         String suffix = callbackType.name() + productId;
-        inlineKeyboardButtons1.add(createInlineKeyboardButton(text1, CODE_SUFFIX + text1 + suffix));
-        inlineKeyboardButtons2.add(createInlineKeyboardButton(text2, CODE_SUFFIX + text2 + suffix));
-        inlineKeyboardButtons3.add(createInlineKeyboardButton(text3, CODE_SUFFIX + text3 + suffix));
+        String callBackData1 = CODE_SUFFIX + text1 + suffix;
+        String callBackData2 = CODE_SUFFIX + text2 + suffix;
+        String callBackData3 = CODE_SUFFIX + text3 + suffix;
+
+        inlineKeyboardButtons1.add(createInlineKeyboardButton(text1, callBackData1));
+        inlineKeyboardButtons2.add(createInlineKeyboardButton(text2, callBackData2));
+        inlineKeyboardButtons3.add(createInlineKeyboardButton(text3, callBackData3));
 
 
         buttons.add(inlineKeyboardButtons1);

@@ -16,7 +16,7 @@ public class TelegramController {
     private final SendingUsersService sendingUsersService;
 
     @PostMapping
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public void sendMessage(@RequestBody SendingMessageRequestDto sendingMessageRequestDto) {
         sendingUsersService.sendMessageToAllTelegramUsers(sendingMessageRequestDto.getMessage());
     }

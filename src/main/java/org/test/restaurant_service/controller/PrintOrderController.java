@@ -15,7 +15,7 @@ public class PrintOrderController {
     private final PrinterService printerService;
 
     @PostMapping("/{orderId}/print")
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public void sendToPrinter(@PathVariable Integer orderId,
                               @RequestBody ProductsForPrintRequest productsId) {
         printerService.sendOrderToPrinter(orderId, productsId, null);

@@ -22,7 +22,7 @@ public class ProductDiscountController {
     private final ProductDiscountMapper productDiscountMapper;
 
     @PostMapping
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     @ResponseStatus(HttpStatus.CREATED)
     public ProductDiscountResponseDTO createProductDiscount(@RequestBody ProductDiscountRequestDTO productDiscountRequestDTO) {
         ProductDiscount productDiscount = productDiscountMapper.toEntity(productDiscountRequestDTO);
@@ -32,6 +32,7 @@ public class ProductDiscountController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public ResponseEntity<ProductDiscountResponseDTO> getProductDiscountById(@PathVariable Integer id) {
         ProductDiscount productDiscountById = productDiscountService.getProductDiscountById(id);
         ProductDiscountResponseDTO responseDTO = productDiscountMapper.toResponseDTO(productDiscountById);
@@ -39,7 +40,7 @@ public class ProductDiscountController {
     }
 
     @GetMapping
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public ResponseEntity<List<ProductDiscountResponseDTO>> getAllProductDiscounts() {
         List<ProductDiscountResponseDTO> allProductDiscounts = productDiscountService.getAllProductDiscounts()
                 .stream()
@@ -49,14 +50,14 @@ public class ProductDiscountController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public ResponseEntity<ProductDiscountResponseDTO> updateProductDiscount(@PathVariable Integer id, @RequestBody ProductDiscount productDiscount) {
 
         return ResponseEntity.ok(productDiscountMapper.toResponseDTO(productDiscountService.updateProductDiscount(id, productDiscount)));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public ResponseEntity<Void> deleteProductDiscountById(@PathVariable Integer id) {
         productDiscountService.deleteProductDiscountById(id);
         return ResponseEntity.noContent().build();

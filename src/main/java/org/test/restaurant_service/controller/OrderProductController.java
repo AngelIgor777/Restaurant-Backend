@@ -27,6 +27,7 @@ public class OrderProductController {
     private final RabbitMQJsonProducer producer;
 
     @GetMapping("/order/{orderId}")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public List<OrderProductResponseDTO> getOrderProductsByOrderId(@PathVariable Integer orderId) {
         List<OrderProduct> orderProductsByOrderId = orderProductService.getOrderProductsByOrderId(orderId);
         return orderProductsByOrderId.stream().map(orderProductMapper::toResponseDTO).toList();
@@ -39,20 +40,15 @@ public class OrderProductController {
     }
 
     @PostMapping("/bulk/admin")
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     @ResponseStatus(HttpStatus.CREATED)
     public OtpResponseDto createBulkAdmin(@Valid @RequestBody OrderProductWithPayloadAndPrintRequestDto requestDtoWithPayloadDto) {
         return producer.send(requestDtoWithPayloadDto);
     }
 
-    @PatchMapping("/{id}")
-    public OrderProductResponseDTO update(@PathVariable Integer id,
-                                          @Valid @RequestBody OrderProductRequestDTO requestDTO,
-                                          @RequestParam Integer orderId) {
-        return orderProductService.update(id, requestDTO, orderId);
-    }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Integer id) {
         orderProductService.delete(id);

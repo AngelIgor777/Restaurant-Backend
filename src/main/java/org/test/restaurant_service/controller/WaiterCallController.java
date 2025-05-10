@@ -18,7 +18,7 @@ public class WaiterCallController {
 
 
     @GetMapping("/{tableNumber}")
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public ResponseEntity<WaiterCallRequestDTO> getCallByTable(@PathVariable Integer tableNumber) {
         WaiterCallRequestDTO call = waiterCallCacheService.getWaiterCallByTable(tableNumber);
         if (call == null) {
@@ -28,14 +28,14 @@ public class WaiterCallController {
     }
 
     @GetMapping
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public ResponseEntity<List<WaiterCallRequestDTO>> getAllWaiterCalls() {
         List<WaiterCallRequestDTO> calls = waiterCallCacheService.getAllWaiterCalls();
         return ResponseEntity.ok(calls);
     }
 
     @DeleteMapping("/{tableNumber}")
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public ResponseEntity<Void> deleteCall(@PathVariable Integer tableNumber) {
         waiterCallCacheService.deleteWaiterCall(tableNumber);
         return ResponseEntity.noContent().build();

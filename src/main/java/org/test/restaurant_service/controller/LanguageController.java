@@ -4,6 +4,7 @@ package org.test.restaurant_service.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.test.restaurant_service.dto.request.LanguageRequestDTO;
@@ -35,11 +36,13 @@ public class LanguageController {
     }
 
     @PostMapping("/run-check")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public void runCheckLanguages() {
         availableLanguageService.checkAvailableLanguages();
     }
 
     @PostMapping
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public ResponseEntity<LanguageResponseDTO> create(@RequestBody @Valid LanguageRequestDTO dto) {
         Language saved = languageService.create(languageMapper.toEntity(dto));
         return ResponseEntity
@@ -48,6 +51,7 @@ public class LanguageController {
     }
 
     @PatchMapping("/{id}")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public LanguageResponseDTO update(@PathVariable Integer id,
                                       @RequestBody @Valid LanguageRequestDTO dto) {
         Language updated = languageService.update(id, dto);
@@ -55,6 +59,7 @@ public class LanguageController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Integer id) {
         languageService.delete(id);
