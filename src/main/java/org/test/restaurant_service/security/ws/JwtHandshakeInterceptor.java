@@ -30,6 +30,11 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
                                    ServerHttpResponse resp,
                                    WebSocketHandler wsHandler,
                                    Map<String, Object> attrs) {
+        String path = req.getURI().getPath();
+        // ← skip JWT check for public SockJS endpoint and all its transports
+        if (path.startsWith("/ws-open-tables")) {
+            return true;
+        }
 
         if (!(req instanceof ServletServerHttpRequest sr)) return false;
 

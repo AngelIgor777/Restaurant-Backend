@@ -64,9 +64,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
         }
-        // 2) fallback: Authorization Bearer (чтобы не упало у старых клиентов)
-        var h = request.getHeader(HttpHeaders.AUTHORIZATION);
-        return (h != null && h.startsWith(BEARER_PREFIX)) ? h.substring(BEARER_PREFIX.length()) : null;
+        return null;
     }
 
     private DecodedJWT verifyAccessToken(String token) {

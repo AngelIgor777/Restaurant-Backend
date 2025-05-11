@@ -12,43 +12,40 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 
 import org.springframework.stereotype.Component;
-
 @Component
 @RequiredArgsConstructor
 public class StompAuthChannelInterceptor implements ChannelInterceptor {
-
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
         StompHeaderAccessor accessor =
                 MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
-
-        if (accessor == null) return message;
-
-        // 1) CONNECT — проверяем JWT и ставим Authentication
-        if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-            // User уже положен в accessor в JwtHandshakeInterceptor
-            Authentication auth = (Authentication) accessor.getUser();
-            if (auth == null) {
-                throw new MessagingException("JWT not found in handshake");
-            }
+        if (accessor == null) {
+            return message;
         }
 
+        StompCommand cmd = accessor.getCommand();
 
-        // 2) SUBSCRIBE — проверяем, что currentUser — админ
-        if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
+        // 1) CONNECT — пропускаем, даже без auth
+        if (StompCommand.CONNECT.equals(cmd)) {
+            return message;
+        }
+
+        // 2) SUBSCRIBE — вешаем авторизацию
+        if (StompCommand.SUBSCRIBE.equals(cmd)) {
             String dest = accessor.getDestination();
-            Authentication auth = (Authentication) accessor.getUser();
-            boolean isAdmin = auth.getAuthorities().stream()
-                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") ||
-                            a.getAuthority().equals("ROLE_MODERATOR"));
-
-            // Все могут open-tables и orders-print (если нужно)
+            // публичный топик — всегда ОК
             if ("/topic/open-tables".equals(dest)) {
                 return message;
             }
 
-            if (dest.startsWith("/topic/") && !isAdmin) {
+            // всё остальное — только для авторизованных с ролью ADMIN или MODERATOR
+            Authentication auth = (Authentication) accessor.getUser();
+            if (auth == null ||
+                    auth.getAuthorities().stream().noneMatch(a ->
+                            a.getAuthority().equals("ROLE_ADMIN") ||
+                                    a.getAuthority().equals("ROLE_MODERATOR")
+                    )) {
                 throw new AccessDeniedException("Only admins can subscribe to " + dest);
             }
         }
