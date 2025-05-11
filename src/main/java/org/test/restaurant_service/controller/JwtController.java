@@ -31,7 +31,7 @@ public class JwtController {
         ResponseCookie cookie = ResponseCookie.from("ACCESS_TOKEN", jwt)
                 .httpOnly(true)          // защищает от XSS
                 .secure(false)            // отправлять только по HTTPS
-                .sameSite("Strict")      // защита от CSRF
+                .sameSite("None")      // защита от CSRF
                 .path("/")               // ко всем эндпоинтам
                 .maxAge(Duration.ofMinutes(30)) // TTL = 30 минут
                 .build();
@@ -50,7 +50,7 @@ public class JwtController {
                 .path("/")
                 .httpOnly(true)
                 .secure(false)
-                .sameSite("Strict")
+                .sameSite("None")
                 .build();
         return ResponseEntity.noContent()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())

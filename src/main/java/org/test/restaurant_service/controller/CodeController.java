@@ -16,7 +16,6 @@ public class CodeController {
     public CodeController(CodeCacheService codeCacheService) {
         this.codeCacheService = codeCacheService;
     }
-
     @GetMapping
     @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public ResponseEntity<Integer> getValidCode() {
