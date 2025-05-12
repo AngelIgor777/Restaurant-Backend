@@ -21,6 +21,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMar
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import org.test.restaurant_service.dto.feats.Features;
 import org.test.restaurant_service.service.impl.CodeService;
 import org.test.restaurant_service.controller.websocket.WebSocketSender;
 import org.test.restaurant_service.dto.request.*;
@@ -113,8 +114,9 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final StaffSendingOrderService staffSendingOrderService;
     private final CodeCacheService codeCacheService;
     private final CodeService codeService;
+    private final FeatureService featureService;
 
-    public TelegramBot(TelegramUserServiceImpl telegramUserService, ProductTypeServiceImpl productTypeService, @Qualifier("productServiceImpl") ProductServiceImpl productService, BotConfig botConfig, TextUtil textUtil, UserService userService, S3Service s3Service, TableService tableService, RabbitMQJsonProducer rabbitMQJsonProducer, UserCacheService userCacheService, UserBucketCacheService userBucketCacheService, OrderCacheService orderCacheService, WebSocketSender webSocketSender, WorkTelegramBot workTelegramBot, StaffSendingOrderService staffSendingOrderService, WaiterCallCacheService waiterCallCacheService1, AvailableLanguagesCacheService languagesCache, CodeCacheService codeCacheService, CodeService codeService) {
+    public TelegramBot(TelegramUserServiceImpl telegramUserService, ProductTypeServiceImpl productTypeService, @Qualifier("productServiceImpl") ProductServiceImpl productService, BotConfig botConfig, TextUtil textUtil, UserService userService, S3Service s3Service, TableService tableService, RabbitMQJsonProducer rabbitMQJsonProducer, UserCacheService userCacheService, UserBucketCacheService userBucketCacheService, OrderCacheService orderCacheService, WebSocketSender webSocketSender, WorkTelegramBot workTelegramBot, StaffSendingOrderService staffSendingOrderService, WaiterCallCacheService waiterCallCacheService1, AvailableLanguagesCacheService languagesCache, CodeCacheService codeCacheService, CodeService codeService, FeatureService featureService) {
         this.telegramUserService = telegramUserService;
         this.productTypeService = productTypeService;
         this.productService = productService;
@@ -128,18 +130,15 @@ public class TelegramBot extends TelegramLongPollingBot {
         this.userBucketCacheService = userBucketCacheService;
         this.waiterCallCacheService = waiterCallCacheService1;
         this.languagesCache = languagesCache;
-        ArrayList<BotCommand> botCommands = getCommands("ru");
-        try {
-            this.execute(new SetMyCommands(botCommands, new BotCommandScopeDefault(), null));
-        } catch (TelegramApiException e) {
-            log.error(e.getMessage());
-        }
         this.orderCacheService = orderCacheService;
         this.webSocketSender = webSocketSender;
         this.workTelegramBot = workTelegramBot;
         this.staffSendingOrderService = staffSendingOrderService;
         this.codeCacheService = codeCacheService;
         this.codeService = codeService;
+        this.featureService = featureService;
+        updateCommands();
+
     }
 
     private Set<String> callbackProductTypesData = new HashSet<>();
@@ -148,10 +147,25 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private Set<String> callbackProductsData = new HashSet<>();
 
-    private ArrayList<BotCommand> getCommands(String langCode) {
+
+    public void updateCommands() {
+        List<BotCommand> commands = getCommands();
+        try {
+            // Вообще scope можно менять: AllPrivate, AllGroup, User, Chat и т.д.
+            this.execute(new SetMyCommands(commands, new BotCommandScopeDefault(), null));
+        } catch (TelegramApiException e) {
+            log.error("Не удалось обновить команды: {}", e.getMessage(), e);
+        }
+    }
+
+
+    private ArrayList<BotCommand> getCommands() {
         ArrayList<BotCommand> botCommands = new ArrayList<>();
         botCommands.add(new BotCommand("/menu", "Показать меню"));
-        botCommands.add(new BotCommand("/waiter", "Вызвать официанта"));
+
+        if (featureService.getFeatureStatus(Features.WAITER_CALL).isEnabled())
+            botCommands.add(new BotCommand("/waiter", "Вызвать официанта"));
+
         botCommands.add(new BotCommand("/website", "Зайти на сайт"));
         botCommands.add(new BotCommand("/basket", "Посмотреть корзину"));
         botCommands.add(new BotCommand("/help", "Список доступных команд"));
@@ -477,17 +491,26 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void sendTableSelection(Update update) {
-        if (!codeCacheService.isUserActive(update.getMessage().getChatId())) {
-            String text = """
-                    Чтобы вызвать официанта, выберите код активации:
-                    Он отображается на экране в правом верхнем углу, непосредственно над зоной заказа и оплаты.
-                    
-                    Это нужно, чтобы мы точно знали, что вы на месте и ваш заказ действительно активен 😊""";
+        if (featureService.getFeatureStatus(Features.WAITER_CALL).isEnabled()) {
 
-            sendActivationCode(update, text, CallbackType.WR, null);
+            if (!codeCacheService.isUserActive(update.getMessage().getChatId())) {
+                String text = """
+                        Чтобы вызвать официанта, выберите код активации:
+                        Он отображается на экране в правом верхнем углу, непосредственно над зоной заказа и оплаты.
+                        
+                        Это нужно, чтобы мы точно знали, что вы на месте и ваш заказ действительно активен 😊""";
+
+                sendActivationCode(update, text, CallbackType.WR, null);
+            } else {
+                sendTablesForChoose(update);
+            }
         } else {
-            sendTablesForChoose(update);
+            sendMessage(update, """
+                    Команда вызова официанта временно отключена! Но мы скоро её включим 😉
+                    А пока можете посмотреть наше меню /menu или посмотреть его на сайте /website
+                    """);
         }
+
     }
 
     private void sendTablesForChoose(Update update) {
@@ -1204,38 +1227,25 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         // Setting inline keyboard
         InlineKeyboardMarkup markupInLine = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rowsInLine = new ArrayList<>();
-        List<InlineKeyboardButton> inlineKeyboardButtons = new ArrayList<>();
-        List<InlineKeyboardButton> inlineKeyboardButtons2 = new ArrayList<>();
-        List<InlineKeyboardButton> inlineKeyboardButtons3 = new ArrayList<>();
 
-        InlineKeyboardButton inlineBackKeyboardButton = new InlineKeyboardButton();
-        InlineKeyboardButton inlineQuickOrderButton = new InlineKeyboardButton();
-        InlineKeyboardButton inlineAddToBucketButton = new InlineKeyboardButton();
-        formatButtonsForProduct(langCode, productResponse, productTypeTranslResponseDTO, inlineBackKeyboardButton, inlineQuickOrderButton, inlineAddToBucketButton);
+        formatButtonsForProduct(markupInLine, productResponse);
 
-        inlineKeyboardButtons.add(inlineBackKeyboardButton);
-        rowsInLine.add(inlineKeyboardButtons);
-
-        inlineKeyboardButtons2.add(inlineQuickOrderButton);
-        rowsInLine.add(inlineKeyboardButtons2);
-
-        inlineKeyboardButtons3.add(inlineAddToBucketButton);
-        rowsInLine.add(inlineKeyboardButtons3);
-
-        markupInLine.setKeyboard(rowsInLine);
         sendPhoto.setReplyMarkup(markupInLine);
 
         executeMessage(sendPhoto);
     }
 
-    private void formatButtonsForProduct(String langCode,
-                                         ProductResponseDTO productResponse,
-                                         ProductTypeTranslResponseDTO productTypeTranslResponseDTO,
-                                         InlineKeyboardButton backToTypesButton,
-                                         InlineKeyboardButton quickOrderButton,
-                                         InlineKeyboardButton addToBucketButton) {
+    private void formatButtonsForProduct(InlineKeyboardMarkup markupInLine, ProductResponseDTO productResponse) {
+        List<List<InlineKeyboardButton>> rowsInLine = new ArrayList<>();
+        List<InlineKeyboardButton> inlineKeyboardButtons = new ArrayList<>();
+        List<InlineKeyboardButton> inlineKeyboardButtons2 = new ArrayList<>();
+
+        InlineKeyboardButton backToTypesButton = new InlineKeyboardButton();
+        InlineKeyboardButton quickOrderButton = new InlineKeyboardButton();
+        InlineKeyboardButton addToBucketButton = new InlineKeyboardButton();
+
         backToTypesButton.setText("Назад ✨");
+
         String productTypeCallbackData = PRODUCT_TYPE_WHEN_PRODUCT_SUFFIX + productResponse.getTypeName();
         backToTypesButton.setCallbackData(productTypeCallbackData);
         callbackProductTypesDataWithDeleting.add(productTypeCallbackData);
@@ -1244,6 +1254,21 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         addToBucketButton.setText("Добавить в корзину 📥");
         addToBucketButton.setCallbackData(ADD_TO_BUCKET_SUFFIX + productResponse.getId().toString());
+
+
+        inlineKeyboardButtons.add(backToTypesButton);
+        rowsInLine.add(inlineKeyboardButtons);
+
+        inlineKeyboardButtons2.add(quickOrderButton);
+        inlineKeyboardButtons2.add(addToBucketButton);
+
+        if (featureService.getFeatureStatus(Features.ORDERING).isEnabled()) {
+            rowsInLine.add(inlineKeyboardButtons2);
+        }
+
+        markupInLine.setKeyboard(rowsInLine);
+
+
     }
 
     private EditMessageText setEditMessageTextProperties(Update update) {

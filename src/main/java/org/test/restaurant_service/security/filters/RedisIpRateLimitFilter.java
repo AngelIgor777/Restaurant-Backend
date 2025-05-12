@@ -20,7 +20,7 @@ import java.time.Duration;
 public class RedisIpRateLimitFilter extends OncePerRequestFilter {
 
     private final RateLimitCacheService rateLimitCacheService;
-    private static final int REQUEST_LIMIT = 7;
+    private static final int REQUEST_LIMIT = 15;
     private static final Duration WINDOW = Duration.ofSeconds(1);
 
     @Override

@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.test.restaurant_service.controller.websocket.WebSocketSender;
+import org.test.restaurant_service.dto.feats.Features;
 import org.test.restaurant_service.dto.request.AddressRequestDTO;
 import org.test.restaurant_service.dto.request.OrderProductRequestDTO;
 import org.test.restaurant_service.dto.request.order.OrderProductWithPayloadAndPrintRequestDto;
@@ -50,8 +51,9 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
     private final TableCacheService tableCacheService;
     private final TableService tableService;
     private final TotalOrdersCacheService totalOrdersCacheService;
+    private final FeatureService featureService;
 
-    public OrderProductAndUserServiceImpl(OrderService orderService, OrderProductServiceImpl orderProductService, UserService userService, ProductDiscountService productDiscountService, DiscountService discountService, OrderProductMapper orderProductMapper, ProductMapper productMapper, @Qualifier("productServiceImpl") ProductService productService, AddressService addressService, OrderMapper orderMapper, AddressMapper addressMapper, TableMapper tableMapper, OrderDiscountService orderDiscountService, UserAddressService userAddressService, PrinterService printerService, WebSocketSender webSocketSender, TableCacheService tableCacheService, TableService tableService, TotalOrdersCacheService totalOrdersCacheService) {
+    public OrderProductAndUserServiceImpl(OrderService orderService, OrderProductServiceImpl orderProductService, UserService userService, ProductDiscountService productDiscountService, DiscountService discountService, OrderProductMapper orderProductMapper, ProductMapper productMapper, @Qualifier("productServiceImpl") ProductService productService, AddressService addressService, OrderMapper orderMapper, AddressMapper addressMapper, TableMapper tableMapper, OrderDiscountService orderDiscountService, UserAddressService userAddressService, PrinterService printerService, WebSocketSender webSocketSender, TableCacheService tableCacheService, TableService tableService, TotalOrdersCacheService totalOrdersCacheService, FeatureService featureService, FeatureService featureService1) {
         this.orderService = orderService;
         this.orderProductService = orderProductService;
         this.userService = userService;
@@ -71,6 +73,7 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
         this.tableCacheService = tableCacheService;
         this.tableService = tableService;
         this.totalOrdersCacheService = totalOrdersCacheService;
+        this.featureService = featureService1;
     }
 
     //1 check the user is register
@@ -82,7 +85,30 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
     @Override
     @Transactional(rollbackFor = Exception.class)
     public <T extends OrderProductWithPayloadRequestDto> void createOrder(T requestDto) {
-        Order.PaymentMethod paymentMethod = requestDto.getPaymentMethod();
+        Order order = Order.builder()
+                .paymentMethod(requestDto.getPaymentMethod())
+                .otp(requestDto.getOtp())
+                .build();
+        OrderProductWithPayloadAndPrintRequestDto requestDtoForPrint = null;
+        Order.OrderStatus orderStatus = null;
+        boolean isOrderOfAdmin = requestDto instanceof OrderProductWithPayloadAndPrintRequestDto;
+        if (!isOrderOfAdmin && !featureService.getFeatureStatus(Features.ORDERING).isEnabled()) {
+            throw new IllegalStateException("Заказы от пользователей отключены");
+        }
+
+        if (!featureService.getFeatureStatus(Features.COUPONS).isEnabled()) {
+            requestDto.setExistDiscountCodes(false);
+        }
+
+
+        if (isOrderOfAdmin) {
+            requestDtoForPrint = (OrderProductWithPayloadAndPrintRequestDto) requestDto;
+            orderStatus = requestDtoForPrint.getOrderStatus();
+            if (orderStatus != null) {
+                order.setStatus(orderStatus);
+            }
+        }
+
         boolean orderInRestaurant = requestDto.isOrderInRestaurant();
         boolean existDiscountCodes = requestDto.isExistDiscountCodes();
         String productDiscountCode = requestDto.getProductDiscountCode();
@@ -95,10 +121,6 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
                         .existDiscountCodes(existDiscountCodes)
                         .build();
 
-        Order order = Order.builder()
-                .paymentMethod(paymentMethod)
-                .otp(requestDto.getOtp())
-                .build();
 
         if (requestDto.getPhoneNumber() != null) {
             order.setPhoneNumber(requestDto.getPhoneNumber());
@@ -124,16 +146,6 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
         boolean isInRestaurant = checkTheOrderIsInRestaurant(order, requestDto, orderProductResponseWithPayloadDto);
 
         OrderDiscount orderDiscount = handleDiscountCodes(existDiscountCodes, globalDiscountCode, productDiscountCode, globalDiscountAmount, productDiscountAmount, totalPrice, order, orderProductResponseWithPayloadDto, productResponseDTOS);
-
-        OrderProductWithPayloadAndPrintRequestDto requestDtoForPrint = null;
-        Order.OrderStatus orderStatus = null;
-        if (requestDto instanceof OrderProductWithPayloadAndPrintRequestDto) {
-            requestDtoForPrint = (OrderProductWithPayloadAndPrintRequestDto) requestDto;
-            orderStatus = requestDtoForPrint.getOrderStatus();
-            if (orderStatus != null) {
-                order.setStatus(orderStatus);
-            }
-        }
 
         Order savedOrder = orderService.create(order);
 
@@ -199,6 +211,7 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
                                               Order order,
                                               OrderProductResponseWithPayloadDto orderProductResponseWithPayloadDto,
                                               List<ProductResponseDTO> productResponseDTOS) {
+
         BigDecimal finalTotalPrice;
         OrderDiscount orderDiscount = null;
         if (existDiscountCodes) {

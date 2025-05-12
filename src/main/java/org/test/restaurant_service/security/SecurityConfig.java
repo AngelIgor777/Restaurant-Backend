@@ -64,6 +64,7 @@ public class SecurityConfig {
                         "/api/v1/ui-translations/**",
                         "/actuator/**",
                         "/api/v1/shared-buckets/**",
+                        "/api/v1/info/**",
                         "/ws-open-tables/**",
                         "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html"
                 ).permitAll()

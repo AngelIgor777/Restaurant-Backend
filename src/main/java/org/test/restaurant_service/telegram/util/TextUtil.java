@@ -146,14 +146,6 @@ class TextUtil {
         menuText.append("🍽️ <i><b>Добро пожаловать в наше уютное меню!</b></i> \n\n")
                 .append("✨ Здесь вы найдёте изысканные блюда, которые подарят вам наслаждение и радость! ✨\n\n");
 
-
-        for (int i = 1; i <= productTypes.size(); i++) {
-            menuText.append("\uD83D\uDD38 <b>")
-                    .append(i).append(". ")
-                    .append(productTypes.get(i - 1))
-                    .append("</b> \n")
-                    .append("   ───────────────\n");
-        }
         menuText.append("\n💌 Спасибо, что выбираете нас! Ваш вкус — наша забота! 💌\n")
                 .append("🎉 <i>Введите номер категории или выберите ниже!</i> 🎉\n");
     }
