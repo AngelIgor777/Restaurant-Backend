@@ -14,19 +14,24 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.test.restaurant_service.security.filters.JwtAuthenticationFilter;
+import org.test.restaurant_service.security.filters.RedisIpRateLimitFilter;
 import org.test.restaurant_service.security.service.CustomUserDetailsService;
 import org.test.restaurant_service.service.UserService;
+import org.test.restaurant_service.service.impl.cache.RateLimitCacheService;
 
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
+
     private final UserService userService;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final RedisIpRateLimitFilter rateLimitFilter;
 
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, StringRedisTemplate redisTemplate) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .cors().and()
                 .csrf().disable()
@@ -64,7 +69,11 @@ public class SecurityConfig {
                 ).permitAll()
                 .anyRequest().authenticated()
                 .and()
-                .addFilterBefore(authFilter(), UsernamePasswordAuthenticationFilter.class);
+                // 1) сначала rate-limit — до UsernamePasswordAuthenticationFilter
+                .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
+                // 2) затем JWT-аутентификация — тоже до UsernamePasswordAuthenticationFilter
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 
@@ -79,11 +88,6 @@ public class SecurityConfig {
     @Bean
     public UserDetailsService userDetailsService() {
         return new CustomUserDetailsService(userService);
-    }
-
-    @Bean
-    public JwtAuthenticationFilter authFilter() {
-        return new JwtAuthenticationFilter();
     }
 
 }
