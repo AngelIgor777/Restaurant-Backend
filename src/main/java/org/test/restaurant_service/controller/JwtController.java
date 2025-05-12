@@ -31,9 +31,9 @@ public class JwtController {
         ResponseCookie cookie = ResponseCookie.from("ACCESS_TOKEN", jwt)
                 .httpOnly(true)          // защищает от XSS
                 .secure(false)            // отправлять только по HTTPS
-                .sameSite("None")      // защита от CSRF
+                .sameSite("Strict")      // защита от CSRF
                 .path("/")               // ко всем эндпоинтам
-                .maxAge(Duration.ofMinutes(30)) // TTL = 30 минут
+                .maxAge(Duration.ofMinutes(60)) // TTL = 30 минут
                 .build();
 
         log.debug("JWT generated and written to cookie for user {}", userUUID);
@@ -50,7 +50,7 @@ public class JwtController {
                 .path("/")
                 .httpOnly(true)
                 .secure(false)
-                .sameSite("None")
+                .sameSite("Strict")
                 .build();
         return ResponseEntity.noContent()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
@@ -62,8 +62,8 @@ public class JwtController {
         if (auth != null && auth.getAuthorities()
                 .stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
-            return ResponseEntity.ok().build();      // 200 → nginx даст файл
+            return ResponseEntity.ok().build();
         }
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).build(); // 403 → nginx редирект
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     }
 }

@@ -10,7 +10,7 @@ import java.time.LocalTime;
 @Data
 public class WaiterCallRequestDTO {
     private Integer tableNumber;
-    @JsonFormat(shape = JsonFormat.Shape.STRING,pattern = "HH:mm")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm")
     private LocalTime requestTime;
     private TelegramUserDTO telegramUser;
 }

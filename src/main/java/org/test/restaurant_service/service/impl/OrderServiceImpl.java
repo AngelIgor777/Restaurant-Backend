@@ -204,11 +204,8 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public List<OrderProductResponseWithPayloadDto> searchOrdersWithPayloadDtoById(List<Integer> ids) {
-        return ids.stream()
-                .map(id -> {
-                    Order order = getOrderById(id);
-                    return getOrderProductResponseWithPayloadDto(order, false);
-                })
+        return  orderRepository.findByIdIn(ids).stream()
+                .map(order -> getOrderProductResponseWithPayloadDto(order, false))
                 .toList();
     }
 
