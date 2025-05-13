@@ -135,14 +135,14 @@ class TextUtil {
     }
 
 
-    public String getProductTypeTextByType(String productType, String language) {
+    public String getProductTypeTextByType(String productType) {
         return "🍽️ Вы выбрали категорию <b>" + productType + "</b>!\n\n" +
                 "Нажмите на блюдо, чтобы увидеть описание.\n";
 
     }
 
 
-    public void addAllProductsToMenu(StringBuilder menuText, List<String> productTypes, String language) {
+    public void addAllProductsToMenu(StringBuilder menuText) {
         menuText.append("🍽️ <i><b>Добро пожаловать в наше уютное меню!</b></i> \n\n")
                 .append("✨ Здесь вы найдёте изысканные блюда, которые подарят вам наслаждение и радость! ✨\n\n");
 

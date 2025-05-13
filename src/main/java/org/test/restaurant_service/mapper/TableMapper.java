@@ -11,6 +11,9 @@ public interface TableMapper {
     @Mapping(target = "id", ignore = true) // Если id не нужно маппировать
     Table toEntity(TableRequestDTO tableRequestDTO);
 
+
+    @Mapping(target = "sessionUUID", ignore = true)
+    @Mapping(target = "open", ignore = true)
     TableResponseDTO toResponseDTO(Table table);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

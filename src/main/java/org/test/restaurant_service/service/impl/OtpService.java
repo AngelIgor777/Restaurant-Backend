@@ -13,7 +13,7 @@ import java.util.Random;
 
 @Service
 @RequiredArgsConstructor
-public class OtpAdminService {
+public class OtpService {
     private final TelegramBot telegramBot;
     private final TextUtil textUtil;
     private final OtpRepository otpRepository;

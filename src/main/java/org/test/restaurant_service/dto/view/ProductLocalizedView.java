@@ -18,4 +18,7 @@ public interface ProductLocalizedView {
     LocalTime getCookingTime();
 
     String getPhotoUrl();
+
+    Boolean getAvailable();
+
 }

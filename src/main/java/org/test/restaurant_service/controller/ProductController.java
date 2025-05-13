@@ -115,4 +115,14 @@ public class ProductController {
     ) {
         return productTranslReadService.search(query, typeId, lang, pageable);
     }
+
+    @PatchMapping("/{id}/availability")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void markAvailability(
+            @PathVariable Integer id,
+            @RequestParam("available") boolean available
+    ) {
+        productService.markAvailability(id, available);
+    }
 }

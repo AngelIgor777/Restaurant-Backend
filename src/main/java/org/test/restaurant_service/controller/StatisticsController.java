@@ -25,18 +25,24 @@ public class StatisticsController {
 
 
     @GetMapping("/all")
-    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
-    public ResponseEntity<List<OrderProductResponseWithPayloadDto>> getAllPendingOrders(@RequestParam Order.OrderStatus status,
-                                                                                        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
-                                                                                        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
-                                                                                        Pageable pageable
+    @PreAuthorize(
+            "@securityService.userIsAdminOrModerator(authentication) "
+                    + "&& @securityService.isValidDisposableToken(authentication)"
+    )
+    public ResponseEntity<List<OrderProductResponseWithPayloadDto>> getAllOrders(@RequestParam Order.OrderStatus status,
+                                                                                 @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+                                                                                 @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
+                                                                                 Pageable pageable
     ) {
         List<OrderProductResponseWithPayloadDto> orders = orderService.getAllOrdersProductResponseWithPayloadDto(status, from, to, pageable);
         return ResponseEntity.ok(orders);
     }
 
     @GetMapping
-    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
+    @PreAuthorize(
+            "@securityService.userIsAdminOrModerator(authentication) "
+                    + "&& @securityService.isValidDisposableToken(authentication)"
+    )
     public ResponseEntity<StatisticsResultResponseDto> getStatistics(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to

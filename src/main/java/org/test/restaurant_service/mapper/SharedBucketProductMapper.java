@@ -8,7 +8,7 @@ import org.test.restaurant_service.dto.response.sharedBucket.SharedBucketProduct
 import org.test.restaurant_service.entity.SharedBucketProduct;
 import org.test.restaurant_service.mapper.helper.SharedBucketMapperHelper;
 
-@Mapper(componentModel = "spring", uses = SharedBucketMapperHelper.class)
+@Mapper(componentModel = "spring", uses = {SharedBucketMapperHelper.class, ProductMapper.class})
 public interface SharedBucketProductMapper {
 
     SharedBucketProductMapper INSTANCE = Mappers.getMapper(SharedBucketProductMapper.class);
@@ -30,6 +30,7 @@ public interface SharedBucketProductMapper {
     @Mapping(target = "price", source = "product.price")
     @Mapping(target = "name", source = "product.name")
     @Mapping(target = "userUUID", source = "user.uuid")
+    @Mapping(target = "photoUrl", source = "product.photos", qualifiedByName = "mapPhotoUrl")
     ProductsForSharedBucketResponseDto toResponseForSharedBucketResponseDto(SharedBucketProduct entity);
 
 }

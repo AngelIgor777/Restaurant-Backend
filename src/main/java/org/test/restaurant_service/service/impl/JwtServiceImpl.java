@@ -25,7 +25,7 @@ public class JwtServiceImpl implements JwtService {
 
     private final HttpServletRequest request;
 
-    private final long ACCESS_TOKEN_EXPIRATION_TIME = (30 * 24 * 60 * 60 * 1000L) * 6;
+    private final long ACCESS_TOKEN_EXPIRATION_TIME = 60 * 60 * 1000L;
 
     public String generateUserAccessToken(Long chatId, List<String> roles) {
         Algorithm algorithm = JwtAlgorithmUtil.getAccessAlgorithm();
@@ -99,7 +99,7 @@ public class JwtServiceImpl implements JwtService {
         String token = JWT.create()
                 .withSubject(admin.getLogin())
                 .withClaim("roles", roles)
-                .withExpiresAt(new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 12))
+                .withExpiresAt(new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24))
                 .sign(algorithm);
         org.test.restaurant_service.dto.response.admin.JwtResponse jwtResponse = new org.test.restaurant_service.dto.response.admin.JwtResponse();
         jwtResponse.setDisposableToken(token);

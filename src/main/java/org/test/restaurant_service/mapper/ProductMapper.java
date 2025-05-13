@@ -34,13 +34,22 @@ public interface ProductMapper {
     @Mapping(source = "type.name", target = "typeName")
     @Mapping(target = "quantity", ignore = true)
     @Mapping(target = "photos", ignore = true)
+    @Mapping(target = "photoUrl", ignore = true)
     ProductResponseDTO toResponseIgnorePhotos(Product product);
+
+
+    @Mapping(target = "typeName", ignore = true)
+    @Mapping(target = "quantity", ignore = true)
+    @Mapping(target = "photos", ignore = true)
+    @Mapping(target = "photoUrl", ignore = true)
+    ProductResponseDTO toResponseIgnorePhotosAndType(Product product);
 
     @Mapping(source = "type.name", target = "typeName")
     @Mapping(target = "quantity", ignore = true)
     @Mapping(target = "photos", ignore = true)
     @Mapping(target = "description", ignore = true)
     @Mapping(target = "cookingTime", ignore = true)
+    @Mapping(target = "photoUrl", ignore = true)
     ProductResponseDTO toResponseForStats(Product product);
 
 
@@ -48,6 +57,7 @@ public interface ProductMapper {
     @Mapping(target = "product", ignore = true)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "changedAt", ignore = true)
+    @Mapping(source = "photos", target = "photoUrl", qualifiedByName = "mapPhotoUrl")
     ProductHistory toProductHistory(Product product);
 
 
@@ -62,6 +72,8 @@ public interface ProductMapper {
         return (photos != null && !photos.isEmpty()) ? photos.get(0).getUrl() : null;
     }
 
+    @Mapping(target = "photos", ignore = true)
+    @Mapping(target = "quantity", ignore = true)
     ProductResponseDTO fromProjection(ProductLocalizedView view);
 
     ProductIdsResponse toProductIds(ProductIdsView allProductIds);

@@ -26,8 +26,8 @@ import java.util.stream.Collectors;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private static final String BEARER_PREFIX = "Bearer ";
-    private static final String COOKIE_NAME = "ACCESS_TOKEN";
+    private static final String DISPOSABLE = "DISPOSABLE_TOKEN";
+    private static final String ACCESS = "ACCESS_TOKEN";
 
 
     @Override
@@ -39,33 +39,50 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-            throws ServletException, IOException {
-        String token = extractToken(request);
+    protected void doFilterInternal(
+            HttpServletRequest req,
+            HttpServletResponse resp,
+            FilterChain chain
+    ) throws ServletException, IOException {
 
+        String uri = req.getRequestURI();
+        String tokenCookieName;
+        if (uri.startsWith("/api/v1/statistics") || uri.startsWith("/api/v1/exportOrders")) {
+            // статистика доступна ТОЛЬКО с disposable
+            tokenCookieName = DISPOSABLE;
+        } else {
+            // все остальные — по обычному
+            tokenCookieName = ACCESS;
+        }
+
+        String token = extractCookie(req, tokenCookieName);
         if (token != null) {
             try {
-                DecodedJWT decodedJWT = tryVerifyAllTokens(token);
-                setUpAuthentication(decodedJWT);
-                refreshAccessCookie(response, token, false, "Strict");
+                DecodedJWT decoded =
+                        tokenCookieName.equals(DISPOSABLE)
+                                ? verifyDisposableToken(token)
+                                : verifyAccessToken(token);
+
+                setUpAuthentication(decoded, tokenCookieName.equals(DISPOSABLE));
+                // обновляем только ту куку, что проверили
+                refreshCookie(resp, tokenCookieName, token);
             } catch (JWTVerificationException e) {
                 SecurityContextHolder.clearContext();
             }
         }
-
-        filterChain.doFilter(request, response);
+        chain.doFilter(req, resp);
     }
 
-    private String extractToken(HttpServletRequest request) {
-        if (request.getCookies() != null) {
-            for (var c : request.getCookies()) {
-                if (COOKIE_NAME.equals(c.getName())) {
-                    return c.getValue();
-                }
+    private String extractCookie(HttpServletRequest req, String name) {
+        if (req.getCookies() == null) return null;
+        for (var c : req.getCookies()) {
+            if (name.equals(c.getName())) {
+                return c.getValue();
             }
         }
         return null;
     }
+
 
     private DecodedJWT verifyAccessToken(String token) {
         return JWT.require(JwtAlgorithmUtil.getAccessAlgorithm())
@@ -79,44 +96,39 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 .verify(token);
     }
 
-    private void setUpAuthentication(DecodedJWT decodedJWT) {
+    private void setUpAuthentication(DecodedJWT decodedJWT, boolean isDisposable) {
         String chatId = decodedJWT.getSubject();
         List<String> roles = decodedJWT.getClaim("roles").asList(String.class);
 
         if (chatId != null) {
-            UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
-                    chatId,
-                    null,
-                    roles.stream()
-                            .map(SimpleGrantedAuthority::new)
-                            .collect(Collectors.toList())
-            );
-            SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+            List<SimpleGrantedAuthority> authorities = roles.stream()
+                    .map(SimpleGrantedAuthority::new)
+                    .collect(Collectors.toList());
+            if (isDisposable) {
+                // специальная роль-маркер
+                authorities.add(new SimpleGrantedAuthority("ROLE_DISPOSABLE"));
+            }
+            UsernamePasswordAuthenticationToken auth =
+                    new UsernamePasswordAuthenticationToken(
+                            chatId,
+                            null,
+                            authorities
+                    );
+            SecurityContextHolder.getContext().setAuthentication(auth);
         }
     }
 
-
-    private DecodedJWT tryVerifyAllTokens(String token) {
-        try {
-            return verifyAccessToken(token);
-        } catch (JWTVerificationException e) {
-        }
-
-        try {
-            return verifyDisposableToken(token);
-        } catch (JWTVerificationException e) {
-        }
-
-        throw new JWTVerificationException("Invalid token");
-    }
-
-    public static void refreshAccessCookie(HttpServletResponse resp, String jwt,
-                                           boolean secure, String sameSite) {
-        ResponseCookie c = ResponseCookie.from("ACCESS_TOKEN", jwt)
-                .httpOnly(true).secure(secure)
-                .sameSite(sameSite).path("/")
-                .maxAge(Duration.ofMinutes(30))
+    private void refreshCookie(HttpServletResponse resp,
+                               String name,
+                               String token) {
+        // однообразно обновляем maxAge, sameSite и т.д.
+        ResponseCookie cookie = ResponseCookie.from(name, token)
+                .httpOnly(true).secure(false)
+                .sameSite("Strict").path("/")
+                .maxAge(Duration.ofHours(
+                        name.equals(DISPOSABLE) ? 24 : 1
+                ))
                 .build();
-        resp.addHeader(HttpHeaders.SET_COOKIE, c.toString());
+        resp.setHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 }

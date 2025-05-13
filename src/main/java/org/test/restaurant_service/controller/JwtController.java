@@ -33,7 +33,7 @@ public class JwtController {
                 .secure(false)            // отправлять только по HTTPS
                 .sameSite("Strict")      // защита от CSRF
                 .path("/")               // ко всем эндпоинтам
-                .maxAge(Duration.ofMinutes(60)) // TTL = 30 минут
+                .maxAge(Duration.ofMinutes(60)) // TTL
                 .build();
 
         log.debug("JWT generated and written to cookie for user {}", userUUID);

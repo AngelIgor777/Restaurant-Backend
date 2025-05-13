@@ -21,7 +21,10 @@ public class ExportController {
     private final ExportService exportService;
 
     @GetMapping("/exportOrders")
-    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
+    @PreAuthorize(
+            "@securityService.userIsAdminOrModerator(authentication) "
+                    + "&& @securityService.isValidDisposableToken(authentication)"
+    )
     public ResponseEntity<byte[]> exportProducts(
             @RequestParam Order.OrderStatus status,
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss") LocalDateTime from,

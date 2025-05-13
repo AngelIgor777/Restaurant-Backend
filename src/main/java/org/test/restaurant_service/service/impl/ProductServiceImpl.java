@@ -172,7 +172,11 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     public List<ProductResponseDTO> getByTypeName(String typeName) {
         List<Product> allByTypeName = productRepository.findAllByType_Name(typeName);
-        return allByTypeName.stream().map(productMapper::toResponseDTO).toList();
+        return allByTypeName.stream().map(product -> {
+            ProductResponseDTO responseIgnorePhotosAndType = productMapper.toResponseIgnorePhotosAndType(product);
+            responseIgnorePhotosAndType.setTypeName(typeName);
+            return responseIgnorePhotosAndType;
+        }).toList();
     }
 
     @Override
@@ -201,4 +205,14 @@ public class ProductServiceImpl implements ProductService {
                 .stream().map(productMapper::toProductIds).toList();
     }
 
+    @Override
+    @Transactional
+    @CacheEvict(value = "products", allEntries = true)
+    public void markAvailability(Integer id, boolean available) {
+        int updated = productRepository.updateAvailability(id, available);
+        if (updated == 0) {
+            throw new EntityNotFoundException("Product not found with id " + id);
+        }
+        log.info("Product {} marked as available={}", id, available);
+    }
 }

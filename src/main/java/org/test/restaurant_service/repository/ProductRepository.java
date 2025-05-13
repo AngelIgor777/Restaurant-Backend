@@ -4,6 +4,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -127,6 +128,7 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
                            COALESCE(pi.name, p.name)               AS name,
                            COALESCE(pi.description, p.description) AS description,
                            COALESCE(ptt.name, pt.name)             AS typeName,
+                           p.available                             AS available,
                            p.price,
                            p.cooking_time AS cookingTime,
                            ( SELECT ph.url
@@ -163,6 +165,7 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
                            COALESCE(pi.name, p.name)               AS name,
                            COALESCE(pi.description, p.description) AS description,
                            COALESCE(ptt.name, pt.name)             AS typeName,
+                           p.available                             AS available,
                            p.price,
                            p.cooking_time AS cookingTime,
                            ( SELECT ph.url
@@ -188,4 +191,9 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
                        SELECT p.id FROM Product p
             """)
     List<ProductIdsView> getAllProductIds();
+
+
+    @Modifying
+    @Query("UPDATE Product p SET p.available = :available WHERE p.id = :id")
+    int updateAvailability(@Param("id") Integer id, @Param("available") boolean available);
 }

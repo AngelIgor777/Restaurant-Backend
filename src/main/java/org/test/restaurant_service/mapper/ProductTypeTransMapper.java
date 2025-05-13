@@ -15,6 +15,5 @@ public interface ProductTypeTransMapper {
     @Mapping(target = "productType.id", source = "productTypeId")
     ProductTypeTransl toEntity(ProductTypeTranslationRequestDTO requestDTO);
 
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    void updateEntityFromRequestDTO(ProductTypeTranslationRequestDTO requestDTO, @MappingTarget ProductTypeTransl entity);
+
 }

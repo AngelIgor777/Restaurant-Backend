@@ -314,7 +314,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         } else if (placeOrderCallBack) {
             handlePlaceOrderCallBack(update);
         } else if (data.equals(CallBackButton.BACK_TO_MENU.toString())) {
-            backToMenu(update);
+            goToMenu(update);
         } else if (paymentMethodCallBack) {
             handlePaymentMethodCallBack(update);
         } else if (addToBucketProductQuantityCallBack) {
@@ -1280,12 +1280,9 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
 
-    private void backToMenu(Update update) {
-        Long chatId = update.getCallbackQuery().getMessage().getChatId();
-        User user = userService.findByChatId(chatId);
-
+    private void goToMenu(Update update) {
         EditMessageText editMessage = setEditMessageTextProperties(update);
-        InlineKeyboardMarkup menuInlineMarkup = getMenuKeyboard(user.getTelegramUserEntity().getLanguage().getCode());
+        InlineKeyboardMarkup menuInlineMarkup = getMenuKeyboard();
         editMessage.setText(menuText.toString());
         editMessage.setReplyMarkup(menuInlineMarkup);
         executeMessage(editMessage);
@@ -1296,12 +1293,10 @@ public class TelegramBot extends TelegramLongPollingBot {
         Message message = callbackQuery.getMessage();
         Integer messageId = message.getMessageId();
         Long chatId = message.getChatId();
-        User user = userService.findByChatId(chatId);
-        String langCode = user.getTelegramUserEntity().getLanguage().getCode();
 
         String productType = data.substring(PRODUCT_TYPE_SUFFIX.length());
 
-        String responseText = textUtil.getProductTypeTextByType(productType, user.getTelegramUserEntity().getLanguage().getCode());
+        String responseText = textUtil.getProductTypeTextByType(productType);
 
 
         List<ProductResponseDTO> products = productService.getByTypeName(productType);
@@ -1314,23 +1309,21 @@ public class TelegramBot extends TelegramLongPollingBot {
                     return productTelegramResponseDto;
                 })
                 .toList();
-        editMessageProductsByType(responseText, chatId, messageId, strings, langCode);
+        editMessageProductsByType(responseText, chatId, messageId, strings);
 
     }
 
     private void handleProductTypeCallbackWithSendingNewMessage(CallbackQuery callbackQuery, String data) {
         Message message = callbackQuery.getMessage();
-        Integer messageId = message.getMessageId();
         Long chatId = message.getChatId();
-        User user = userService.findByChatId(chatId);
-        String langCode = user.getTelegramUserEntity().getLanguage().getCode();
 
         String productType = data.substring(PRODUCT_TYPE_SUFFIX.length());
 
-        String responseText = textUtil.getProductTypeTextByType(productType, user.getTelegramUserEntity().getLanguage().getCode());
+        String responseText = textUtil.getProductTypeTextByType(productType);
 
 
         List<ProductResponseDTO> products = productService.getByTypeName(productType);
+
         List<ProductTelegramResponseDto> strings = products
                 .stream()
                 .map(productResponseDTO -> {
@@ -1340,31 +1333,31 @@ public class TelegramBot extends TelegramLongPollingBot {
                     return productTelegramResponseDto;
                 })
                 .toList();
-        editMessageProductsByTypeWithSendingNewMessage(responseText, chatId, messageId, strings, langCode);
+        editMessageProductsByTypeWithSendingNewMessage(responseText, chatId, strings);
 
     }
 
-    private void editMessageProductsByType(String text, long chatId, long messageId, List<ProductTelegramResponseDto> productTelegramResponseDtoList, String langCode) {
+    private void editMessageProductsByType(String text, long chatId, long messageId, List<ProductTelegramResponseDto> productTelegramResponseDtoList) {
         EditMessageText message = getEditMessageText(String.valueOf(chatId), text, (int) messageId);
 
         InlineKeyboardMarkup markupInLine = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rowsInLine = createProductButtons(productTelegramResponseDtoList);
 
-        addBackToMenuButton(rowsInLine, langCode);
+        addBackToMenuButton(rowsInLine);
         markupInLine.setKeyboard(rowsInLine);
         message.setReplyMarkup(markupInLine);
 
         sendEditedMessage(message);
     }
 
-    private void editMessageProductsByTypeWithSendingNewMessage(String text, long chatId, long messageId, List<
-            ProductTelegramResponseDto> productTelegramResponseDtoList, String langCode) {
+    private void editMessageProductsByTypeWithSendingNewMessage(String text, long chatId, List<
+            ProductTelegramResponseDto> productTelegramResponseDtoList) {
         SendMessage message = new SendMessage(String.valueOf(chatId), text);
 
         InlineKeyboardMarkup markupInLine = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rowsInLine = createProductButtons(productTelegramResponseDtoList);
 
-        addBackToMenuButton(rowsInLine, langCode);
+        addBackToMenuButton(rowsInLine);
         markupInLine.setKeyboard(rowsInLine);
         message.setReplyMarkup(markupInLine);
 
@@ -1375,7 +1368,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             (List<ProductTelegramResponseDto> productTelegramResponseDtoList) {
         List<List<InlineKeyboardButton>> rowsInLine = new ArrayList<>();
         int size = productTelegramResponseDtoList.size();
-        int buttonsPerRow = 3;
+        int buttonsPerRow = 2;
 
         callbackProductsData.clear();
 
@@ -1440,7 +1433,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         return message;
     }
 
-    private void addBackToMenuButton(List<List<InlineKeyboardButton>> rowsInLine, String langCode) {
+    private void addBackToMenuButton(List<List<InlineKeyboardButton>> rowsInLine) {
         List<InlineKeyboardButton> row = new ArrayList<>();
 
         InlineKeyboardButton button = createOneLineButton();
@@ -1455,17 +1448,13 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final StringBuilder menuText = new StringBuilder();
 
     private void menu(Update update) {
-        Long chatId = update.getMessage().getChatId();
-        User user = userService.findByChatId(chatId);
-
-        String langCode = user.getTelegramUserEntity().getLanguage().getCode();
-        setMenuText(langCode);
+        setMenuText();
         SendMessage message = new SendMessage(update.getMessage().getChatId().toString(), menuText.toString());
         message.setParseMode("HTML");
-        createMenu(message, langCode);
+        createMenu(message);
     }
 
-    private List<String> setMenuText(String langCode) {
+    private List<String> setMenuText() {
         List<ProductTypeResponseDTO> all = productTypeService.getAll();
         List<String> productTypes = new ArrayList<>();
 
@@ -1477,12 +1466,12 @@ public class TelegramBot extends TelegramLongPollingBot {
                 });
 
 
-        textUtil.addAllProductsToMenu(menuText, productTypes, langCode);
+        textUtil.addAllProductsToMenu(menuText);
         return productTypes;
     }
 
-    private void createMenu(SendMessage message, String langCode) {
-        InlineKeyboardMarkup menuInlineMarkup = getMenuKeyboard(langCode);
+    private void createMenu(SendMessage message) {
+        InlineKeyboardMarkup menuInlineMarkup = getMenuKeyboard();
         message.setReplyMarkup(menuInlineMarkup);
         executeMessage(message);
         deleteMenuText();
@@ -1493,9 +1482,9 @@ public class TelegramBot extends TelegramLongPollingBot {
         menuText.delete(0, menuText.length());
     }
 
-    private InlineKeyboardMarkup getMenuKeyboard(String langCode) {
+    private InlineKeyboardMarkup getMenuKeyboard() {
 
-        List<String> productTypes = setMenuText(langCode);
+        List<String> productTypes = setMenuText();
 
         InlineKeyboardMarkup markupInLine = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rowsInLine = new ArrayList<>();
@@ -1521,8 +1510,10 @@ public class TelegramBot extends TelegramLongPollingBot {
             rowsInLine.add(row);
         }
 
-        rowsInLine.add(List.of(createOneLineButton("Корзина 🧺", BUCKET_SHOW)));
+        if (featureService.getFeatureStatus(Features.ORDERING).isEnabled()) {
+            rowsInLine.add(List.of(createOneLineButton("Корзина 🧺", BUCKET_SHOW)));
 
+        }
         markupInLine.setKeyboard(rowsInLine);
         return markupInLine;
     }

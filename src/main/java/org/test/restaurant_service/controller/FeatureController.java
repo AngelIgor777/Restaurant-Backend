@@ -27,6 +27,9 @@ public class FeatureController {
     @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public ResponseEntity<Void> enableFeature(@PathVariable Features feature) {
         featureService.enableFeature(feature);
+        if (feature.equals(Features.WAITER_CALL)) {
+            telegramBot.updateCommands();
+        }
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 

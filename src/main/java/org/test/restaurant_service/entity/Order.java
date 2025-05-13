@@ -60,6 +60,7 @@ public class Order {
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @Builder.Default
     private List<OrderProduct> orderProducts = new ArrayList<>();
 
     @Column

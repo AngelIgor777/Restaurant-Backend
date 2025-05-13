@@ -3,7 +3,6 @@ package org.test.restaurant_service.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
-import org.test.restaurant_service.entity.Role;
 import org.test.restaurant_service.entity.RoleName;
 import org.test.restaurant_service.entity.User;
 import org.test.restaurant_service.service.JwtService;
@@ -29,11 +28,10 @@ public class SecurityService {
         return user.isAdminOrModerator();
     }
 
-    public boolean userIsAdminDisposableKeyOwner(String disposableKey) {
+    public boolean isValidDisposableToken(Authentication auth) {
 
-
-        List<String> rolesFromDisposableToken = jwtService.getRolesFromDisposableToken(disposableKey);
-        return isValidRoles(rolesFromDisposableToken);
+        return auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_DISPOSABLE"));
     }
 
     public boolean userIsAdminOrModerator(Authentication auth) {

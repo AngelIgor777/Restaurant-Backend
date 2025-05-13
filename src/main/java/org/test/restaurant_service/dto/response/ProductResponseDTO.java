@@ -14,6 +14,7 @@ public class ProductResponseDTO {
     protected String name;
     protected String description;
     protected String typeName;
+    private boolean available;
     protected BigDecimal price;
     protected LocalTime cookingTime;
     protected Integer quantity;

@@ -42,4 +42,8 @@ public interface ProductService {
     Page<Product> searchProducts(String searchTerm, int page, int size);
 
     List<ProductIdsResponse> getAllProductsId();
+
+
+    void markAvailability(Integer id, boolean available);
+
 }

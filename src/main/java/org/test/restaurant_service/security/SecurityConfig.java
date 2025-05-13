@@ -56,7 +56,7 @@ public class SecurityConfig {
                         "/api/v1/connection/**",
                         "/api/v1/tg/**",
                         "/api/v1/auth/**",
-                        "/api/v1/statistics/**",
+//                        "/api/v1/statistics/**",
                         "/api/v1/exportOrders/**",
                         "/api/v1/jwt/**",
                         "/api/v1/waiter-calls/**",
