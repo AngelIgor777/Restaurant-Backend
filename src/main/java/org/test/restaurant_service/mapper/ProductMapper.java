@@ -23,6 +23,7 @@ public interface ProductMapper {
     @Mapping(source = "typeId", target = "type.id")
     @Mapping(target = "id", ignore = true) // Игнорирование id при обновлении
     @Mapping(target = "photos", ignore = true)
+    @Mapping(target = "available", ignore = true)
     Product toEntity(ProductRequestDTO requestDTO);
 
     @Mapping(source = "type.name", target = "typeName")
@@ -65,6 +66,7 @@ public interface ProductMapper {
     @Mapping(target = "type", ignore = true)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "photos", ignore = true)
+    @Mapping(target = "available", ignore = true)
     void updateEntityFromRequestDTO(ProductRequestDTO requestDTO, @MappingTarget Product product);
 
     @Named("mapPhotoUrl")

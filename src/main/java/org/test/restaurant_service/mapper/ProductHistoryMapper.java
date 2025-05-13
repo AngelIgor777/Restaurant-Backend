@@ -13,8 +13,9 @@ public interface ProductHistoryMapper {
     @Mapping(source = "type.name", target = "typeName")
     @Mapping(target = "quantity", ignore = true)
     @Mapping(target = "photos", ignore = true)
-    @Mapping(target = "id",source = "product.id")
-    @Mapping(target = "productHistoryId",source = "id")
+    @Mapping(target = "id", source = "product.id")
+    @Mapping(target = "productHistoryId", source = "id")
+    @Mapping(target = "available", ignore = true)
     @Mapping(target = "photoUrl", source = "product.photos", qualifiedByName = "mapPhotoUrl")
     ProductHistoryResponseDTO toProductHistoryResponseDTO(ProductHistory productHistory);
 

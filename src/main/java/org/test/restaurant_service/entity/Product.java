@@ -41,6 +41,7 @@ public class Product {
     private LocalTime cookingTime;
 
     @Column(nullable = false)
+    @Builder.Default
     private Boolean available = true;
 
     @Builder.Default

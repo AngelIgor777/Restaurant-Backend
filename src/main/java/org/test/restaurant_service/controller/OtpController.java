@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.test.restaurant_service.dto.response.JwtResponse;
 import org.test.restaurant_service.entity.User;
@@ -48,6 +47,7 @@ public class OtpController {
 
 
         return ResponseEntity.ok()
-                .header("Set-Cookie", cookie.toString()).build();
+                .header("Set-Cookie", cookie.toString())
+                .body(jwt.getUserUUID());
     }
 }

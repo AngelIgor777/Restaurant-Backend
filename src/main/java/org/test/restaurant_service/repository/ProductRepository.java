@@ -46,6 +46,7 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
                             COALESCE(pi.name,   p.name)        AS name,
                             COALESCE(pi.description, p.description) AS description,
                             COALESCE(ptt.name,  pt.name)       AS typeName,
+                            p.available                             AS available,
                             p.price,
                             p.cooking_time      AS cookingTime,
                             ( SELECT MIN(ph.url)
@@ -89,6 +90,8 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
                             COALESCE(pi.name, p.name)   AS name,
                             COALESCE(pi.description,p.description) AS description,
                             COALESCE(ptt.name,pt.name)  AS typeName,
+                            p.available                             AS available,
+                    
                             p.price,
                             p.cooking_time             AS cookingTime,
                             ( SELECT MIN(ph.url)
