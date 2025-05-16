@@ -3,6 +3,7 @@ package org.test.restaurant_service.repository;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -36,8 +37,22 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
 
     Integer countAllByUser_TelegramUserEntity_ChatId(Long chatIdp);
 
-    void deleteAllByStatusAndCreatedAtBetween(Order.OrderStatus status, LocalDateTime from, LocalDateTime to);
-
+    @Modifying
+    @Query(
+            value = """
+        DELETE 
+          FROM restaurant_service.orders
+         WHERE status = :status
+           AND created_at BETWEEN :from AND :to
+         RETURNING id
+      """,
+            nativeQuery = true
+    )
+    List<Integer> deleteByStatusAndCreatedAtBetweenReturningIds(
+            @Param("status") String status,
+            @Param("from")   LocalDateTime from,
+            @Param("to")     LocalDateTime to
+    );
     boolean existsByOtp(String otp);
 
     @Query(

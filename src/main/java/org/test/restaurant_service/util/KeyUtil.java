@@ -41,6 +41,9 @@ public class KeyUtil {
     @Getter
     private static String disposableAdminKey;
 
+    @Getter
+    private static String activationUserKey;
+
 
     public static void setProperties(Dotenv dotenv) {
         // Прокидываем переменные в System Environment
@@ -80,6 +83,9 @@ public class KeyUtil {
             }
             if (entry.getKey().equals("AWS_REGION")) {
                 s3Region = value;
+            }
+            if (entry.getKey().equals("ACTIVATION_USER_KEY")) {
+                activationUserKey = value;
             }
         });
     }

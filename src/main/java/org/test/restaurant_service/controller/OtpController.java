@@ -37,7 +37,7 @@ public class OtpController {
     @PostMapping("/verify")
     public ResponseEntity<?> verifyOtp(@RequestParam Long chatId, @RequestParam String otp) {
         JwtResponse jwt = authenticationService.authenticate(chatId, otp);
-        ResponseCookie cookie = ResponseCookie.from("ACCESS_TOKEN", jwt.getAccessToken())
+        ResponseCookie cookie = ResponseCookie.from("ACCESS_TOKEN", jwt.getToken())
                 .httpOnly(true)          // защищает от XSS
                 .secure(false)            // отправлять только по HTTPS
                 .sameSite("Strict")      // защита от CSRF

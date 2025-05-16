@@ -10,9 +10,6 @@ import org.test.restaurant_service.service.JwtService;
 import org.test.restaurant_service.service.OtpService;
 import org.test.restaurant_service.service.UserService;
 
-import javax.naming.AuthenticationException;
-import java.nio.file.AccessDeniedException;
-
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +35,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .toList());
 
         return JwtResponse.builder()
-                .accessToken(accessToken)
+                .token(accessToken)
                 .userUUID(user.getUuid())
                 .build();
     }

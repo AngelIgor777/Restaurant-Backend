@@ -28,6 +28,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final String DISPOSABLE = "DISPOSABLE_TOKEN";
     private static final String ACCESS = "ACCESS_TOKEN";
+    private static final String ACTIVATION = "ACTIVATION_TOKEN";
 
 
     @Override
@@ -48,23 +49,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String uri = req.getRequestURI();
         String tokenCookieName;
         if (uri.startsWith("/api/v1/statistics") || uri.startsWith("/api/v1/exportOrders")) {
-            // статистика доступна ТОЛЬКО с disposable
             tokenCookieName = DISPOSABLE;
+        } else if (uri.endsWith("call-waiter") || uri.startsWith("/api/v1/order-products/bulk")) {
+            tokenCookieName = ACTIVATION;
         } else {
-            // все остальные — по обычному
             tokenCookieName = ACCESS;
         }
 
         String token = extractCookie(req, tokenCookieName);
         if (token != null) {
             try {
-                DecodedJWT decoded =
-                        tokenCookieName.equals(DISPOSABLE)
-                                ? verifyDisposableToken(token)
-                                : verifyAccessToken(token);
+                DecodedJWT decoded;
+                if (tokenCookieName.equals(DISPOSABLE)) {
+                    decoded = verifyDisposableToken(token);
+                } else if (tokenCookieName.equals(ACTIVATION)) {
+                    decoded = verifyActivationToken(token);
+                } else {
+                    decoded = verifyAccessToken(token);
+                }
 
-                setUpAuthentication(decoded, tokenCookieName.equals(DISPOSABLE));
-                // обновляем только ту куку, что проверили
+                setUpAuthentication(decoded, tokenCookieName);
+
                 refreshCookie(resp, tokenCookieName, token);
             } catch (JWTVerificationException e) {
                 SecurityContextHolder.clearContext();
@@ -96,7 +101,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 .verify(token);
     }
 
-    private void setUpAuthentication(DecodedJWT decodedJWT, boolean isDisposable) {
+    private DecodedJWT verifyActivationToken(String token) {
+        return JWT.require(JwtAlgorithmUtil.getUserActivationAlgorithm())
+                .build()
+                .verify(token);
+    }
+
+    private void setUpAuthentication(DecodedJWT decodedJWT, String tokenType) {
         String chatId = decodedJWT.getSubject();
         List<String> roles = decodedJWT.getClaim("roles").asList(String.class);
 
@@ -104,10 +115,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             List<SimpleGrantedAuthority> authorities = roles.stream()
                     .map(SimpleGrantedAuthority::new)
                     .collect(Collectors.toList());
-            if (isDisposable) {
-                // специальная роль-маркер
+
+            if (tokenType.equals(DISPOSABLE)) {
                 authorities.add(new SimpleGrantedAuthority("ROLE_DISPOSABLE"));
+            } else if (tokenType.equals(ACTIVATION)) {
+                authorities.add(new SimpleGrantedAuthority("ROLE_ACTIVATION"));
             }
+
+
             UsernamePasswordAuthenticationToken auth =
                     new UsernamePasswordAuthenticationToken(
                             chatId,

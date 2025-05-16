@@ -124,6 +124,9 @@ admin:
 
 disposable:
   adminKey: ${DISPOSABLE_ADMIN_KEY}
+
+activation:
+  userKey: ${ACTIVATION_USER_KEY}
 #logging:
 #  level:
 #    org:

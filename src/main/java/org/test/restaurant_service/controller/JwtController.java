@@ -26,7 +26,7 @@ public class JwtController {
     public ResponseEntity<?> generateJwtForUser(@RequestParam UUID userUUID) {
         log.debug("Received request to generate JWT for user {}", userUUID);
 
-        String jwt = jwtService.generateUserAccessToken(userUUID).getAccessToken();
+        String jwt = jwtService.generateUserAccessToken(userUUID).getToken();
 
         ResponseCookie cookie = ResponseCookie.from("ACCESS_TOKEN", jwt)
                 .httpOnly(true)          // защищает от XSS
@@ -45,15 +45,31 @@ public class JwtController {
 
     @PostMapping("/logout")
     public ResponseEntity<Void> logout() {
-        var cookie = ResponseCookie.from("ACCESS_TOKEN", "")
-                .maxAge(0)              // удаляем
+        var cookieAccess = ResponseCookie.from("ACCESS_TOKEN", "")
+                .maxAge(0)
+                .path("/")
+                .httpOnly(true)
+                .secure(false)
+                .sameSite("Strict")
+                .build();
+        var cookieDisposable = ResponseCookie.from("DISPOSABLE_TOKEN", "")
+                .maxAge(0)
+                .path("/")
+                .httpOnly(true)
+                .secure(false)
+                .sameSite("Strict")
+                .build();
+        var cookieActivation = ResponseCookie.from("ACTIVATION_TOKEN", "")
+                .maxAge(0)
                 .path("/")
                 .httpOnly(true)
                 .secure(false)
                 .sameSite("Strict")
                 .build();
         return ResponseEntity.noContent()
-                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .header(HttpHeaders.SET_COOKIE, cookieAccess.toString())
+                .header(HttpHeaders.SET_COOKIE, cookieDisposable.toString())
+                .header(HttpHeaders.SET_COOKIE, cookieActivation.toString())
                 .build();
     }
 

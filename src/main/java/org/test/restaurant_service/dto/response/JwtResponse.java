@@ -8,6 +8,6 @@ import java.util.UUID;
 @Builder
 @Data
 public class JwtResponse {
-    private String accessToken;
+    private String token;
     private UUID userUUID;
 }

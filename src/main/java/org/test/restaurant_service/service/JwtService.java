@@ -23,4 +23,6 @@ public interface JwtService {
     JwtResponse generateJwtResponseForAdmin(Admin admin, User user);
 
     List<String> getRolesFromDisposableToken(String disposableToken);
+
+    org.test.restaurant_service.dto.response.JwtResponse generateUserActivationToken(UUID userUUID);
 }

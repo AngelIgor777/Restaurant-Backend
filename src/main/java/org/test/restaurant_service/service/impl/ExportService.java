@@ -37,10 +37,9 @@ public class ExportService {
         Workbook workbook = new XSSFWorkbook();
         Sheet sheet = workbook.createSheet("Orders");
 
-        // Create header
         String[] headers = {
                 "ID заказа", "Метод оплаты", "Общая цена", "Создано",
-                "Блюда"  // <--- important
+                "Блюда"
         };
 
         Row headerRow = sheet.createRow(0);
@@ -67,7 +66,6 @@ public class ExportService {
                 row.createCell(col++).setCellValue(createdAt);
             }
 
-            // 📦 Products
             List<ProductResponseDTO> products = order != null ? order.getProducts() : null;
             String productsString = "";
             if (products != null) {

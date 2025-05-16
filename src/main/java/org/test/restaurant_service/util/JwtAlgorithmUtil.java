@@ -15,6 +15,10 @@ public class JwtAlgorithmUtil {
         return Algorithm.HMAC256(KeyUtil.getDisposableAdminKey().getBytes());
     }
 
+    public static Algorithm getUserActivationAlgorithm() {
+        return Algorithm.HMAC256(KeyUtil.getActivationUserKey().getBytes());
+    }
+
     public static Algorithm getAccessAlgorithm() {
         return Algorithm.HMAC256(KeyUtil.getAccessSecret().getBytes());
     }

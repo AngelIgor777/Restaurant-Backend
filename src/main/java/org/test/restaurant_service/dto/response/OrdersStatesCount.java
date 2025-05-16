@@ -11,4 +11,5 @@ import java.util.List;
 public class OrdersStatesCount {
     private TotalOrders totalOrders;
     private List<TableOrderInfo> tablesOrderInfo;
+    private List<Integer> ordersForDelete;
 }

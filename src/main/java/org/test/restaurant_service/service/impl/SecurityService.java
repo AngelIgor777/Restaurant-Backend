@@ -96,4 +96,9 @@ public class SecurityService {
             return false;
         }
     }
+
+    public boolean userIsActivated(Authentication auth) {
+        return auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ACTIVATION"));
+    }
 }

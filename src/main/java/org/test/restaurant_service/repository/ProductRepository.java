@@ -64,6 +64,7 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
                           AND ptt.lang_id = :langId
                     WHERE   (:typeId IS NULL OR pt.id = :typeId)
                       AND   LOWER(COALESCE(pi.name, p.name)) LIKE LOWER(CONCAT('%', :term, '%'))
+                      ORDER BY p.available DESC
                     """,
             countQuery = """
                     SELECT  COUNT(*)
@@ -113,6 +114,7 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
                            ON o.id = op.order_id
                     WHERE   o.created_at >= CURRENT_DATE - :days
                       AND   (:typeId IS NULL OR pt.id = :typeId)
+                    AND p.available = true
                     GROUP BY p.id, pi.name, pi.description, pt.name, p.price, p.cooking_time, ptt.name
                     ORDER BY SUM(op.quantity) DESC
                     LIMIT   :limit
@@ -147,6 +149,7 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
                     LEFT   JOIN restaurant_service.product_type_i18n ptt
                            ON ptt.product_type_id = pt.id AND ptt.lang_id = :langId
                     WHERE  (:typeId IS NULL OR pt.id = :typeId)
+                    ORDER BY p.available DESC
                     """,
             countQuery = """
                     SELECT COUNT(*)

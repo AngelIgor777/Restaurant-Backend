@@ -190,7 +190,7 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
         }
         ordersStatesCount.setTotalOrders(totalOrders);
 
-        webSocketSender.sendTablesOrderInfo(ordersStatesCount);
+        webSocketSender.sendOrdersStateCount(ordersStatesCount);
     }
 
     private OrderResponseDTO handleOrderResponse(Order savedOrder, AtomicReference<LocalTime> totalCookingTime, AtomicReference<BigDecimal> totalPrice, List<ProductResponseDTO> productResponseDTOS) {

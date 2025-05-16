@@ -1,5 +1,6 @@
 package org.test.restaurant_service.telegram.util;
 
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -29,6 +30,14 @@ class TextUtil {
 
     private final OrderService orderService;
     private final ProductService productService;
+
+    @Getter
+    private final String activationText = """
+            Чтобы подтвердить ваше действие, выберите код активации:
+            Он отображается на экране в правом верхнем углу, непосредственно над зоной заказа и оплаты.
+            
+            Это нужно, чтобы мы точно знали, что вы на месте и ваш заказ действительно активен 😊
+            """;
 
 
     public String getBlacklistText(UUID userUUID) {

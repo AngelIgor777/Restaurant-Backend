@@ -33,14 +33,14 @@ public class CodeCacheService {
         return value;
     }
 
-    public Codes getOrderCode() {
+    public Codes getActivationCodes() {
         Object raw = redis.opsForValue().get(CODE_KEY);
         Codes value = objectMapper.convertValue(raw, Codes.class);
         return value == null ? rotateCodes() : value;
     }
 
     public boolean isValidCode(Integer code) {
-        return getOrderCode().getTrueCode() == code;
+        return getActivationCodes().getTrueCode() == code;
     }
 
 

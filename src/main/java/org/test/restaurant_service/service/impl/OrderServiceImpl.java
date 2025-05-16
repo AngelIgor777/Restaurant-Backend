@@ -14,10 +14,7 @@ import org.test.restaurant_service.dto.response.order.ConcreteOrderId;
 import org.test.restaurant_service.dto.response.order.OrderId;
 import org.test.restaurant_service.dto.response.order.TotalOrders;
 import org.test.restaurant_service.entity.*;
-import org.test.restaurant_service.mapper.AddressMapperImpl;
-import org.test.restaurant_service.mapper.OrderMapper;
-import org.test.restaurant_service.mapper.ProductMapperImpl;
-import org.test.restaurant_service.mapper.TableMapperImpl;
+import org.test.restaurant_service.mapper.*;
 import org.test.restaurant_service.repository.OrderRepository;
 import org.test.restaurant_service.service.OrderDiscountService;
 import org.test.restaurant_service.service.OrderProductService;
@@ -43,7 +40,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderDiscountService orderDiscountService;
     private final OrderProductService orderProductService;
     private final AddressMapperImpl addressMapperImpl;
-    private final ProductMapperImpl productMapperImpl;
+    private final ProductMapper productMapperImpl;
     private final TableMapperImpl tableMapperImpl;
     private final WebSocketSender webSocketSender;
     private final TableCacheService tableCacheService;
@@ -149,7 +146,7 @@ public class OrderServiceImpl implements OrderService {
         TotalOrders totalOrders = totalOrdersCacheService.updateOrderStatus(() -> orderId, Order.OrderStatus.PENDING, Order.OrderStatus.COMPLETED);
         ordersStatesCount.setTotalOrders(totalOrders);
 
-        webSocketSender.sendTablesOrderInfo(ordersStatesCount);
+        webSocketSender.sendOrdersStateCount(ordersStatesCount);
     }
 
     @Override
@@ -166,11 +163,11 @@ public class OrderServiceImpl implements OrderService {
         TotalOrders totalOrders = totalOrdersCacheService.updateOrderStatus(() -> orderId, from, Order.OrderStatus.CONFIRMED);
         OrdersStatesCount ordersStatesCount = new OrdersStatesCount();
         ordersStatesCount.setTotalOrders(totalOrders);
-        if(tableOrderInfo != null) {
+        if (tableOrderInfo != null) {
             ordersStatesCount.setTablesOrderInfo(List.of(tableOrderInfo));
         }
 
-        webSocketSender.sendTablesOrderInfo(ordersStatesCount);
+        webSocketSender.sendOrdersStateCount(ordersStatesCount);
     }
 
     @Override
@@ -191,8 +188,8 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void deleteAllByStatusAndCreatedAtBetween(Order.OrderStatus status, LocalDateTime from, LocalDateTime to) {
-        orderRepository.deleteAllByStatusAndCreatedAtBetween(status, from, to);
+    public List<Integer> deleteAllByStatusAndCreatedAtBetween(Order.OrderStatus status, LocalDateTime from, LocalDateTime to) {
+       return orderRepository.deleteByStatusAndCreatedAtBetweenReturningIds(status.name(), from, to);
     }
 
     @Override
@@ -204,7 +201,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public List<OrderProductResponseWithPayloadDto> searchOrdersWithPayloadDtoById(List<Integer> ids) {
-        return  orderRepository.findByIdIn(ids).stream()
+        return orderRepository.findByIdIn(ids).stream()
                 .map(order -> getOrderProductResponseWithPayloadDto(order, false))
                 .toList();
     }

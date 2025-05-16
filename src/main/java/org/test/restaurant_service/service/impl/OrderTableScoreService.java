@@ -40,4 +40,8 @@ public class OrderTableScoreService {
                 .totalPrice(totalPrice.get())
                 .build();
     }
+
+    public void deleteAll() {
+        scoreRepository.deleteAll();
+    }
 }

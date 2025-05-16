@@ -43,8 +43,9 @@ public class TableCacheService {
     }
 
     public UUID deleteSessionUUID(Integer tableId) {
-        Object object = redisTemplate.opsForValue().getAndDelete(("session:" + tableId));
-        return jacksonObjectMapper.convertValue(object, UUID.class);
+        UUID sessionUUID = getSessionUUID(tableId);
+        redisTemplate.delete(("session:" + tableId));
+        return sessionUUID;
     }
 
     public void saveOpenTables(OpenTables openTables) {

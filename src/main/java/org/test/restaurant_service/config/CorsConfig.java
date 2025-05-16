@@ -11,6 +11,7 @@ public class CorsConfig implements WebMvcConfigurer {
 
     String[] PUBLIC_ORIGINS = {
             "http://localhost:63344",
+            "http://localhost:63342",
             "http://127.0.0.1:63344",
 
             "http://localhost:63343",
