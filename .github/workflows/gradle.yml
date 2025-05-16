@@ -51,6 +51,8 @@ jobs:
           echo "WORK_BOT_KEY=${{ secrets.WORK_BOT_KEY }}" >> src/main/resources/.env
           echo "AWS_URL=${{ secrets.AWS_URL }}" >> src/main/resources/.env
           echo "AWS_REGION=${{ secrets.AWS_REGION }}" >> src/main/resources/.env
+          
+          echo "ACTIVATION_USER_KEY=${{ secrets.ACTIVATION_USER_KEY }}" >> src/main/resources/.env
 
       - name: Make Gradle wrapper executable
         run: chmod +x gradlew
