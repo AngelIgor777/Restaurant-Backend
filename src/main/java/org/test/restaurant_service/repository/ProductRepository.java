@@ -194,7 +194,7 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
 
 
     @Query(value = """
-                       SELECT p.id FROM Product p
+                       SELECT p.id as id FROM Product p
             """)
     List<ProductIdsView> getAllProductIds();
 

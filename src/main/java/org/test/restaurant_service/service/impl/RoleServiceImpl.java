@@ -2,6 +2,7 @@ package org.test.restaurant_service.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.test.restaurant_service.entity.Role;
 import org.test.restaurant_service.entity.RoleName;
 import org.test.restaurant_service.entity.User;
@@ -52,4 +53,19 @@ public class RoleServiceImpl implements RoleService {
         }
     }
 
+    @Override
+    public void removeUserRole(User user, RoleName roleName) {
+        if (user.getRoles() != null) {
+            user.getRoles().removeIf(r -> r.getRoleName().equals(roleName));
+        }
+    }
+
+    @Override
+    @Transactional
+    public void removeUserRole(Long chatId, RoleName roleName) {
+        User user = userService.findByChatId(chatId);
+        removeUserRole(user, roleName);
+
+        staffSendingOrderService.deleteStaffSendingOrder(user, chatId);
+    }
 }

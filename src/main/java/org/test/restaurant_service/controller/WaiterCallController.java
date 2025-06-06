@@ -35,7 +35,6 @@ public class WaiterCallController {
     private final WorkTelegramBot workTelegramBot;
     private final StaffSendingOrderService staffSendingOrderService;
 
-
     @GetMapping("/{tableNumber}")
     @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public ResponseEntity<WaiterCallRequestDTO> getCallByTable(@PathVariable Integer tableNumber) {
@@ -60,10 +59,9 @@ public class WaiterCallController {
         return ResponseEntity.noContent().build();
     }
 
-
-    @PostMapping("/{tableId}/call-waiter")
+    @PostMapping("/{tableNumber}/call-waiter")
     @PreAuthorize("@securityService.userIsActivated(authentication)")
-    public ResponseEntity<String> callWaiter(@PathVariable Integer tableId) {
+    public ResponseEntity<String> callWaiter(@PathVariable Integer tableNumber) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         Long chatId = Long.parseLong(auth.getName());
 
@@ -71,7 +69,7 @@ public class WaiterCallController {
         TelegramUserDTO dto = TelegramUserMapper.INSTANCE.toDto(user);
 
         WaiterCallRequestDTO request = WaiterCallRequestDTO.builder()
-                .tableNumber(tableId)
+                .tableNumber(tableNumber)
                 .requestTime(LocalTime.now())
                 .telegramUser(dto)
                 .build();
@@ -101,8 +99,7 @@ public class WaiterCallController {
             }
         }
 
-        // 6) Отвечаем клиенту
-        String userMsg = "✅ Официант был вызван к столику №" + tableId;
+        String userMsg = "✅ Официант был вызван к столику №" + tableNumber;
         return ResponseEntity.ok(userMsg);
     }
 

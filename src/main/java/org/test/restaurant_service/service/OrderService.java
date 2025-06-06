@@ -2,6 +2,7 @@ package org.test.restaurant_service.service;
 
 import org.springframework.data.domain.Pageable;
 import org.test.restaurant_service.dto.request.OrderRequestDTO;
+import org.test.restaurant_service.dto.request.order.ProductsForPrintRequest;
 import org.test.restaurant_service.dto.request.table.TableOrderInfo;
 import org.test.restaurant_service.dto.request.table.TableOrdersPriceInfo;
 import org.test.restaurant_service.dto.response.OrderProductResponseWithPayloadDto;
@@ -37,13 +38,11 @@ public interface OrderService {
 
     void completeOrder(Integer orderId, Integer tableId);
 
-    void confirmOrder(Integer orderId, UUID sessionUUID, Order.OrderStatus from);
-
     List<OrderProductResponseWithPayloadDto> getAllUserOrdersProductResponseWithPayloadDto(UUID userUUID, Pageable pageable);
 
     Integer getCountOrdersByUserChatId(Long chatId);
 
-    List<Integer>  deleteAllByStatusAndCreatedAtBetween(Order.OrderStatus status, LocalDateTime from, LocalDateTime to);
+    List<Integer> deleteAllByStatusAndCreatedAtBetween(Order.OrderStatus status, LocalDateTime from, LocalDateTime to);
 
     OrderProductResponseWithPayloadDto searchOrderProductResponseWithPayloadDtoByValidationCode(String query);
 

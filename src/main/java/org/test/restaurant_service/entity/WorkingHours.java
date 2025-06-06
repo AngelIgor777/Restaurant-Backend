@@ -14,6 +14,7 @@ import java.time.LocalTime;
 @Getter
 @Setter
 public class WorkingHours {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -23,4 +24,5 @@ public class WorkingHours {
     private LocalTime openTime;
 
     private LocalTime closeTime;
+
 }

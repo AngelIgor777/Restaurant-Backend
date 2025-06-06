@@ -278,28 +278,41 @@ class TextUtil {
 
 
     public String getTopWeekProducts(UUID userUUID, String language) {
-        String userLink = String.format("[parktown.md](http://195.133.27.38/#menu/%s)", userUUID);
-
+        String userLink = String.format("http://195.133.27.38/#menu/%s", userUUID);
         Pageable pageable = PageRequest.of(0, 10);
-        List<ProductResponseDTO> top10WeekProducts = productService.getTop10WeekProducts(pageable);
+        List<ProductResponseDTO> top10 = productService.getTop10WeekProducts(pageable);
 
-        StringBuilder stringBuilder = new StringBuilder();
+        StringBuilder sb = new StringBuilder();
+        // Заголовок
+        sb.append("*🔥 Топ-").append(top10.size()).append(" блюд недели!* 🔥\n")
+                .append("────────────────────\n\n");
 
-        stringBuilder.append("🔥 Топ-10 самых популярных блюд недели! 🔥\n\n");
-
-
-        int index = 1;
-        for (ProductResponseDTO product : top10WeekProducts) {
-            stringBuilder.append(index).append(". ")
-                    .append("🍽 ").append(product.getName()).append("\n")
-                    .append("🔥 ").append(product.getPrice()).append("🔥 lei")
-                    .append("\n✨ ").append(getHotSlogan(language))
-                    .append("\n\n");
-            index++;
+        // Список
+        int idx = 1;
+        for (ProductResponseDTO p : top10) {
+            sb.append(String.format("*%d.* **%s**\n", idx, escapeMarkdown(p.getName())))
+                    .append(String.format("💰 _%s lei_\n", p.getPrice()))
+                    .append(String.format("> %s\n", getHotSlogan(language)))
+                    .append("\n────────────────────\n\n");
+            idx++;
         }
 
-        stringBuilder.append("💥 Спешите попробовать! 🍔🔥Заходите на наш сайт и заказывайте прямо сейчас: ").append(userLink);
-        return stringBuilder.toString();
+        // Подвал
+        sb.append("💥 *Спешите попробовать!*\n")
+                .append(String.format("👉 [Заказать сейчас](%s)", userLink));
+
+        return sb.toString();
+    }
+
+
+    private String escapeMarkdown(String text) {
+        return text
+                .replace("_", "\\_")
+                .replace("*", "\\*")
+                .replace("[", "\\[")
+                .replace("]", "\\]")
+                .replace("(", "\\(")
+                .replace(")", "\\)");
     }
 
     private String getHotSlogan(String language) {

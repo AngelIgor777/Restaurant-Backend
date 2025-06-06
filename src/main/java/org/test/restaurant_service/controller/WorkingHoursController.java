@@ -22,20 +22,18 @@ public class WorkingHoursController {
         return ResponseEntity.ok(service.save(hours));
     }
 
-    @PutMapping
+    @PatchMapping
     @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public ResponseEntity<WorkingHours> update(@RequestBody WorkingHours hours) {
         return ResponseEntity.ok(service.update(hours));
     }
 
     @GetMapping
-    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public ResponseEntity<List<WorkingHours>> getAll() {
         return ResponseEntity.ok(service.getAll());
     }
 
     @GetMapping("/{dayOfWeek}")
-    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public ResponseEntity<WorkingHours> getByDay(@PathVariable short dayOfWeek) {
         return ResponseEntity.ok(service.getByDayOfWeek(dayOfWeek));
     }

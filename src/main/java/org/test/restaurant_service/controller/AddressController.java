@@ -3,7 +3,6 @@ package org.test.restaurant_service.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.test.restaurant_service.dto.request.AddressRequestDTO;
 import org.test.restaurant_service.dto.response.AddressResponseDTO;
@@ -12,7 +11,7 @@ import org.test.restaurant_service.mapper.AddressMapper;
 import org.test.restaurant_service.service.AddressService;
 import org.test.restaurant_service.service.UserAddressService;
 
-import java.util.List;
+import javax.validation.Valid;
 import java.util.UUID;
 
 @RestController
@@ -25,16 +24,12 @@ public class AddressController {
     private final UserAddressService userAddressService;
 
     @PatchMapping("/{id}")
-    //todo check user update own address or not
-    public ResponseEntity<AddressResponseDTO> updateAddress(@PathVariable Integer id, @RequestBody AddressRequestDTO addressRequestDTO) {
-        Address existingAddress = addressService.findById(id);
-
-        addressMapper.updateAddressFromDto(addressRequestDTO, existingAddress);
-
-        Address updatedAddress = addressService.save(existingAddress);
-        AddressResponseDTO responseDTO = addressMapper.toResponseDto(updatedAddress);
-
-        return ResponseEntity.ok(responseDTO);
+    public ResponseEntity<AddressResponseDTO> updateAddress(
+            @PathVariable Integer id,
+            @RequestBody @Valid AddressRequestDTO dto
+    ) {
+        Address updated = addressService.updateAddress(id, dto);
+        return ResponseEntity.ok(addressMapper.toResponseDto(updated));
     }
 
     @GetMapping("/user/{userUUID}")

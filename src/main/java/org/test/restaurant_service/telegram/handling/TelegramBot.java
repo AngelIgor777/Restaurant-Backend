@@ -174,6 +174,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         botCommands.add(new BotCommand("/website", "Зайти на сайт"));
         botCommands.add(new BotCommand("/basket", "Посмотреть корзину"));
+        botCommands.add(new BotCommand("/id", "Узнать айди чата"));
         botCommands.add(new BotCommand("/help", "Список доступных команд"));
         botCommands.add(new BotCommand("/info", "Информация о боте"));
         botCommands.add(new BotCommand("/about", "Показать мою информацию"));
@@ -246,6 +247,10 @@ public class TelegramBot extends TelegramLongPollingBot {
                     break;
                 case "/about":
                     sendUserInfo(update);
+                    break;
+                case "/id":
+                    createAndSendMessage(update, "Ваш айди: " + update.getMessage().getChatId() + "\nИспользуйте его для входа на нашем сайте:" +
+                            "\n");
                     break;
                 default:
                     user = userService.findByChatId(chatId);
@@ -1110,9 +1115,11 @@ public class TelegramBot extends TelegramLongPollingBot {
                 sendActivationCode(null, editMessageText, textUtil.getActivationText(), CallbackType.QK
                 );
             } else {
-                editMessageText.setChatId(String.valueOf(chatId));
-                editMessageText.setMessageId(message.getMessageId());
                 setMessageForChooseTableQKOrder(editMessageText, buttons);
+                InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+                inlineKeyboardMarkup.setKeyboard(buttons);
+                editMessageText.setReplyMarkup(inlineKeyboardMarkup);
+                executeMessage(editMessageText);
             }
         } else if (data.equals(ORDER_HOME)) {
             editMessageText.setText(
@@ -1120,6 +1127,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                             "Формат: город/село, улица, дом.\n" +
                             "Например: Копчак, ул. Иванова, 987"
             );
+            executeMessage(editMessageText);
             userCacheService.saveUserState(chatId, USER_WAITING_STATE_ADDRESS); // Store in Redis
         }
     }
@@ -1627,12 +1635,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         String fileId = update.getMessage().getSticker().getFileId();
         sendMessage(update, "Какой прекрасный стикер! 🙃");
         log.info("Получен File ID стикера: {}", fileId);
-    }
-
-    private void sendHelpMessage(Long chatId) {
-        User user = userService.findByChatId(chatId);
-        String codeLang = user.getTelegramUserEntity().getLanguage().getCode();
-        sendMessage(chatId, textUtil.getHelpText(codeLang));
     }
 
     private void sendHelpMessage(Update update) {

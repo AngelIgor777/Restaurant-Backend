@@ -6,7 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.test.restaurant_service.controller.websocket.WebSocketSender;
-import org.test.restaurant_service.dto.request.table.OpenTables;
+ import org.test.restaurant_service.dto.request.table.OpenTables;
 import org.test.restaurant_service.dto.request.table.TableOrderInfo;
 import org.test.restaurant_service.dto.request.table.TableOrdersPriceInfo;
 import org.test.restaurant_service.dto.response.*;
@@ -19,7 +19,7 @@ import org.test.restaurant_service.repository.OrderRepository;
 import org.test.restaurant_service.service.OrderDiscountService;
 import org.test.restaurant_service.service.OrderProductService;
 import org.test.restaurant_service.service.OrderService;
-import org.test.restaurant_service.service.impl.cache.TableCacheService;
+ import org.test.restaurant_service.service.impl.cache.TableCacheService;
 import org.test.restaurant_service.service.impl.cache.TotalOrdersCacheService;
 
 import javax.persistence.EntityNotFoundException;
@@ -44,10 +44,9 @@ public class OrderServiceImpl implements OrderService {
     private final TableMapperImpl tableMapperImpl;
     private final WebSocketSender webSocketSender;
     private final TableCacheService tableCacheService;
-    private final TableOrderScoreService tableOrderScoreService;
     private final TotalOrdersCacheService totalOrdersCacheService;
 
-    public OrderServiceImpl(OrderRepository orderRepository, OrderMapper orderMapper, OrderDiscountService orderDiscountService, OrderProductService orderProductService, AddressMapperImpl addressMapperImpl, ProductMapperImpl productMapperImpl, TableMapperImpl tableMapperImpl, WebSocketSender webSocketSender, TableCacheService tableCacheService, TableOrderScoreService tableOrderScoreService, TotalOrdersCacheService totalOrdersCacheService, TotalOrdersCacheService totalOrdersCacheService1) {
+    public OrderServiceImpl(OrderRepository orderRepository, OrderMapper orderMapper, OrderDiscountService orderDiscountService, OrderProductService orderProductService, AddressMapperImpl addressMapperImpl, ProductMapperImpl productMapperImpl, TableMapperImpl tableMapperImpl, WebSocketSender webSocketSender, TableCacheService tableCacheService,TotalOrdersCacheService totalOrdersCacheService1) {
         this.orderRepository = orderRepository;
         this.orderMapper = orderMapper;
         this.orderDiscountService = orderDiscountService;
@@ -57,7 +56,6 @@ public class OrderServiceImpl implements OrderService {
         this.tableMapperImpl = tableMapperImpl;
         this.webSocketSender = webSocketSender;
         this.tableCacheService = tableCacheService;
-        this.tableOrderScoreService = tableOrderScoreService;
         this.totalOrdersCacheService = totalOrdersCacheService1;
     }
 
@@ -149,35 +147,14 @@ public class OrderServiceImpl implements OrderService {
         webSocketSender.sendOrdersStateCount(ordersStatesCount);
     }
 
-    @Override
-    public void confirmOrder(Integer orderId, UUID sessionUUID, Order.OrderStatus from) {
-        Order orderById = getOrderById(orderId);
-        orderById.setStatus(Order.OrderStatus.CONFIRMED);
-        orderById.setOtp(null);
-        orderRepository.save(orderById);
-        TableOrderInfo tableOrderInfo = null;
-        if (sessionUUID != null) {
-            tableOrderScoreService.save(orderById.getTable(), orderById, sessionUUID);
-            tableOrderInfo = tableCacheService.changeOrderStateForTable(orderId, orderById.getTable().getId(), from, Order.OrderStatus.CONFIRMED);
-        }
-        TotalOrders totalOrders = totalOrdersCacheService.updateOrderStatus(() -> orderId, from, Order.OrderStatus.CONFIRMED);
-        OrdersStatesCount ordersStatesCount = new OrdersStatesCount();
-        ordersStatesCount.setTotalOrders(totalOrders);
-        if (tableOrderInfo != null) {
-            ordersStatesCount.setTablesOrderInfo(List.of(tableOrderInfo));
-        }
 
-        webSocketSender.sendOrdersStateCount(ordersStatesCount);
-    }
 
     @Override
     @Transactional(readOnly = true)
     public List<OrderProductResponseWithPayloadDto> getAllUserOrdersProductResponseWithPayloadDto(UUID userUUID, Pageable pageable) {
         List<Order> ordersByUserUuid = orderRepository.findByUser_UuidOrderByCreatedAtDesc(userUUID, pageable);
         return new ArrayList<>(ordersByUserUuid.stream()
-                .map(order -> {
-                    return getOrderProductResponseWithPayloadDto(order, true);
-                })
+                .map(order -> getOrderProductResponseWithPayloadDto(order, true))
                 .toList());
     }
 
@@ -189,7 +166,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public List<Integer> deleteAllByStatusAndCreatedAtBetween(Order.OrderStatus status, LocalDateTime from, LocalDateTime to) {
-       return orderRepository.deleteByStatusAndCreatedAtBetweenReturningIds(status.name(), from, to);
+        return orderRepository.deleteByStatusAndCreatedAtBetweenReturningIds(status.name(), from, to);
     }
 
     @Override

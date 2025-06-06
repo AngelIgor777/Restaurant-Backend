@@ -8,7 +8,7 @@ import org.test.restaurant_service.entity.Table;
 @Mapper(componentModel = "spring")
 public interface TableMapper {
 
-    @Mapping(target = "id", ignore = true) // Если id не нужно маппировать
+    @Mapping(target = "id", ignore = true)
     Table toEntity(TableRequestDTO tableRequestDTO);
 
 

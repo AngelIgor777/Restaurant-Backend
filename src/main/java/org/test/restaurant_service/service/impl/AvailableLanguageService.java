@@ -40,68 +40,66 @@ public class AvailableLanguageService {
 
     @Scheduled(cron = "0 0 5 * * *")
     public void checkAvailableLanguages() {
-
         List<Language> allLangs = languageService.getAll();
-        HashMap<Language, Boolean> langs = new HashMap<>();
+        Map<Language, Boolean> langs = new HashMap<>();
 
         List<ProductIdsResponse> allProductsId = productService.getAllProductsId();
         List<ProductTypeResponseDTO> types = typeService.getAll();
+
         for (Language language : allLangs) {
             boolean existTranslates = true;
 
-            for (ProductIdsResponse productIdsResponse : allProductsId) {
-
-                if (!productI18nService.existTranslation(productIdsResponse.getId(), language.getId())) {
-                    existTranslates = false;
-                    langs.put(language, false);
-                    break;
-                }
-            }
-
-            if (!existTranslates) {
-                break;
-            }
-
-            //check for types
-            for (ProductTypeResponseDTO type : types) {
-                if (!productTypeI18nService.existsTranslation(type.getId(), language.getId())) {
-                    existTranslates = false;
-                    langs.put(language, false);
-                    break;
-                }
-            }
-
-            if (!existTranslates) {
-                break;
-            }
-
-            if (language.getCode().equals("ru")) {
-                List<UiTranslationDTO> allByLangId = uiTranslationService.getAllByLangId(language.getId());
-                for (UiTranslationDTO uiTranslationDTO : allByLangId) {
-                    if (!uiTranslationService.existByKeyAndLanguage(uiTranslationDTO.getKey(), language)) {
+            if (!"ru".equals(language.getCode())) {
+                for (ProductIdsResponse productId : allProductsId) {
+                    boolean hasProductTrans = productI18nService.existTranslation(productId.getId(), language.getId());
+                    if (!hasProductTrans) {
                         existTranslates = false;
-                        langs.put(language, false);
                         break;
                     }
                 }
-            }
+                if (!existTranslates) {
+                    langs.put(language, false);
+                    continue;
+                }
 
-            if (!existTranslates) {
-                break;
-            }
+                for (ProductTypeResponseDTO type : types) {
+                    boolean hasTypeTrans = productTypeI18nService.existsTranslation(type.getId(), language.getId());
+                    if (!hasTypeTrans) {
+                        existTranslates = false;
+                        break;
+                    }
+                }
+                if (!existTranslates) {
+                    langs.put(language, false);
+                    continue;
+                }
 
-            langs.put(language, true);
+                List<UiTranslationDTO> uiTranslations = uiTranslationService.getAllByLangId(language.getId());
+                for (UiTranslationDTO uiDto : uiTranslations) {
+                    boolean hasUiTrans = uiTranslationService.existByKeyAndLanguage(uiDto.getKey(), language);
+                    if (!hasUiTrans) {
+                        existTranslates = false;
+                        break;
+                    }
+                }
+                if (!existTranslates) {
+                    langs.put(language, false);
+                    continue;
+                }
+
+                langs.put(language, true);
+            } else {
+                langs.put(language, true);
+            }
         }
 
-        for (Map.Entry<Language, Boolean> languageBooleanEntry : langs.entrySet()) {
-            Language key = languageBooleanEntry.getKey();
-            Boolean available = langs.put(key, languageBooleanEntry.getValue());
+        for (Map.Entry<Language, Boolean> entry : langs.entrySet()) {
+            Language lang = entry.getKey();
+            Boolean isAvailable = entry.getValue();
 
-            if (Boolean.TRUE.equals(available) || key.getCode().equals("ru")) {
-                availableLanguagesCacheService.saveLanguageToAvailable(key);
+            if (Boolean.TRUE.equals(isAvailable)) {
+                availableLanguagesCacheService.saveLanguageToAvailable(lang);
             }
         }
-
-
     }
 }

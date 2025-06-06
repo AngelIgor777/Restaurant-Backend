@@ -1,5 +1,3 @@
-// src/main/java/org/test/restaurant_service/security/filters/RedisIpRateLimitFilter.java
-
 package org.test.restaurant_service.security.filters;
 
 import lombok.RequiredArgsConstructor;
@@ -20,7 +18,7 @@ import java.time.Duration;
 public class RedisIpRateLimitFilter extends OncePerRequestFilter {
 
     private final RateLimitCacheService rateLimitCacheService;
-    private static final int REQUEST_LIMIT = 30;
+    private static final int REQUEST_LIMIT = 100;
     private static final Duration WINDOW = Duration.ofSeconds(1);
 
     @Override

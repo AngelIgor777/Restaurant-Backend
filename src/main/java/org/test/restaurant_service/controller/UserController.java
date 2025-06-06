@@ -61,9 +61,23 @@ public class UserController {
 
 
     @PostMapping("/isActivated")
-    public boolean isActivatedUser(@RequestParam UUID userUUID) {
-        return codeCacheService.isUserActive(userUUID);
+    public ResponseEntity<?> isActivatedUser(@RequestParam UUID userUUID) {
+        boolean userActive = codeCacheService.isUserActive(userUUID);
+
+        if (userActive) {
+            JwtResponse response = codeService.getJwtResponse(userUUID);
+            ResponseCookie cookie = ResponseCookie.from("ACTIVATION_TOKEN", response.getToken())
+                    .httpOnly(true)
+                    .secure(false)
+                    .sameSite("Strict")
+                    .path("/")
+                    .maxAge(Duration.ofMinutes(60))
+                    .build();
+
+            return ResponseEntity.ok()
+                    .header("Set-Cookie", cookie.toString())
+                    .body(true);
+        }
+        return ResponseEntity.ok(false);
     }
-
-
 }

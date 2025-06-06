@@ -22,7 +22,7 @@ public class ProductTypeI18nController {
     private final ProductTypeI18nService service;
 
     @PostMapping("/{typeId}")
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public ResponseEntity<ProductTypeTranslationResponseDTO> create(@PathVariable Integer typeId,
                                                                     @Valid @RequestBody ProductTypeTranslationRequestDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -30,7 +30,7 @@ public class ProductTypeI18nController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable("id") Integer id) {
         service.delete(id);

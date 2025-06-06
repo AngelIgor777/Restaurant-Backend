@@ -17,14 +17,14 @@ public class ProductI18nController {
 
 
     @PostMapping
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public ResponseEntity<ProductI18nResponseDTO> createTranslation(
             @RequestParam Integer productId, @RequestBody ProductI18nRequestDTO dto) {
         return ResponseEntity.ok(translationService.create(productId, dto));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("@securityService.userIsAdminOrModerator(@jwtServiceImpl.extractToken())")
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
     public ResponseEntity<Void> deleteTranslation(@PathVariable Integer id) {
         translationService.delete(id);
         return ResponseEntity.noContent().build();

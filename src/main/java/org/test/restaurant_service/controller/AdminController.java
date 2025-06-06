@@ -47,4 +47,10 @@ public class AdminController {
         roleService.ensureUserHasRole(chatId, role);
     }
 
+    @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
+    @DeleteMapping("/staff/cook")
+    public void removeCookStaffAndDeleteUser(@RequestParam Long chatId) {
+
+        roleService.removeUserRole(chatId, RoleName.ROLE_COOK);
+    }
 }

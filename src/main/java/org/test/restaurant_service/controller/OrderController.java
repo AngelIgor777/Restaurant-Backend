@@ -1,15 +1,18 @@
 package org.test.restaurant_service.controller;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.test.restaurant_service.dto.request.order.ProductsForPrintRequest;
 import org.test.restaurant_service.dto.request.table.TableOrdersPriceInfo;
 import org.test.restaurant_service.dto.response.OrderProductResponseWithPayloadDto;
 import org.test.restaurant_service.dto.response.OrdersStatesCount;
 import org.test.restaurant_service.dto.response.TableOrderScoreResponseDTO;
 import org.test.restaurant_service.entity.Order;
+import org.test.restaurant_service.service.OrderAndPrintService;
 import org.test.restaurant_service.service.OrderService;
 import org.test.restaurant_service.service.impl.OrderTableScoreService;
 import org.test.restaurant_service.service.impl.TableOrderScoreService;
@@ -21,16 +24,13 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/v1/orders")
 public class OrderController {
 
     private final OrderService orderService;
     private final OrderTableScoreService orderTableScoreService;
-
-    public OrderController(OrderService orderService, OrderTableScoreService orderTableScoreService) {
-        this.orderService = orderService;
-        this.orderTableScoreService = orderTableScoreService;
-    }
+    private final OrderAndPrintService orderAndPrintService;
 
     @GetMapping
     @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
@@ -82,8 +82,9 @@ public class OrderController {
     @PostMapping("/confirm/{orderId}")
     public void confirmOrder(@PathVariable Integer orderId,
                              @RequestParam(required = false) UUID sessionUUID,
-                             @RequestParam Order.OrderStatus from) {
-        orderService.confirmOrder(orderId, sessionUUID, from);
+                             @RequestParam Order.OrderStatus from,
+                             @RequestBody ProductsForPrintRequest productsForPrintRequest) {
+        orderAndPrintService.confirmOrder(orderId, sessionUUID, from, productsForPrintRequest);
     }
 
     @GetMapping("/user")

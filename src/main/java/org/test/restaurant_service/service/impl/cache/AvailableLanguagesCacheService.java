@@ -21,7 +21,9 @@ public class AvailableLanguagesCacheService {
 
     public void saveLanguageToAvailable(Language language) {
         List<Language> languagesAvailable = getLanguagesAvailable();
-        languagesAvailable.add(language);
+        if(!languagesAvailable.contains(language)) {
+            languagesAvailable.add(language);
+        }
         saveLanguages(languagesAvailable);
     }
 

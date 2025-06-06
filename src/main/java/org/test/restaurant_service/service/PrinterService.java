@@ -51,7 +51,7 @@ public class PrinterService {
         this.webSocketSender = webSocketSender;
     }
 
-    public void sendOrderToPrinter(Integer orderId,
+    public void sendOrderToPrinter(@Nullable Integer orderId,
                                    @Nullable ProductsForPrintRequest productsId,
                                    @Nullable Order inputOrder) {
         Order order = inputOrder != null
@@ -63,17 +63,14 @@ public class PrinterService {
             return;
         }
 
-        // Собираем DTO, чтобы получить поля
-        OrderForPrintDto dto = toDto(orderId, productsId, order);
+        OrderForPrintDto dto = toDto(order.getId(), productsId, order);
 
-        // Генерим ESC/POS-байты
         byte[] rawBytes = buildEscPosBytes(dto);
 
-        // Отправляем их по WebSocket в бинарном фрейме
         webSocketSender.sendRawToPrinter(rawBytes);
 
-        // И, как раньше, меняем статус заказа
-        if (!order.getStatus().equals(Order.OrderStatus.COMPLETED)) {
+        Order.OrderStatus status = order.getStatus();
+        if (!status.equals(Order.OrderStatus.COMPLETED) && !status.equals(Order.OrderStatus.CONFIRMED)) {
             Table table = order.getTable();
             orderService.completeOrder(orderId, table != null ? table.getId() : null);
         }
@@ -87,6 +84,7 @@ public class PrinterService {
         if (order.orderInRestaurant() && order.getTable() != null) {
             dto.setTable(order.getTable().getNumber());
         }
+
         List<ProductItem> items = orderProductService.getOrderProductsByOrderId(orderId)
                 .stream()
                 .filter(op -> productsId == null || productsId.getProducts().contains(op.getProduct().getId()))
@@ -133,7 +131,7 @@ public class PrinterService {
                 String name = Arrays.stream(item.getName().split("\\s+"))
                         .map(w -> {
                             String up = w.toUpperCase();
-                            return up.length() > 4 ? up.substring(0, 4) : up;
+                            return up.length() > 5 ? up.substring(0, 5) : up;
                         })
                         .collect(Collectors.joining(". "));
                 String first = cutText(name, 20);
@@ -150,13 +148,14 @@ public class PrinterService {
             }
 
             // Cut
-//            out.write(CUT_COMMAND);
+            out.write(CUT_COMMAND);
             return out.toByteArray();
         } catch (Exception e) {
             log.error("Ошибка генерации ESC/POS-байтов: {}", e.getMessage(), e);
             return new byte[0];
         }
     }
+
     private String cutText(String text, int maxLength) {
         if (text.length() > maxLength) {
             return text.substring(0, maxLength);

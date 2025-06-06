@@ -8,4 +8,8 @@ public interface RoleService {
     void ensureUserHasRole(User user, RoleName roleName);
 
     void ensureUserHasRole(Long chatId, RoleName roleName);
+
+    void removeUserRole(User user, RoleName roleName);
+
+    void removeUserRole(Long chatId, RoleName roleName);
 }

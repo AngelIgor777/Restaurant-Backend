@@ -13,6 +13,7 @@ import org.test.restaurant_service.dto.response.FeatureStatusResponseDTO;
 import org.test.restaurant_service.entity.WorkingHours;
 import org.test.restaurant_service.service.impl.FeatureService;
 import org.test.restaurant_service.service.impl.TableService;
+import org.test.restaurant_service.service.impl.UiTranslationService;
 import org.test.restaurant_service.service.impl.WorkingHoursService;
 
 

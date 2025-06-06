@@ -33,10 +33,14 @@ public class CodeService {
         int trueCode = codeCacheService.getActivationCodes().getTrueCode();
         if (trueCode == activationCode) {
             codeCacheService.activateUser(userUUID);
-            return jwtService.generateUserActivationToken(userUUID);
+            return getJwtResponse(userUUID);
         } else {
             throw new AccessDeniedException("Access denied");
         }
+    }
+
+    public JwtResponse getJwtResponse(UUID userUUID) {
+        return jwtService.generateUserActivationToken(userUUID);
     }
 
 }

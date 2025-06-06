@@ -1,5 +1,6 @@
 package org.test.restaurant_service.service;
 
+import org.test.restaurant_service.dto.request.AddressRequestDTO;
 import org.test.restaurant_service.entity.Address;
 
 import java.util.List;
@@ -18,4 +19,6 @@ public interface AddressService {
     List<Address> findByCity(String city);
 
     Address findByUserUUID(UUID userUUID);
+
+    Address updateAddress(Integer id, AddressRequestDTO dto);
 }

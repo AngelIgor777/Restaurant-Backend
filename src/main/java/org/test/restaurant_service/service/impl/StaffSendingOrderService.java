@@ -1,5 +1,6 @@
 package org.test.restaurant_service.service.impl;
 
+import org.springframework.boot.actuate.autoconfigure.metrics.data.RepositoryMetricsAutoConfiguration;
 import org.test.restaurant_service.entity.StaffSendingOrder;
 import org.test.restaurant_service.entity.User;
 import org.test.restaurant_service.repository.StaffSendingOrderRepository;
@@ -16,6 +17,7 @@ import java.util.List;
 public class StaffSendingOrderService {
 
     private final StaffSendingOrderRepository staffSendingOrderRepository;
+    private final RepositoryMetricsAutoConfiguration repositoryMetricsAutoConfiguration;
 
     public void setStaffSendingState(Long chatId, boolean sendingState) {
         StaffSendingOrder staffSendingOrder = staffSendingOrderRepository.findByChatId(chatId)
@@ -36,5 +38,9 @@ public class StaffSendingOrderService {
 
     public List<StaffSendingOrder> getAllSendingState(boolean sendingState) {
         return staffSendingOrderRepository.findAllBySendingOn(sendingState);
+    }
+
+    public void deleteStaffSendingOrder(User user, Long chatId) {
+        staffSendingOrderRepository.deleteByChatIdAndUser(chatId, user);
     }
 }

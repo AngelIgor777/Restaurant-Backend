@@ -93,13 +93,12 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
         Order.OrderStatus orderStatus = null;
         boolean isOrderOfAdmin = requestDto instanceof OrderProductWithPayloadAndPrintRequestDto;
         if (!isOrderOfAdmin && !featureService.getFeatureStatus(Features.ORDERING).isEnabled()) {
-            throw new IllegalStateException("Заказы от пользователей отключены");
+            throw new IllegalStateException("Заказы отключены");
         }
 
         if (!featureService.getFeatureStatus(Features.COUPONS).isEnabled()) {
             requestDto.setExistDiscountCodes(false);
         }
-
 
         if (isOrderOfAdmin) {
             requestDtoForPrint = (OrderProductWithPayloadAndPrintRequestDto) requestDto;
@@ -176,7 +175,7 @@ public class OrderProductAndUserServiceImpl implements OrderProductAndUserServic
 
         TotalOrders totalOrders = null;
         if (orderStatus != null) {
-            if (orderStatus.equals(Order.OrderStatus.COMPLETED)) {
+            if (orderStatus.equals(Order.OrderStatus.COMPLETED) || orderStatus.equals(Order.OrderStatus.CONFIRMED)) {
                 totalOrders = totalOrdersCacheService.addCompletedOrder(savedOrder::getId);
                 printerService.sendOrderToPrinter(savedOrder.getId(), requestDtoForPrint.getProductsIdForPrint(), order);
             }
