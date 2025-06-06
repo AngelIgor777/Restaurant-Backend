@@ -35,13 +35,16 @@ public class OrderAndPrintService {
         orderById.setOtp(null);
 
         //queue is important
-        printerService.sendOrderToPrinter(null, productsForPrintRequest, orderById);
+        if (from.equals(Order.OrderStatus.PENDING)) {
+            printerService.sendOrderToPrinter(null, productsForPrintRequest, orderById);
+        }
 
         TableOrderInfo tableOrderInfo = null;
         if (sessionUUID != null) {
             tableOrderScoreService.save(orderById.getTable(), orderById, sessionUUID);
             tableOrderInfo = tableCacheService.changeOrderStateForTable(orderId, orderById.getTable().getId(), from, Order.OrderStatus.CONFIRMED);
         }
+
         TotalOrders totalOrders = totalOrdersCacheService.updateOrderStatus(() -> orderId, from, Order.OrderStatus.CONFIRMED);
         OrdersStatesCount ordersStatesCount = new OrdersStatesCount();
         ordersStatesCount.setTotalOrders(totalOrders);

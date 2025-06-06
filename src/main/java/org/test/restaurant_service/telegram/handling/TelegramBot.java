@@ -251,7 +251,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     sendUserInfo(update);
                     break;
                 case "/id":
-                    createAndSendMessage(update, "Ваш айди: " + update.getMessage().getChatId() + "\nИспользуйте его для входа на нашем сайте:" +
+                    createAndSendMessage(update, "Ваш айди: " + update.getMessage().getChatId() + "\nИспользуйте его для входа на нашем сайте!" +
                             "\n");
                     break;
                 default:
@@ -949,7 +949,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         message.append("\n🕒 В скором времени всё будет готово!\n")
                 .append("А пока можете посмотреть меню [на сайте]")
-                .append("(http://195.133.27.38/#menu/")
+                .append("(http://195.133.93.67/#menu/")
                 .append(order.getUserUUID()).append(")");
 
         return message.toString();
@@ -1682,7 +1682,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         sendMessage.setText(message);
         ReplyKeyboardMarkup replyKeyboard = getReplyKeyboard();
         sendMessage.setReplyMarkup(replyKeyboard);
-        sendMessage.setParseMode("Markdown"); // Использование Markdown для форматирования текста
+        sendMessage.setParseMode("Markdown");
         executeMessage(sendMessage);
     }
 
