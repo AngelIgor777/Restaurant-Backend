@@ -41,7 +41,7 @@ class TextUtil {
 
 
     public String getBlacklistText(UUID userUUID) {
-        String websiteLink = String.format("[parktown.md](http://195.133.27.38/#menu/%s)", userUUID);
+        String websiteLink = String.format("[parktown.md](http://195.133.93.67/#menu/%s)", userUUID);
 
         return """
                 🚫 Вы временно заблокированы
@@ -60,20 +60,6 @@ class TextUtil {
                 ℹ️ /info — О боте
                 """.formatted(websiteLink);
     }
-
-    private String adTextRu =
-            """
-                    🍽️ <b>Время вкусных открытий!</b>
-                    
-                    ✨ Сегодня у нас для вас нечто особенное:
-                    🍕 <b>Пицца недели:</b> Сырный взрыв — только 149 mdl!
-                    🍹 <b>Коктейли:</b> Закажи два и получи третий в подарок!
-                    
-                    🎉 <i>Забронируйте столик прямо сейчас, чтобы не упустить шанс насладиться уникальными блюдами!</i>
-                    
-                    📲 Нажмите /menu, чтобы посмотреть всё меню!
-                    
-                    ❤️ С любовью, ваш PARK TOWN""";
 
 
     private final String helpTextRu =
@@ -134,17 +120,6 @@ class TextUtil {
         return productText;
     }
 
-
-    public String getCaptionForUser(TelegramUserEntity telegramUserEntity) {
-        return String.format("""
-                %s Привет! 😎 У нас для тебя что-то новенькое!
-                🍽️<b>Время вкусных открытий!</b>
-                ✨ Пицца недели: Сырный взрыв — только 149 лей!
-                📲 Нажмите /menu, чтобы посмотреть всё меню!
-                ❤️ С любовью, ваш PARK TOWN""", telegramUserEntity.getFirstname());
-    }
-
-
     public String getProductTypeTextByType(String productType) {
         return "🍽️ Вы выбрали категорию <b>" + productType + "</b>!\n\n" +
                 "Нажмите на блюдо, чтобы увидеть описание.\n";
@@ -161,26 +136,26 @@ class TextUtil {
     }
 
     public String getErrorText(UUID userUUID, String language) {
-        return String.format("🌐Заходите на наш сайт [parktown.md](http://195.133.27.38/#menu/%s).\n" +
+        return String.format("🌐Заходите на наш сайт [parktown.md](http://195.133.93.67/#menu/%s).\n" +
                 "🎁Участвуйте в розыгрышах, получайте промокоды и смотрите за новостями!", userUUID);
     }
 
     public String getMessageAfterRegister(UUID userUUID, String language) {
         return String.format("""
-                🌐Заходите на наш сайт [parktown.md](http://195.133.27.38/#menu/%s).
+                🌐Заходите на наш сайт [parktown.md](http://195.133.93.67/#menu/%s).
                 🎁Участвуйте в розыгрышах и смотрите за новостями!
                 """, userUUID);
     }
 
     public String getWebSiteText(UUID userUUID, String language) {
-        return String.format("🌟 Привет! Добро пожаловать на наш сайт: [parktown.md](http://195.133.27.38/#menu/%s). Мы рады, что вы с нами! 😊", userUUID);
+        return String.format("🌟 Привет! Добро пожаловать на наш сайт: [parktown.md](http://195.133.93.67/#menu/%s). Мы рады, что вы с нами! 😊", userUUID);
     }
 
     public String getDefaultMessage(UUID userUUID, String language) {
         return String.format("""
                 Неизвестная команда 🤯. Введите /help, чтобы увидеть доступные команды.
                 
-                Можете посмотреть наше меню /menu ☺ или сделать заказ у нас на сайте [parktown.md](http://195.133.27.38/#menu/%s).
+                Можете посмотреть наше меню /menu ☺ или сделать заказ у нас на сайте [parktown.md](http://195.133.93.67/#menu/%s).
                 """, userUUID);
     }
 
@@ -228,7 +203,7 @@ class TextUtil {
         String formattedValidFrom = validFromZoned.format(formatter);
         String formattedValidTo = validToZoned.format(formatter);
 
-        String userLink = String.format("[parktown.md](http://195.133.27.38/#menu/%s)", userUUID);
+        String userLink = String.format("[parktown.md](http://195.133.93.67/#menu/%s)", userUUID);
 
 
         return new StringBuilder()
@@ -256,7 +231,7 @@ class TextUtil {
         String formattedValidFrom = validFromZoned.format(formatter);
         String formattedValidTo = validToZoned.format(formatter);
 
-        String userLink = String.format("[parktown.md](http://195.133.27.38/#menu/%s)", userUUID);
+        String userLink = String.format("[parktown.md](http://195.133.93.67/#menu/%s)", userUUID);
 
         Product product = productDiscount.getProduct();
         String name = product.getName();
@@ -279,7 +254,7 @@ class TextUtil {
 
 
     public String getTopWeekProducts(UUID userUUID, String language) {
-        String userLink = String.format("http://195.133.27.38/#menu/%s", userUUID);
+        String userLink = String.format("http://195.133.93.67/#menu/%s", userUUID);
         Pageable pageable = PageRequest.of(0, 10);
         List<ProductResponseDTO> top10 = productService.getTop10WeekProducts(pageable);
 
