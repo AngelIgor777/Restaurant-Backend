@@ -13,6 +13,7 @@ import org.test.restaurant_service.entity.TelegramUserEntity;
 import org.test.restaurant_service.entity.RoleName;
 import org.test.restaurant_service.repository.TelegramUserRepository;
 import org.test.restaurant_service.repository.UserRepository;
+import org.test.restaurant_service.service.LanguageService;
 import org.test.restaurant_service.service.RoleService;
 import org.test.restaurant_service.service.TelegramUserService;
 
@@ -25,38 +26,9 @@ import java.util.List;
 public class TelegramUserServiceImpl implements TelegramUserService {
 
     private final TelegramUserRepository telegramUserRepository;
-    private final UserRepository userRepository;
-    private final RoleService roleService;
 
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public org.test.restaurant_service.entity.User registerUser(Update update, String userPhotoUrl) {
-        Message message = update.getMessage();
-        User user = message.getFrom();
 
-        TelegramUserEntity telegramUser = TelegramUserEntity.builder()
-                .chatId(message.getChatId())
-                .firstname(user.getFirstName())
-                .username(user.getUserName())
-                .build();
-
-        //its ensure because photo can be null
-        if (userPhotoUrl != null) {
-            telegramUser.setPhotoUrl(userPhotoUrl);
-        }
-
-
-        org.test.restaurant_service.entity.User userEntity =
-                org.test.restaurant_service.entity.User.builder()
-                        .telegramUserEntity(telegramUser)
-                        .build();
-
-        roleService.ensureUserHasRole(userEntity, RoleName.ROLE_USER);
-        TelegramUserEntity save = telegramUserRepository.save(telegramUser);
-        userEntity.setTelegramUserEntity(save);
-        return userRepository.save(userEntity);
-    }
 
     @Override
     public TelegramUserEntity save(TelegramUserEntity telegramUserEntity) {

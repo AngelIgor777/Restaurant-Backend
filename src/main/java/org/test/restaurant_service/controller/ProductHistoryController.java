@@ -2,6 +2,7 @@ package org.test.restaurant_service.controller;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.test.restaurant_service.dto.response.ProductHistoryResponseDTO;
 import org.test.restaurant_service.dto.response.ProductResponseDTO;
@@ -30,6 +31,7 @@ public class ProductHistoryController {
 
     @GetMapping("{productId}")
     @PreAuthorize("@securityService.userIsAdminOrModerator(authentication)")
+    @Transactional(readOnly = true)
     public List<ProductHistoryResponseDTO> getProductHistory(@PathVariable Integer productId) {
         return productHistoryService.getProductHistoryByProductId(productId)
                 .stream()

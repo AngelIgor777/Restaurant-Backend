@@ -64,6 +64,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final UserBucketCacheService userBucketCacheService;
     private final WaiterCallCacheService waiterCallCacheService;
     private final AvailableLanguagesCacheService languagesCache;
+    private final UserLangService userLangService;
 
 
     private final String QUICK_ORDER_SUFFIX = "QO:";
@@ -122,7 +123,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private Pattern PHONE_PATTERN =
             Pattern.compile("^(373\\d{8}|0\\d{8}|\\d{8})$");
 
-    public TelegramBot(TelegramUserServiceImpl telegramUserService, ProductTypeServiceImpl productTypeService, @Qualifier("productServiceImpl") ProductServiceImpl productService, BotConfig botConfig, TextUtil textUtil, UserService userService, S3Service s3Service, TableService tableService, RabbitMQJsonProducer rabbitMQJsonProducer, UserCacheService userCacheService, UserBucketCacheService userBucketCacheService, OrderCacheService orderCacheService, WebSocketSender webSocketSender, WorkTelegramBot workTelegramBot, StaffSendingOrderService staffSendingOrderService, WaiterCallCacheService waiterCallCacheService1, AvailableLanguagesCacheService languagesCache, CodeCacheService codeCacheService, CodeService codeService, FeatureService featureService) {
+    public TelegramBot(TelegramUserServiceImpl telegramUserService, ProductTypeServiceImpl productTypeService, @Qualifier("productServiceImpl") ProductServiceImpl productService, BotConfig botConfig, TextUtil textUtil, UserService userService, S3Service s3Service, TableService tableService, RabbitMQJsonProducer rabbitMQJsonProducer, UserCacheService userCacheService, UserBucketCacheService userBucketCacheService, OrderCacheService orderCacheService, WebSocketSender webSocketSender, WorkTelegramBot workTelegramBot, StaffSendingOrderService staffSendingOrderService, WaiterCallCacheService waiterCallCacheService1, AvailableLanguagesCacheService languagesCache, UserLangService userLangService, CodeCacheService codeCacheService, CodeService codeService, FeatureService featureService) {
         this.telegramUserService = telegramUserService;
         this.productTypeService = productTypeService;
         this.productService = productService;
@@ -140,6 +141,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         this.webSocketSender = webSocketSender;
         this.workTelegramBot = workTelegramBot;
         this.staffSendingOrderService = staffSendingOrderService;
+        this.userLangService = userLangService;
         this.codeCacheService = codeCacheService;
         this.codeService = codeService;
         this.featureService = featureService;
@@ -1649,8 +1651,8 @@ public class TelegramBot extends TelegramLongPollingBot {
         String errorText;
         if (!telegramUserService.existByChatId(chatId)) {
             String userPhotoUrl = saveUserPhoto(update);
-            telegramUserService.registerUser(update, userPhotoUrl);
-//            sendLanguageSelection(update.getMessage().getChatId());
+            userLangService.registerUser(update, userPhotoUrl);
+            sendMessageWithMarkdown(chatId, textUtil.getHelpText(""));
         } else {
             User user = userService.findByChatId(chatId);
             UUID userUUID = user.getUuid();
