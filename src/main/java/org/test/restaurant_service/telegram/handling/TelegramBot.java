@@ -1650,7 +1650,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         if (!telegramUserService.existByChatId(chatId)) {
             String userPhotoUrl = saveUserPhoto(update);
             telegramUserService.registerUser(update, userPhotoUrl);
-            sendLanguageSelection(update.getMessage().getChatId());
+//            sendLanguageSelection(update.getMessage().getChatId());
         } else {
             User user = userService.findByChatId(chatId);
             UUID userUUID = user.getUuid();
